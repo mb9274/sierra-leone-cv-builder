@@ -1,0 +1,1599 @@
+"use client"
+
+import type React from "react"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  User,
+  GraduationCap,
+  Briefcase,
+  Award,
+  Globe,
+  Plus,
+  Trash2,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Sparkles,
+  Upload,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  LayoutTemplate,
+  FileText,
+} from "lucide-react"
+import type { CVData } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster"
+import { AISuggestionDialog } from "@/components/ai-suggestion-dialog"
+
+const steps = [
+  { number: 1, title: "Start", icon: LayoutTemplate },
+  { number: 2, title: "Personal Information", icon: User },
+  { number: 3, title: "Education", icon: GraduationCap },
+  { number: 4, title: "Experience", icon: Briefcase },
+  { number: 5, title: "Skills", icon: Award },
+  { number: 6, title: "Languages", icon: Globe },
+  { number: 7, title: "Profile Photo", icon: User },
+  { number: 8, title: "AI Enhancement", icon: Sparkles },
+]
+
+const templates = [
+  { id: "sierra-leone-professional", name: "Sierra Leone Professional", color: "green", description: "Clean, traditional format trusted by government." },
+  { id: "freetown-modern", name: "Freetown Modern", color: "blue", description: "Contemporary layout for tech and creative roles." },
+  { id: "classic-salone", name: "Classic Salone", color: "yellow", description: "Traditional single-column format." },
+  { id: "bo-business", name: "Bo Business", color: "red", description: "Bold and corporate, ideal for management roles." },
+  { id: "makeni-minimal", name: "Makeni Minimal", color: "slate", description: "Clean and minimalist, focuses on content." },
+  { id: "kenema-creative", name: "Kenema Creative", color: "purple", description: "Vibrant and expressive for artistic fields." },
+  { id: "lion-mountains", name: "Lion Mountains", color: "teal", description: "Modern and fresh with a nature-inspired palette." },
+]
+
+export default function CVBuilderPage() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [currentStep, setCurrentStep] = useState(1)
+  const [aiEnhancing, setAiEnhancing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [completionPercentage, setCompletionPercentage] = useState(0)
+
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [fieldStatus, setFieldStatus] = useState<Record<string, "valid" | "invalid" | "empty">>({})
+
+  const [cvData, setCvData] = useState<Partial<CVData>>({
+    personalInfo: {
+      fullName: "",
+      email: "",
+      phone: "",
+      location: "",
+      summary: "",
+      age: undefined,
+      profilePhoto: "",
+    },
+    education: [],
+    experience: [],
+    skills: [],
+    languages: [],
+    templateId: "sierra-leone-professional",
+  })
+
+  // Education form state
+  const [eduForm, setEduForm] = useState({
+    institution: "",
+    degree: "",
+    fieldOfStudy: "",
+    startDate: "",
+    endDate: "",
+    current: false,
+  })
+
+  // Experience form state
+  const [expForm, setExpForm] = useState({
+    company: "",
+    position: "",
+    location: "",
+    startDate: "",
+    endDate: "",
+    current: false,
+    description: "",
+  })
+
+  // Skills state
+  const [skillInput, setSkillInput] = useState("")
+
+  // Language state
+  const [langForm, setLangForm] = useState({
+    language: "",
+    proficiency: "intermediate",
+  })
+
+  // Profile Photo state
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>("")
+  const [preferences, setPreferences] = useState<{ jobRole: string; experienceLevel: string } | null>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState("sierra-leone-professional")
+
+  // Mock CV Parsing
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      toast({
+        title: "Analyzing CV...",
+        description: "Extracting information from your document.",
+      })
+
+      // Simulate parsing delay
+      setTimeout(() => {
+        // Mock parsed data
+        setCvData({
+          personalInfo: {
+            fullName: "Abdul Bangura",
+            email: "abdul.b@example.com",
+            phone: "076123456",
+            location: "Freetown, Sierra Leone",
+            summary: "Experienced professional with a background in administration.",
+            age: 28,
+            profilePhoto: "",
+          },
+          education: [],
+          experience: [],
+          skills: ["Microsoft Office", "Communication"],
+          languages: []
+        })
+        toast({
+          title: "CV Uploaded!",
+          description: "We've pre-filled your information. Please review it.",
+        })
+        setCurrentStep(2) // Move to Personal Info
+      }, 1500)
+    }
+  }
+
+  useEffect(() => {
+    // Load saved CV data
+    const savedCV = localStorage.getItem("cvbuilder_current")
+    if (savedCV) {
+      try {
+        const parsed = JSON.parse(savedCV)
+        setCvData(parsed)
+        if (parsed.templateId) {
+          setSelectedTemplate(parsed.templateId)
+        }
+      } catch (e) {
+        console.error("[v0] Failed to load saved CV:", e)
+      }
+    }
+
+    // Load preferences from onboarding
+    const savedPrefs = localStorage.getItem("cvbuilder_preferences")
+    if (savedPrefs) {
+      setPreferences(JSON.parse(savedPrefs))
+    }
+  }, [])
+
+  const calculateCompletion = () => {
+    if (!cvData) {
+      setCompletionPercentage(0)
+      return
+    }
+
+    let completed = 0
+
+    // Personal Info (35%)
+    if (cvData.personalInfo?.fullName) completed += 10
+    if (cvData.personalInfo?.email) completed += 10
+    if (cvData.personalInfo?.phone) completed += 10
+    if (cvData.personalInfo?.summary) completed += 5
+
+    // Education (20%)
+    if (cvData.education && cvData.education.length > 0) completed += 20
+
+    // Experience (20%)
+    if (cvData.experience && cvData.experience.length > 0) completed += 20
+
+    // Skills (15%)
+    if (cvData.skills && cvData.skills.length > 0) completed += 15
+
+    // Languages (10%)
+    if (cvData.languages && cvData.languages.length > 0) completed += 10
+
+    // Profile Photo (5%)
+    if (cvData.personalInfo?.profilePhoto) completed += 5
+
+    setCompletionPercentage(completed)
+  }
+
+  useEffect(() => {
+    calculateCompletion()
+  }, [cvData])
+
+  const validateField = (fieldName: string, value: string) => {
+    let error = ""
+    let status: "valid" | "invalid" | "empty" = "empty"
+
+    if (!value) {
+      status = "empty"
+      setFieldStatus((prev) => ({ ...prev, [fieldName]: status }))
+      return
+    }
+
+    switch (fieldName) {
+      case "fullName":
+        if (!/^[a-zA-Z\s]+$/.test(value)) {
+          error = "Name can only contain letters and spaces"
+          status = "invalid"
+        } else if (value.length < 2) {
+          error = "Name must be at least 2 characters"
+          status = "invalid"
+        } else {
+          status = "valid"
+        }
+        break
+      case "email":
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          error = "Please enter a valid email address"
+          status = "invalid"
+        } else {
+          status = "valid"
+        }
+        break
+      case "phone":
+        if (!/^\d{8}$/.test(value.replace(/\s/g, ""))) {
+          error = "Phone must be 8 digits"
+          status = "invalid"
+        } else {
+          status = "valid"
+        }
+        break
+      case "age":
+        const age = Number.parseInt(value)
+        if (isNaN(age) || age < 18 || age > 30) {
+          error = "Age must be between 18 and 30"
+          status = "invalid"
+        } else {
+          status = "valid"
+        }
+        break
+    }
+
+    setValidationErrors((prev) => ({ ...prev, [fieldName]: error }))
+    setFieldStatus((prev) => ({ ...prev, [fieldName]: status }))
+  }
+
+  useEffect(() => {
+    const autoSave = setTimeout(() => {
+      if (cvData && Object.keys(cvData).length > 0) {
+        setSaving(true)
+        localStorage.setItem("cvbuilder_current", JSON.stringify(cvData))
+        setTimeout(() => {
+          setSaving(false)
+        }, 500)
+      }
+    }, 1000)
+
+    return () => clearTimeout(autoSave)
+  }, [cvData])
+
+  const handleNameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^a-zA-Z\s]/g, "") // Only letters and spaces
+    setCvData({
+      ...cvData,
+      personalInfo: { ...(cvData.personalInfo || {}), fullName: value },
+    })
+  }
+
+  const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, "") // Only numbers
+    if (value.length <= 8) {
+      // Max 8 digits after +232
+      setCvData({
+        ...cvData,
+        personalInfo: { ...(cvData.personalInfo || {}), phone: value },
+      })
+    }
+  }
+
+  const handleAgeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, "") // Only numbers
+    const age = Number.parseInt(value) || undefined
+    if (!age || (age >= 18 && age <= 30)) {
+      setCvData({
+        ...cvData,
+        personalInfo: { ...(cvData.personalInfo || {}), age },
+      })
+    }
+  }
+
+  const handlePersonalInfoChange = (field: string, value: string) => {
+    setCvData((prev) => ({
+      ...prev,
+      personalInfo: {
+        [field]: value,
+      } as any,
+    }))
+
+    if (["fullName", "email", "phone", "age"].includes(field)) {
+      validateField(field, value)
+    }
+  }
+
+  const handleEnhanceWithAI = async () => {
+    setAiEnhancing(true)
+
+    toast({
+      title: "AI Enhancement Started",
+      description: "Analyzing your CV and generating improvements...",
+    })
+
+    try {
+      const response = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "enhance_cv",
+          cvData: cvData,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.summary || result.experience || result.skills) {
+        // AI generated enhancements
+        const enhancedData = {
+          ...cvData,
+          personalInfo: {
+            ...cvData.personalInfo,
+            summary: result.summary || cvData.personalInfo?.summary,
+          },
+          experience: result.experience || cvData.experience,
+          skills: result.skills || cvData.skills,
+        }
+        setCvData(enhancedData)
+
+        toast({
+          title: "AI Enhancement Complete!",
+          description: "Your CV has been professionally enhanced with AI-powered suggestions.",
+          variant: "default",
+        })
+      } else {
+        // Use professional template enhancement
+        const enhancedData = enhanceWithProfessionalTemplate(cvData)
+        setCvData(enhancedData)
+
+        toast({
+          title: "Enhancement Complete",
+          description: "Your CV has been enhanced with professional formatting and language.",
+        })
+      }
+    } catch (error) {
+      console.error("[v0] AI enhancement error:", error)
+
+      // Fallback to professional template enhancement
+      const enhancedData = enhanceWithProfessionalTemplate(cvData)
+      setCvData(enhancedData)
+
+      toast({
+        title: "Enhancement Complete",
+        description: "Your CV has been enhanced with professional templates.",
+      })
+    } finally {
+      setAiEnhancing(false)
+    }
+  }
+
+  const enhanceWithProfessionalTemplate = (data: Partial<CVData>) => {
+    const location = data.personalInfo?.location || "Sierra Leone"
+    const topSkills = data.skills?.slice(0, 3).join(", ") || "communication, teamwork, and problem-solving"
+    const yearsExp = data.experience?.length || 0
+    const education = data.education?.[0]
+
+    // Generate professional summary
+    let enhancedSummary = ""
+    if (yearsExp > 0) {
+      enhancedSummary = `Accomplished professional from ${location} with ${yearsExp}+ years of progressive experience in ${data.experience?.[0]?.position || "the field"}. Demonstrated expertise in ${topSkills}, with a proven track record of delivering results. ${education ? `Holds a ${education.degree} in ${education.fieldOfStudy}.` : ""} Seeking opportunities to leverage skills and experience to contribute to organizational success and growth.`
+    } else {
+      enhancedSummary = `Motivated and detail-oriented ${education?.fieldOfStudy || "professional"} graduate from ${location}. Strong foundation in ${topSkills}, with excellent academic performance and practical skills. ${education ? `Recently completed ${education.degree} at ${education.institution}.` : ""} Eager to apply knowledge and skills in a challenging role while contributing to organizational objectives.`
+    }
+
+    // Enhance experience descriptions
+    const enhancedExperience = data.experience?.map((exp) => {
+      const enhanced = {
+        ...exp,
+        description: exp.description || "",
+      }
+
+      // If description is short or generic, enhance it
+      if (!exp.description || exp.description.length < 100) {
+        const position = exp.position.toLowerCase()
+        if (position.includes("teacher")) {
+          enhanced.description =
+            "• Developed and delivered engaging lesson plans aligned with curriculum standards\n• Monitored student progress through regular assessments and provided constructive feedback\n• Collaborated with colleagues to enhance teaching methodologies and student outcomes\n• Maintained positive relationships with students, parents, and school administration"
+        } else if (position.includes("sales") || position.includes("marketing")) {
+          enhanced.description =
+            "• Achieved and exceeded sales targets through effective customer relationship management\n• Identified new business opportunities and expanded customer base by 25%\n• Provided exceptional customer service and resolved client concerns promptly\n• Maintained accurate records of sales activities and customer interactions"
+        } else if (position.includes("manager") || position.includes("supervisor")) {
+          enhanced.description =
+            "• Led and motivated a team of professionals to achieve departmental objectives\n• Implemented efficient processes that improved productivity by 30%\n• Conducted performance evaluations and provided coaching to team members\n• Coordinated cross-functional initiatives and stakeholder communications"
+        } else if (position.includes("accountant") || position.includes("finance")) {
+          enhanced.description =
+            "• Prepared accurate financial reports and maintained organized accounting records\n• Processed invoices, payments, and reconciliations in accordance with company policies\n• Assisted with budget preparation and variance analysis\n• Ensured compliance with financial regulations and internal controls"
+        } else {
+          enhanced.description =
+            "• Performed assigned duties with professionalism and attention to detail\n• Collaborated effectively with team members to achieve organizational goals\n• Maintained accurate documentation and records of all activities\n• Contributed to process improvements and operational efficiency initiatives"
+        }
+      }
+
+      return enhanced
+    })
+
+    // Add suggested skills if list is short
+    let enhancedSkills = data.skills || []
+    if (enhancedSkills.length < 8) {
+      const additionalSkills = [
+        "Microsoft Office Suite",
+        "Communication Skills",
+        "Time Management",
+        "Problem Solving",
+        "Team Collaboration",
+        "Customer Service",
+        "Report Writing",
+        "Data Analysis",
+      ]
+      const missingSkills = additionalSkills.filter((skill) => !enhancedSkills.includes(skill))
+      enhancedSkills = [...enhancedSkills, ...missingSkills.slice(0, 8 - enhancedSkills.length)]
+    }
+
+    return {
+      ...data,
+      personalInfo: {
+        ...(data.personalInfo || {}),
+        summary: enhancedSummary,
+      },
+      experience: enhancedExperience,
+      skills: enhancedSkills,
+    }
+  }
+
+  const handleSaveAndContinue = async () => {
+    setSaving(true)
+
+    const verificationId = `CV${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`
+    const cvId = Date.now().toString()
+    const cvToSave: CVData = {
+      id: cvId,
+      personalInfo: cvData.personalInfo || {
+        fullName: "",
+        email: "",
+        phone: "",
+        location: "",
+        summary: "",
+        age: undefined,
+        profilePhoto: "",
+      },
+      education: cvData.education || [],
+      experience: cvData.experience || [],
+      skills: cvData.skills || [],
+      languages: cvData.languages || [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      verificationId, // Add verification ID to CV data
+      verifiedAt: new Date().toISOString(), // Mark as verified immediately
+    }
+
+    const existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
+    existingCVs.push(cvToSave)
+    localStorage.setItem("cvbuilder_cvs", JSON.stringify(existingCVs))
+    localStorage.setItem("cvbuilder_current", JSON.stringify(cvToSave))
+
+    try {
+      if (cvData.personalInfo?.email) {
+        const response = await fetch("/api/send-verification-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: cvData.personalInfo.email,
+            fullName: cvData.personalInfo.fullName,
+            verificationId,
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log("[v0] Verification email sent:", data)
+        }
+      }
+    } catch (error) {
+      console.error("[v0] Failed to send verification email:", error)
+      // Don't block CV save if email fails
+    }
+
+    setTimeout(() => {
+      setSaving(false)
+      toast({
+        title: "CV Saved Successfully!",
+        description: `Your verification ID (${verificationId}) has been sent to ${cvData.personalInfo?.email || "your email"}.`,
+      })
+      router.push("/preview")
+    }, 800)
+  }
+
+  const handleSaveCV = async () => {
+    const verificationId = `CV${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`
+
+    const completedCV: CVData = {
+      id: Math.random().toString(36).substr(2, 9),
+      personalInfo: cvData.personalInfo || {
+        fullName: "",
+        email: "",
+        phone: "",
+        location: "",
+        summary: "",
+        age: undefined,
+        profilePhoto: "",
+      },
+      education: cvData.education || [],
+      experience: cvData.experience || [],
+      skills: cvData.skills || [],
+      languages: cvData.languages || [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      verificationId, // Add verification ID
+      verifiedAt: new Date().toISOString(),
+    }
+
+    // Save to localStorage
+    const existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
+    existingCVs.push(completedCV)
+    localStorage.setItem("cvbuilder_cvs", JSON.stringify(existingCVs))
+    localStorage.setItem("cvbuilder_current", JSON.stringify(completedCV))
+
+    try {
+      if (cvData.personalInfo?.email) {
+        await fetch("/api/send-verification-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: cvData.personalInfo.email,
+            fullName: cvData.personalInfo.fullName,
+            verificationId,
+          }),
+        })
+      }
+    } catch (error) {
+      console.error("[v0] Failed to send verification email:", error)
+    }
+
+    toast({
+      title: "CV Saved!",
+      description: `Your CV has been created successfully. Verification ID sent to your email.`,
+    })
+
+    setTimeout(() => {
+      router.push("/preview")
+    }, 1000)
+  }
+
+  const getStepIcon = (status: "valid" | "invalid" | "empty") => {
+    if (status === "valid") return <CheckCircle2 className="size-4 text-green-600" />
+    if (status === "invalid") return <AlertCircle className="size-4 text-red-600" />
+    return null
+  }
+
+  const handleNextStep = () => {
+    if (currentStep < 8) {
+      // Validate fields before moving to the next step
+      if (currentStep === 2) {
+        validateField("fullName", cvData.personalInfo?.fullName || "")
+        validateField("email", cvData.personalInfo?.email || "")
+        validateField("phone", cvData.personalInfo?.phone || "")
+        validateField("age", String(cvData.personalInfo?.age || ""))
+
+        if (
+          Object.values(validationErrors).some((error) => error) ||
+          fieldStatus.fullName === "invalid" ||
+          fieldStatus.email === "invalid" ||
+          fieldStatus.phone === "invalid" ||
+          fieldStatus.age === "invalid"
+        ) {
+          toast({
+            title: "Validation Error",
+            description: "Please fix the errors in the Personal Information section.",
+            variant: "destructive",
+          })
+          return
+        }
+      }
+      setCurrentStep(currentStep + 1)
+    } else if (currentStep === 8) {
+      // Final step - enhance with AI or save directly
+      handleSaveAndContinue()
+    }
+  }
+
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const addEducation = () => {
+    if (eduForm.institution && eduForm.degree) {
+      setCvData({
+        ...cvData,
+        education: [...(cvData.education || []), { ...eduForm, id: Date.now().toString() }],
+      })
+      setEduForm({
+        institution: "",
+        degree: "",
+        fieldOfStudy: "",
+        startDate: "",
+        endDate: "",
+        current: false,
+      })
+      toast({ title: "Education added!" })
+    }
+  }
+
+  const addExperience = () => {
+    if (expForm.company && expForm.position) {
+      setCvData({
+        ...cvData,
+        experience: [...(cvData.experience || []), { ...expForm, id: Date.now().toString() }],
+      })
+      setExpForm({
+        company: "",
+        position: "",
+        location: "",
+        startDate: "",
+        endDate: "",
+        current: false,
+        description: "",
+      })
+      toast({ title: "Experience added!" })
+    }
+  }
+
+  const addSkill = () => {
+    if (skillInput.trim()) {
+      setCvData({
+        ...cvData,
+        skills: [...(cvData.skills || []), skillInput.trim()],
+      })
+      setSkillInput("")
+    }
+  }
+
+  const addLanguage = () => {
+    if (langForm.language) {
+      setCvData({
+        ...cvData,
+        languages: [...(cvData.languages || []), langForm],
+      })
+      setLangForm({ language: "", proficiency: "intermediate" })
+      toast({ title: "Language added!" })
+    }
+  }
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const photoUrl = reader.result as string
+        setProfilePhotoPreview(photoUrl)
+        setCvData({
+          ...cvData,
+          personalInfo: { ...(cvData.personalInfo || {}), profilePhoto: photoUrl },
+        })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Template-based enhancement functions as fallback
+  const enhanceSummaryWithTemplate = (summary: string): string => {
+    if (!summary) return summary
+
+    // Add professional language patterns
+    const enhanced = summary
+      .replace(/\bi am\b/gi, "I am a")
+      .replace(/\bi have\b/gi, "I possess")
+      .replace(/\bgood at\b/gi, "skilled in")
+      .replace(/\bwork hard\b/gi, "dedicated professional")
+
+    return enhanced
+  }
+
+  const enhanceDescriptionWithTemplate = (description: string): string => {
+    if (!description) return description
+
+    // Add action verbs and professional tone
+    const actionVerbs = ["Managed", "Developed", "Implemented", "Coordinated", "Achieved"]
+    const enhanced = description
+
+    // Ensure bullets start with action verbs
+    const lines = enhanced.split("\n")
+    const improvedLines = lines.map((line) => {
+      const trimmed = line.trim()
+      if (trimmed && !actionVerbs.some((verb) => trimmed.startsWith(verb))) {
+        return "• " + trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
+      }
+      return line
+    })
+
+    return improvedLines.join("\n")
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+      {/* Header */}
+      {/* Updated header for dashboard navigation and visual progress bar */}
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm print:hidden sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard")}>
+                <ArrowLeft className="size-5" />
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Konek Salone</h1>
+                {preferences && (
+                  <p className="text-sm text-muted-foreground">
+                    Building CV for {preferences.jobRole} • {preferences.experienceLevel}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {saving && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving...
+                </div>
+              )}
+              <div className="text-sm font-medium">
+                Step {currentStep} of {steps.length}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="font-medium text-foreground">CV Completion</span>
+              <span className="text-primary font-bold">{completionPercentage}%</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-500 ease-out"
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
+            {completionPercentage < 100 && (
+              <p className="text-xs text-muted-foreground">
+                {completionPercentage < 35 && "Start by filling in your personal information"}
+                {completionPercentage >= 35 && completionPercentage < 55 && "Great! Add your education history"}
+                {completionPercentage >= 55 && completionPercentage < 75 && "Almost there! Add your work experience"}
+                {completionPercentage >= 75 && "Finish up with your skills and languages"}
+              </p>
+            )}
+            {completionPercentage === 100 && (
+              <p className="text-xs text-primary font-medium flex items-center gap-1">
+                <CheckCircle2 className="size-3" />
+                Your CV is complete! Enhance it with AI in Step 7
+              </p>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Progress Steps */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between max-w-4xl mx-auto mb-8 overflow-x-auto">
+          {steps.map((step) => {
+            const Icon = step.icon
+            const isActive = currentStep === step.number
+            const isCompleted = currentStep > step.number
+            return (
+              <div key={step.number} className="flex flex-col items-center gap-2 min-w-[100px]">
+                <div
+                  className={`size-12 rounded-full flex items-center justify-center transition-all duration-300 ${isActive
+                    ? "bg-primary text-primary-foreground scale-110 shadow-lg"
+                    : isCompleted
+                      ? "bg-green-600 text-white"
+                      : "bg-muted text-muted-foreground"
+                    }`}
+                >
+                  {isCompleted ? <Check className="size-6" /> : <Icon className="size-6" />}
+                </div>
+                <span
+                  className={`text-xs text-center transition-all ${isActive ? "text-foreground font-semibold" : "text-muted-foreground"
+                    }`}
+                >
+                  {step.title}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Form Content */}
+        <div className="max-w-3xl mx-auto">
+          <Card className="border-2">
+            <CardHeader>
+              <CardTitle className="text-2xl">{steps[currentStep - 1].title}</CardTitle>
+              <CardDescription>
+                {currentStep === 7 ? "Review and enhance your CV with AI" : "Fill in your information below"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Step 1: Template Selection & Upload */}
+              {currentStep === 1 && (
+                <div className="space-y-8 animate-in fade-in duration-500">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <Card className="border-primary/20 bg-primary/5">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Upload className="size-5" />
+                          Upload Existing CV
+                        </CardTitle>
+                        <CardDescription>
+                          Have a CV already? Upload it to auto-fill your details.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer relative">
+                          <Upload className="size-8 text-muted-foreground mb-2" />
+                          <p className="text-sm font-medium">Click to upload PDF or Word</p>
+                          <p className="text-xs text-muted-foreground mt-1">Max 5MB</p>
+                          <Input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            onChange={handleFileUpload}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <LayoutTemplate className="size-5" />
+                          Choose Template
+                        </CardTitle>
+                        <CardDescription>
+                          Select a design for your new CV.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {templates.map(t => (
+                          <div
+                            key={t.id}
+                            onClick={() => {
+                              setSelectedTemplate(t.id)
+                              setCvData((prev) => ({ ...prev, templateId: t.id }))
+                            }}
+                            className={`p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-all ${selectedTemplate === t.id
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "hover:border-primary/50"
+                              }`}
+                          >
+                            <div>
+                              <p className="font-medium">{t.name}</p>
+                              <p className="text-xs text-muted-foreground">{t.description}</p>
+                            </div>
+                            {selectedTemplate === t.id && <CheckCircle2 className="size-4 text-primary" />}
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Personal Information */}
+              {currentStep === 2 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="flex items-center gap-2">
+                      Full Name <span className="text-red-500">*</span>
+                      {getStepIcon(fieldStatus.fullName)}
+                    </Label>
+                    <Input
+                      id="fullName"
+                      placeholder="e.g., Abdul Kamara"
+                      value={cvData.personalInfo?.fullName || ""}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^a-zA-Z\s]/g, "")
+                        handlePersonalInfoChange("fullName", value)
+                      }}
+                      className={
+                        fieldStatus.fullName === "invalid"
+                          ? "border-red-500"
+                          : fieldStatus.fullName === "valid"
+                            ? "border-green-500"
+                            : ""
+                      }
+                    />
+                    {validationErrors.fullName && <p className="text-xs text-red-500">{validationErrors.fullName}</p>}
+                    <p className="text-xs text-muted-foreground">Letters only, no numbers or symbols</p>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="flex items-center gap-2">
+                        Email <span className="text-red-500">*</span>
+                        {getStepIcon(fieldStatus.email)}
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="abdul.kamara@gmail.com"
+                        value={cvData.personalInfo?.email || ""}
+                        onChange={(e) => handlePersonalInfoChange("email", e.target.value)}
+                        className={
+                          fieldStatus.email === "invalid"
+                            ? "border-red-500"
+                            : fieldStatus.email === "valid"
+                              ? "border-green-500"
+                              : ""
+                        }
+                      />
+                      {validationErrors.email && <p className="text-xs text-red-500">{validationErrors.email}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="age" className="flex items-center gap-2">
+                        Age <span className="text-red-500">*</span>
+                        {getStepIcon(fieldStatus.age)}
+                      </Label>
+                      <Input
+                        id="age"
+                        type="number"
+                        min="18"
+                        max="30"
+                        placeholder="e.g., 25"
+                        value={cvData.personalInfo?.age || ""}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, "")
+                          handlePersonalInfoChange("age", value)
+                        }}
+                        className={
+                          fieldStatus.age === "invalid"
+                            ? "border-red-500"
+                            : fieldStatus.age === "valid"
+                              ? "border-green-500"
+                              : ""
+                        }
+                      />
+                      {validationErrors.age && <p className="text-xs text-red-500">{validationErrors.age}</p>}
+                      <p className="text-xs text-muted-foreground">Must be between 18-30 years old</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="flex items-center gap-2">
+                      Phone Number <span className="text-red-500">*</span>
+                      {getStepIcon(fieldStatus.phone)}
+                    </Label>
+                    <div className="flex gap-2">
+                      <div className="px-3 py-2 bg-muted rounded-md border border-input flex items-center">
+                        <span className="text-sm font-medium">+232</span>
+                      </div>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="76 123 456"
+                        maxLength={8}
+                        value={cvData.personalInfo?.phone || ""}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, "")
+                          handlePersonalInfoChange("phone", value)
+                        }}
+                        className={`flex-1 ${fieldStatus.phone === "invalid"
+                          ? "border-red-500"
+                          : fieldStatus.phone === "valid"
+                            ? "border-green-500"
+                            : ""
+                          }`}
+                      />
+                    </div>
+                    {validationErrors.phone && <p className="text-xs text-red-500">{validationErrors.phone}</p>}
+                    <p className="text-xs text-muted-foreground">8 digits only (e.g., 76123456)</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      placeholder="e.g., Freetown, Western Area"
+                      value={cvData.personalInfo?.location || ""}
+                      onChange={(e) => handlePersonalInfoChange("location", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="summary">Professional Summary</Label>
+                    <Textarea
+                      id="summary"
+                      rows={4}
+                      placeholder="e.g., Motivated professional with 2 years of experience in customer service..."
+                      value={cvData.personalInfo?.summary || ""}
+                      onChange={(e) => handlePersonalInfoChange("summary", e.target.value)}
+                      className="resize-none"
+                    />
+                    <div className="flex justify-between">
+                      <p className="text-xs text-muted-foreground">Brief introduction about yourself</p>
+                      <span className="text-xs text-muted-foreground">
+                        {cvData.personalInfo?.summary?.length || 0} characters
+                      </span>
+                    </div>
+                  </div>
+
+                  <AISuggestionDialog
+                    type="summary"
+                    context={cvData.personalInfo || {}}
+                    onSelect={(value) => handlePersonalInfoChange("summary", Array.isArray(value) ? value[0] : value)}
+                  />
+                </div>
+              )}
+
+              {/* Step 2: Education */}
+              {currentStep === 2 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.education && cvData.education.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Added Education:</h4>
+                      {cvData.education.map((edu) => (
+                        <div key={edu.id} className="p-4 bg-muted rounded-lg flex justify-between items-center">
+                          <div>
+                            <p className="font-semibold">
+                              {edu.degree} in {edu.fieldOfStudy}
+                            </p>
+                            <p className="text-sm text-muted-foreground">{edu.institution}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {edu.startDate} - {edu.current ? "Present" : edu.endDate}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setCvData((prev) => ({
+                                ...prev,
+                                education: prev.education?.filter((e) => e.id !== edu.id) || [],
+                              }))
+                              toast({ title: "Education removed!" })
+                            }}
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold text-foreground">Add Education</h4>
+
+                    <div className="space-y-2">
+                      <Label>Institution *</Label>
+                      <Input
+                        placeholder="e.g., Fourah Bay College, Njala University"
+                        value={eduForm.institution}
+                        onChange={(e) => setEduForm({ ...eduForm, institution: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Degree *</Label>
+                        <Input
+                          placeholder="e.g., Bachelor's, Diploma"
+                          value={eduForm.degree}
+                          onChange={(e) => setEduForm({ ...eduForm, degree: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Field of Study</Label>
+                        <Input
+                          placeholder="e.g., Computer Science, Business Admin"
+                          value={eduForm.fieldOfStudy}
+                          onChange={(e) => setEduForm({ ...eduForm, fieldOfStudy: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Start Date</Label>
+                        <Input
+                          type="month"
+                          value={eduForm.startDate}
+                          onChange={(e) => setEduForm({ ...eduForm, startDate: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>End Date</Label>
+                        <Input
+                          type="month"
+                          value={eduForm.endDate}
+                          onChange={(e) => setEduForm({ ...eduForm, endDate: e.target.value })}
+                          disabled={eduForm.current}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="current-edu"
+                        checked={eduForm.current}
+                        onCheckedChange={(checked) => setEduForm({ ...eduForm, current: checked as boolean })}
+                      />
+                      <Label htmlFor="current-edu" className="text-sm cursor-pointer">
+                        I currently study here
+                      </Label>
+                    </div>
+
+                    <Button type="button" onClick={addEducation} className="w-full">
+                      <Plus className="size-4 mr-2" />
+                      Add Education
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Experience */}
+              {currentStep === 3 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.experience && cvData.experience.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Added Experience:</h4>
+                      {cvData.experience.map((exp) => (
+                        <div key={exp.id} className="p-4 bg-muted rounded-lg flex justify-between items-center">
+                          <div>
+                            <p className="font-semibold">{exp.position}</p>
+                            <p className="text-sm text-muted-foreground">{exp.company}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setCvData((prev) => ({
+                                ...prev,
+                                experience: prev.experience?.filter((e) => e.id !== exp.id) || [],
+                              }))
+                              toast({ title: "Experience removed!" })
+                            }}
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold text-foreground">Add Experience</h4>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Company *</Label>
+                        <Input
+                          placeholder="e.g., Orange SL, Sierra Rutile, Rokel Bank"
+                          value={expForm.company}
+                          onChange={(e) => setExpForm({ ...expForm, company: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Position *</Label>
+                        <Input
+                          placeholder="e.g., Marketing Intern, Sales Assistant"
+                          value={expForm.position}
+                          onChange={(e) => setExpForm({ ...expForm, position: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Location</Label>
+                      <Input
+                        placeholder="e.g., Freetown"
+                        value={expForm.location}
+                        onChange={(e) => setExpForm({ ...expForm, location: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Start Date</Label>
+                        <Input
+                          type="month"
+                          value={expForm.startDate}
+                          onChange={(e) => setExpForm({ ...expForm, startDate: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>End Date</Label>
+                        <Input
+                          type="month"
+                          value={expForm.endDate}
+                          onChange={(e) => setExpForm({ ...expForm, endDate: e.target.value })}
+                          disabled={expForm.current}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="current-exp"
+                        checked={expForm.current}
+                        onCheckedChange={(checked) => setExpForm({ ...expForm, current: checked as boolean })}
+                      />
+                      <Label htmlFor="current-exp" className="text-sm cursor-pointer">
+                        I currently work here
+                      </Label>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Description</Label>
+                        <AISuggestionDialog
+                          type="experience"
+                          context={{
+                            position: expForm.position,
+                            company: expForm.company,
+                            responsibilities: expForm.description,
+                          }}
+                          onSelect={(value) => {
+                            const bullets = Array.isArray(value) ? value.join("\n") : value
+                            setExpForm({ ...expForm, description: bullets })
+                          }}
+                        />
+                      </div>
+                      <Textarea
+                        placeholder="e.g., • Assisted in developing social media campaigns that increased engagement by 30%&#10;• Conducted market research and presented findings to senior management&#10;• Managed customer inquiries and resolved issues promptly"
+                        value={expForm.description}
+                        onChange={(e) => setExpForm({ ...expForm, description: e.target.value })}
+                        rows={4}
+                      />
+                    </div>
+
+                    <Button type="button" onClick={addExperience} className="w-full">
+                      <Plus className="size-4 mr-2" />
+                      Add Experience
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Skills */}
+              {currentStep === 4 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.skills && cvData.skills.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Your Skills:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {cvData.skills.map((skill, index) => (
+                          <div
+                            key={index}
+                            className="px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium flex items-center gap-1"
+                          >
+                            {skill}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-auto w-auto p-0.5"
+                              onClick={() => {
+                                setCvData((prev) => ({
+                                  ...prev,
+                                  skills: prev.skills?.filter((_, i) => i !== index) || [],
+                                }))
+                                toast({ title: "Skill removed!" })
+                              }}
+                            >
+                              <Trash2 className="size-3 text-primary" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-foreground">Add Skills</h4>
+                      <AISuggestionDialog
+                        type="skills"
+                        context={{
+                          fieldOfStudy: cvData.education?.[0]?.fieldOfStudy || "general",
+                          experience: cvData.experience?.map((e) => e.position).join(", ") || "various roles",
+                          interests: "",
+                        }}
+                        onSelect={(values) => {
+                          const skills = Array.isArray(values) ? values : [values]
+                          setCvData({
+                            ...cvData,
+                            skills: [...(cvData.skills || []), ...skills],
+                          })
+                        }}
+                      >
+                        <Button type="button" variant="outline" size="sm">
+                          <Sparkles className="size-4 mr-2" />
+                          Suggest Skills with AI
+                        </Button>
+                      </AISuggestionDialog>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Skill</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="e.g., Microsoft Office, Customer Service, Data Entry"
+                          value={skillInput}
+                          onChange={(e) => setSkillInput(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault()
+                              addSkill()
+                            }
+                          }}
+                        />
+                        <Button type="button" onClick={addSkill}>
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 5: Languages */}
+              {currentStep === 5 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.languages && cvData.languages.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Your Languages:</h4>
+                      {cvData.languages.map((lang, index) => (
+                        <div key={index} className="p-4 bg-muted rounded-lg flex justify-between items-center">
+                          <span className="font-medium">{lang.language}</span>
+                          <span className="text-sm text-muted-foreground capitalize">{lang.proficiency}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setCvData((prev) => ({
+                                ...prev,
+                                languages: prev.languages?.filter((l) => l.language !== lang.language) || [],
+                              }))
+                              toast({ title: "Language removed!" })
+                            }}
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold text-foreground">Add Language</h4>
+
+                    <div className="space-y-2">
+                      <Label>Language</Label>
+                      <Input
+                        placeholder="e.g., English, Krio, Mende"
+                        value={langForm.language}
+                        onChange={(e) => setLangForm({ ...langForm, language: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Proficiency</Label>
+                      <Select
+                        value={langForm.proficiency}
+                        onValueChange={(value) => setLangForm({ ...langForm, proficiency: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select proficiency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="basic">Basic</SelectItem>
+                          <SelectItem value="intermediate">Intermediate</SelectItem>
+                          <SelectItem value="advanced">Advanced</SelectItem>
+                          <SelectItem value="native">Native/Fluent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Button type="button" onClick={addLanguage} className="w-full">
+                      <Plus className="size-4 mr-2" />
+                      Add Language
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 6: Profile Photo */}
+              {currentStep === 6 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  <div className="text-center space-y-4">
+                    <div className="w-32 h-32 mx-auto rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-primary">
+                      {profilePhotoPreview ? (
+                        <img
+                          src={profilePhotoPreview || "/placeholder.svg"}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="size-16 text-muted-foreground" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold text-foreground">Add Your Profile Photo</h3>
+                      <p className="text-muted-foreground">
+                        A professional photo helps employers remember you and builds trust.
+                      </p>
+                    </div>
+
+                    <div className="space-y-4 max-w-md mx-auto">
+                      <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary transition-colors">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="cursor-pointer file:hidden"
+                          id="photo-upload"
+                        />
+                        <Label htmlFor="photo-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                          <Upload className="size-8 text-muted-foreground" />
+                          <p className="text-sm font-medium text-foreground">Click to upload or drag and drop</p>
+                          <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
+                        </Label>
+                      </div>
+
+                      <div className="bg-muted p-4 rounded-lg text-left space-y-2">
+                        <h4 className="font-semibold text-sm text-foreground">Photo Tips:</h4>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li>✓ Use a recent photo with good lighting</li>
+                          <li>✓ Dress professionally (business attire)</li>
+                          <li>✓ Face the camera directly with a neutral or friendly expression</li>
+                          <li>✓ Use a plain background (white or light colored)</li>
+                          <li>✗ Avoid selfies, group photos, or casual pictures</li>
+                        </ul>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground italic">
+                        Optional: You can skip this step and add a photo later
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 7: AI Enhancement */}
+              {currentStep === 7 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  <div className="text-center space-y-4">
+                    <div className="inline-flex items-center justify-center size-20 rounded-full bg-primary/10 mb-4">
+                      <Sparkles className="size-10 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold">Enhance Your CV with AI</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      Our AI will analyze your information and make your CV more professional, impactful, and attractive
+                      to employers.
+                    </p>
+                  </div>
+
+                  <Card className="bg-muted/30">
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="size-5 text-green-600 mt-0.5" />
+                          <div>
+                            <p className="font-medium">Professional Language</p>
+                            <p className="text-sm text-muted-foreground">
+                              Transform your descriptions into compelling professional statements
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="size-5 text-green-600 mt-0.5" />
+                          <div>
+                            <p className="font-medium">Skills Optimization</p>
+                            <p className="text-sm text-muted-foreground">
+                              Highlight your most relevant skills based on industry standards
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="size-5 text-green-600 mt-0.5" />
+                          <div>
+                            <p className="font-medium">ATS-Friendly Format</p>
+                            <p className="text-sm text-muted-foreground">
+                              Ensure your CV passes applicant tracking systems
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <div className="flex gap-4">
+                    <Button
+                      onClick={handleEnhanceWithAI}
+                      disabled={aiEnhancing}
+                      className="flex-1 h-12 text-lg"
+                      size="lg"
+                    >
+                      {aiEnhancing ? (
+                        <>
+                          <Loader2 className="mr-2 size-5 animate-spin" />
+                          Enhancing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="mr-2 size-5" />
+                          Enhance with AI
+                        </>
+                      )}
+                    </Button>
+                    <Button onClick={() => setCurrentStep(6)} variant="outline" className="h-12">
+                      Skip
+                    </Button>
+                  </div>
+
+                  <Button onClick={handleSaveAndContinue} variant="default" className="w-full h-12 text-lg" size="lg">
+                    {saving ? (
+                      <>
+                        <Loader2 className="mr-2 size-5 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        Save & Preview CV
+                        <ArrowRight className="ml-2 size-5" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              {currentStep < 7 && (
+                <div className="flex gap-4 pt-4">
+                  {currentStep > 1 && (
+                    <Button onClick={handlePreviousStep} variant="outline" className="flex-1 bg-transparent">
+                      <ArrowLeft className="mr-2 size-4" />
+                      Previous
+                    </Button>
+                  )}
+                  <Button onClick={handleNextStep} className="flex-1">
+                    Next
+                    <ArrowRight className="ml-2 size-4" />
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <Toaster />
+    </div>
+  )
+}
