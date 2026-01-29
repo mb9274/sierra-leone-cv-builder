@@ -1,4 +1,4 @@
-# CV Builder Sierra Leone 🇸🇱
+# AI CV Builder Sierra Leone 🇸🇱
 
 A comprehensive citizens services platform built for Sierra Leone youth (ages 18-30) to build professional CVs, find jobs, access learning resources, and connect with essential services.
 

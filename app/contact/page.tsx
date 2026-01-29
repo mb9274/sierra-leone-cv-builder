@@ -12,7 +12,7 @@ export default function ContactPage() {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
               <FileText className="w-6 h-6 text-primary" />
-              <span className="font-bold text-xl text-foreground">Konek Salone</span>
+              <span className="font-bold text-xl text-foreground">AI CV Builder</span>
             </Link>
             <Link href="/dashboard">
               <Button variant="outline" size="sm">
@@ -108,8 +108,19 @@ export default function ContactPage() {
                 <CardDescription>Serving all of Sierra Leone</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-semibold text-foreground">Sierra Leone 🇸🇱</p>
-                <p className="text-sm text-muted-foreground mt-2">Freetown, Bo, Makeni & nationwide</p>
+                <a
+                  href="https://www.google.com/maps/place/Christex+Foundation/@8.480330"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block group"
+                >
+                  <p className="text-lg font-semibold text-foreground group-hover:underline">Sierra Leone 🇸🇱</p>
+                  <p className="text-sm text-muted-foreground mt-2 group-hover:underline">
+                    Freetown, Bo, Makeni & nationwide
+                    <br />
+                    Christex Foundation
+                  </p>
+                </a>
               </CardContent>
             </Card>
             {/* WhatsApp Card */}

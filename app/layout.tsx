@@ -6,8 +6,8 @@ import { MobileNav } from "@/components/mobile-nav"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Konek Salone - Build Your Future",
-  description: "Create professional CVs, find jobs, and learn new skills in Sierra Leone.",
+  title: "AI CV Builder - Build Your Future",
+  description: "Create professional CVs, find jobs, and learn new skills with AI CV Builder.",
   generator: "v0.app",
   icons: {
     icon: [

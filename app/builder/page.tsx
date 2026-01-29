@@ -742,7 +742,7 @@ export default function CVBuilderPage() {
                 <ArrowLeft className="size-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Konek Salone</h1>
+                <h1 className="text-2xl font-bold text-foreground">AI CV Builder</h1>
                 {preferences && (
                   <p className="text-sm text-muted-foreground">
                     Building CV for {preferences.jobRole} • {preferences.experienceLevel}

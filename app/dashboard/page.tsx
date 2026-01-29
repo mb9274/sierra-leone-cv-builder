@@ -129,7 +129,7 @@ export default function DashboardPage() {
             <div className="size-10 rounded-lg bg-[#4CAF50] flex items-center justify-center">
               <FileText className="size-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Konek Salone</h1>
+            <h1 className="text-2xl font-bold text-foreground">AI CV Builder</h1>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => router.push("/")}>

@@ -233,7 +233,7 @@ Employers can verify your CV is authentic
     message.includes("about this app") ||
     message.includes("what does this do")
   ) {
-    return `**Welcome to CV Builder SL!** 🇸🇱
+    return `**Welcome to AI CV Builder!** 🇸🇱
 
 Your complete career development platform for Sierra Leone youth aged 18-30!
 
@@ -512,7 +512,7 @@ Even the best candidates get rejected if their CV can't pass ATS. Our checker he
 - Stand out from other applicants
 - Increase interview chances by 300%
 
-The ATS Checker is built into your CV Builder SL platform - no external tools needed!`
+The ATS Checker is built into your AI CV Builder platform - no external tools needed!`
   }
 
   if (message.includes("template") || (message.includes("choose") && message.includes("cv"))) {
@@ -982,7 +982,7 @@ Would you like help writing your cover letter?`
 • One sentence about why you're interested
 
 Example:
-"I am writing to apply for the Customer Service Representative position at Orange SL, as advertised on CV Builder SL. With my strong communication skills and passion for helping others, I am excited about the opportunity to contribute to your team."
+"I am writing to apply for the Customer Service Representative position at Orange SL, as advertised on AI CV Builder. With my strong communication skills and passion for helping others, I am excited about the opportunity to contribute to your team."
 
 **PARAGRAPH 2 - Your Qualifications (3-4 sentences)**
 • Mention your relevant education
@@ -1845,7 +1845,7 @@ Ready to build your professional CV?`
       message.includes("cv builder sl") ||
       message.includes("website"))
   ) {
-    return `**About CV Builder SL - Your Complete Career Platform**
+    return `**About AI CV Builder - Your Complete Career Platform**
 
 🇸🇱 **BUILT FOR SIERRA LEONE YOUTH (Ages 18-30)**
 

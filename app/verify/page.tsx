@@ -95,7 +95,7 @@ export default function VerifyPage() {
             <div className="size-10 rounded-lg bg-primary flex items-center justify-center">
               <FileText className="size-6 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Konek Salone Verification</h1>
+            <h1 className="text-2xl font-bold text-foreground">AI CV Builder Verification</h1>
           </div>
           <Button variant="outline" onClick={() => router.push("/")}>
             <ArrowLeft className="mr-2 size-4" />

@@ -88,7 +88,7 @@ export default function HomePage() {
               <FileText className="size-6 text-white" />
             </div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
-              Konek Salone
+              AI CV Builder
             </h1>
           </div>
           <Button
@@ -354,7 +354,7 @@ export default function HomePage() {
       {/* Benefits Section */}
       <section className="container mx-auto px-4 py-16 bg-card/30">
         <div className="max-w-4xl mx-auto">
-          <h3 className="text-3xl font-bold text-foreground text-center mb-12">Why Use Konek Salone?</h3>
+          <h3 className="text-3xl font-bold text-foreground text-center mb-12">Why Use AI CV Builder?</h3>
           <div className="space-y-6">
             {[
               "Professional formatting that passes automated screening systems",
@@ -396,7 +396,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* About Section */}
             <div>
-              <h3 className="font-bold text-lg text-foreground mb-4">Konek Salone</h3>
+              <h3 className="font-bold text-lg text-foreground mb-4">AI CV Builder</h3>
               <p className="text-muted-foreground text-sm mb-4">
                 Empowering Sierra Leone Youth Through Professional Development 🇸🇱
               </p>
@@ -479,7 +479,7 @@ export default function HomePage() {
           {/* Bottom Bar */}
           <div className="border-t border-border pt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Konek Salone. All rights reserved. Made with ❤️ for Sierra Leone
+              © {new Date().getFullYear()} AI CV Builder. All rights reserved. Made with ❤️ for Sierra Leone
             </p>
           </div>
         </div>

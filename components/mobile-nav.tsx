@@ -32,7 +32,7 @@ export function MobileNav() {
     { href: "/builder", label: "Build CV", icon: FileText },
     { href: "/jobs", label: "Jobs", icon: Briefcase },
     { href: "/job-map", label: "Map", icon: Map },
-    { href: "/ai-career-companion", label: "AI Career Companion", icon: Sparkles },
+    { href: "/learning-center", label: "Learning Center", icon: BookOpen },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/gemini-setup", label: "AI Setup", icon: Sparkles },
     { href: "/profile", label: "Profile", icon: User },
@@ -52,7 +52,7 @@ export function MobileNav() {
           <SheetContent side="left" className="w-64 p-0">
             <div className="flex flex-col h-full">
               <div className="p-4 border-b border-border">
-                <h2 className="text-lg font-bold text-foreground">CV Builder SL</h2>
+                <h2 className="text-lg font-bold text-foreground">AI CV Builder</h2>
                 <p className="text-xs text-muted-foreground">Build your future</p>
               </div>
               <nav className="flex-1 overflow-y-auto p-4">
@@ -84,7 +84,7 @@ export function MobileNav() {
 
         <Link href="/" className="flex items-center gap-2 flex-1 md:flex-none">
           <FileText className="size-6 text-primary" />
-          <span className="font-bold text-lg">Konek Salone</span>
+          <span className="font-bold text-lg">AI CV Builder</span>
         </Link>
 
         <nav className="hidden md:flex flex-1 items-center gap-6 ml-8">

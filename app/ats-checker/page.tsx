@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import ATSCheckerClient from "./ats-checker-client"
 
 export const metadata: Metadata = {
-  title: "ATS Checker - Konek Salone",
+  title: "ATS Checker - AI CV Builder",
   description: "Check if your CV is compatible with Applicant Tracking Systems used by employers",
 }
 
