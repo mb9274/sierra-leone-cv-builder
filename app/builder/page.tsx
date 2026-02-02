@@ -35,6 +35,16 @@ import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { AISuggestionDialog } from "@/components/ai-suggestion-dialog"
 
+const DEFAULT_PERSONAL_INFO = {
+  fullName: "",
+  email: "",
+  phone: "",
+  location: "",
+  summary: "",
+  age: undefined as number | undefined,
+  profilePhoto: "",
+}
+
 const steps = [
   { number: 1, title: "Start", icon: LayoutTemplate },
   { number: 2, title: "Personal Information", icon: User },
@@ -68,15 +78,7 @@ export default function CVBuilderPage() {
   const [fieldStatus, setFieldStatus] = useState<Record<string, "valid" | "invalid" | "empty">>({})
 
   const [cvData, setCvData] = useState<Partial<CVData>>({
-    personalInfo: {
-      fullName: "",
-      email: "",
-      phone: "",
-      location: "",
-      summary: "",
-      age: undefined,
-      profilePhoto: "",
-    },
+    personalInfo: DEFAULT_PERSONAL_INFO,
     education: [],
     experience: [],
     skills: [],
@@ -131,7 +133,8 @@ export default function CVBuilderPage() {
       // Simulate parsing delay
       setTimeout(() => {
         // Mock parsed data
-        setCvData({
+        setCvData((prev) => ({
+          ...prev,
           personalInfo: {
             fullName: "Abdul Bangura",
             email: "abdul.b@example.com",
@@ -144,8 +147,8 @@ export default function CVBuilderPage() {
           education: [],
           experience: [],
           skills: ["Microsoft Office", "Communication"],
-          languages: []
-        })
+          languages: [],
+        }))
         toast({
           title: "CV Uploaded!",
           description: "We've pre-filled your information. Please review it.",
@@ -282,44 +285,33 @@ export default function CVBuilderPage() {
 
   const handleNameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^a-zA-Z\s]/g, "") // Only letters and spaces
-    setCvData({
-      ...cvData,
-      personalInfo: { ...(cvData.personalInfo || {}), fullName: value },
-    })
+    handlePersonalInfoChange("fullName", value)
   }
 
   const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "") // Only numbers
     if (value.length <= 8) {
       // Max 8 digits after +232
-      setCvData({
-        ...cvData,
-        personalInfo: { ...(cvData.personalInfo || {}), phone: value },
-      })
+      handlePersonalInfoChange("phone", value)
     }
   }
 
   const handleAgeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "") // Only numbers
-    const age = Number.parseInt(value) || undefined
-    if (!age || (age >= 18 && age <= 30)) {
-      setCvData({
-        ...cvData,
-        personalInfo: { ...(cvData.personalInfo || {}), age },
-      })
-    }
+    handlePersonalInfoChange("age", value)
   }
 
-  const handlePersonalInfoChange = (field: string, value: string) => {
+  const handlePersonalInfoChange = (field: string, value: any) => {
     setCvData((prev) => ({
       ...prev,
       personalInfo: {
+        ...(prev.personalInfo || DEFAULT_PERSONAL_INFO),
         [field]: value,
-      } as any,
+      },
     }))
 
     if (["fullName", "email", "phone", "age"].includes(field)) {
-      validateField(field, value)
+      validateField(field, String(value))
     }
   }
 
@@ -345,16 +337,15 @@ export default function CVBuilderPage() {
 
       if (result.summary || result.experience || result.skills) {
         // AI generated enhancements
-        const enhancedData = {
-          ...cvData,
+        setCvData((prev) => ({
+          ...prev,
           personalInfo: {
-            ...cvData.personalInfo,
-            summary: result.summary || cvData.personalInfo?.summary,
-          },
-          experience: result.experience || cvData.experience,
-          skills: result.skills || cvData.skills,
-        }
-        setCvData(enhancedData)
+            ...(prev.personalInfo || {}),
+            summary: result.summary || prev.personalInfo?.summary,
+          } as any,
+          experience: result.experience || prev.experience,
+          skills: result.skills || prev.skills,
+        }))
 
         toast({
           title: "AI Enhancement Complete!",
@@ -363,8 +354,7 @@ export default function CVBuilderPage() {
         })
       } else {
         // Use professional template enhancement
-        const enhancedData = enhanceWithProfessionalTemplate(cvData)
-        setCvData(enhancedData)
+        setCvData((prev) => enhanceWithProfessionalTemplate(prev))
 
         toast({
           title: "Enhancement Complete",
@@ -375,8 +365,7 @@ export default function CVBuilderPage() {
       console.error("[v0] AI enhancement error:", error)
 
       // Fallback to professional template enhancement
-      const enhancedData = enhanceWithProfessionalTemplate(cvData)
-      setCvData(enhancedData)
+      setCvData((prev) => enhanceWithProfessionalTemplate(prev))
 
       toast({
         title: "Enhancement Complete",
@@ -454,36 +443,60 @@ export default function CVBuilderPage() {
       personalInfo: {
         ...(data.personalInfo || {}),
         summary: enhancedSummary,
-      },
+      } as any,
       experience: enhancedExperience,
       skills: enhancedSkills,
     }
   }
 
   const handleSaveAndContinue = async () => {
+    // Final validation before saving
+    validateField("fullName", cvData.personalInfo?.fullName || "")
+    validateField("email", cvData.personalInfo?.email || "")
+    validateField("phone", cvData.personalInfo?.phone || "")
+    validateField("age", String(cvData.personalInfo?.age || ""))
+
+    const hasErrors =
+      !cvData.personalInfo?.fullName ||
+      !cvData.personalInfo?.email ||
+      !cvData.personalInfo?.phone ||
+      !cvData.personalInfo?.age ||
+      Object.values(validationErrors).some((error) => error) ||
+      fieldStatus.fullName === "invalid" ||
+      fieldStatus.email === "invalid" ||
+      fieldStatus.phone === "invalid" ||
+      fieldStatus.age === "invalid"
+
+    if (hasErrors) {
+      toast({
+        title: "Incomplete Information",
+        description: "Please go back to Step 2 and ensure all required fields are filled correctly.",
+        variant: "destructive",
+      })
+      setCurrentStep(2)
+      return
+    }
+
     setSaving(true)
 
     const verificationId = `CV${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`
     const cvId = Date.now().toString()
+    const completedPersonalInfo = {
+      ...DEFAULT_PERSONAL_INFO,
+      ...(cvData.personalInfo || {}),
+    }
+
     const cvToSave: CVData = {
       id: cvId,
-      personalInfo: cvData.personalInfo || {
-        fullName: "",
-        email: "",
-        phone: "",
-        location: "",
-        summary: "",
-        age: undefined,
-        profilePhoto: "",
-      },
+      personalInfo: completedPersonalInfo,
       education: cvData.education || [],
       experience: cvData.experience || [],
       skills: cvData.skills || [],
       languages: cvData.languages || [],
       createdAt: new Date(),
       updatedAt: new Date(),
-      verificationId, // Add verification ID to CV data
-      verifiedAt: new Date().toISOString(), // Mark as verified immediately
+      verificationId,
+      verifiedAt: new Date().toISOString(),
     }
 
     const existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
@@ -526,17 +539,14 @@ export default function CVBuilderPage() {
   const handleSaveCV = async () => {
     const verificationId = `CV${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`
 
+    const completedPersonalInfo = {
+      ...DEFAULT_PERSONAL_INFO,
+      ...(cvData.personalInfo || {}),
+    }
+
     const completedCV: CVData = {
       id: Math.random().toString(36).substr(2, 9),
-      personalInfo: cvData.personalInfo || {
-        fullName: "",
-        email: "",
-        phone: "",
-        location: "",
-        summary: "",
-        age: undefined,
-        profilePhoto: "",
-      },
+      personalInfo: completedPersonalInfo,
       education: cvData.education || [],
       experience: cvData.experience || [],
       skills: cvData.skills || [],
@@ -594,16 +604,24 @@ export default function CVBuilderPage() {
         validateField("phone", cvData.personalInfo?.phone || "")
         validateField("age", String(cvData.personalInfo?.age || ""))
 
-        if (
-          Object.values(validationErrors).some((error) => error) ||
-          fieldStatus.fullName === "invalid" ||
-          fieldStatus.email === "invalid" ||
-          fieldStatus.phone === "invalid" ||
-          fieldStatus.age === "invalid"
-        ) {
+        const hasErrors =
+          !cvData.personalInfo?.fullName ||
+          !cvData.personalInfo?.email ||
+          !cvData.personalInfo?.phone ||
+          !cvData.personalInfo?.age ||
+          validationErrors.fullName ||
+          validationErrors.email ||
+          validationErrors.phone ||
+          validationErrors.age ||
+          fieldStatus.fullName !== "valid" ||
+          fieldStatus.email !== "valid" ||
+          fieldStatus.phone !== "valid" ||
+          fieldStatus.age !== "valid"
+
+        if (hasErrors) {
           toast({
             title: "Validation Error",
-            description: "Please fix the errors in the Personal Information section.",
+            description: "Please fix the errors in the Personal Information section and fill all required fields (*).",
             variant: "destructive",
           })
           return
@@ -611,7 +629,6 @@ export default function CVBuilderPage() {
       }
       setCurrentStep(currentStep + 1)
     } else if (currentStep === 8) {
-      // Final step - enhance with AI or save directly
       handleSaveAndContinue()
     }
   }
@@ -624,10 +641,10 @@ export default function CVBuilderPage() {
 
   const addEducation = () => {
     if (eduForm.institution && eduForm.degree) {
-      setCvData({
-        ...cvData,
-        education: [...(cvData.education || []), { ...eduForm, id: Date.now().toString() }],
-      })
+      setCvData((prev) => ({
+        ...prev,
+        education: [...(prev.education || []), { ...eduForm, id: Date.now().toString() }],
+      }))
       setEduForm({
         institution: "",
         degree: "",
@@ -642,10 +659,10 @@ export default function CVBuilderPage() {
 
   const addExperience = () => {
     if (expForm.company && expForm.position) {
-      setCvData({
-        ...cvData,
-        experience: [...(cvData.experience || []), { ...expForm, id: Date.now().toString() }],
-      })
+      setCvData((prev) => ({
+        ...prev,
+        experience: [...(prev.experience || []), { ...expForm, id: Date.now().toString() }],
+      }))
       setExpForm({
         company: "",
         position: "",
@@ -661,20 +678,20 @@ export default function CVBuilderPage() {
 
   const addSkill = () => {
     if (skillInput.trim()) {
-      setCvData({
-        ...cvData,
-        skills: [...(cvData.skills || []), skillInput.trim()],
-      })
+      setCvData((prev) => ({
+        ...prev,
+        skills: [...(prev.skills || []), skillInput.trim()],
+      }))
       setSkillInput("")
     }
   }
 
   const addLanguage = () => {
     if (langForm.language) {
-      setCvData({
-        ...cvData,
-        languages: [...(cvData.languages || []), langForm],
-      })
+      setCvData((prev) => ({
+        ...prev,
+        languages: [...(prev.languages || []), langForm],
+      }))
       setLangForm({ language: "", proficiency: "intermediate" })
       toast({ title: "Language added!" })
     }
@@ -687,10 +704,7 @@ export default function CVBuilderPage() {
       reader.onloadend = () => {
         const photoUrl = reader.result as string
         setProfilePhotoPreview(photoUrl)
-        setCvData({
-          ...cvData,
-          personalInfo: { ...(cvData.personalInfo || {}), profilePhoto: photoUrl },
-        })
+        handlePersonalInfoChange("profilePhoto", photoUrl)
       }
       reader.readAsDataURL(file)
     }
@@ -1038,14 +1052,18 @@ export default function CVBuilderPage() {
 
                   <AISuggestionDialog
                     type="summary"
-                    context={cvData.personalInfo || {}}
+                    context={{
+                      ...cvData.personalInfo,
+                      education: cvData.education,
+                      experience: cvData.experience,
+                    }}
                     onSelect={(value) => handlePersonalInfoChange("summary", Array.isArray(value) ? value[0] : value)}
                   />
                 </div>
               )}
 
-              {/* Step 2: Education */}
-              {currentStep === 2 && (
+              {/* Step 3: Education */}
+              {currentStep === 3 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   {cvData.education && cvData.education.length > 0 && (
                     <div className="space-y-3">
@@ -1151,8 +1169,8 @@ export default function CVBuilderPage() {
                 </div>
               )}
 
-              {/* Step 3: Experience */}
-              {currentStep === 3 && (
+              {/* Step 4: Experience */}
+              {currentStep === 4 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   {cvData.experience && cvData.experience.length > 0 && (
                     <div className="space-y-3">
@@ -1280,8 +1298,8 @@ export default function CVBuilderPage() {
                 </div>
               )}
 
-              {/* Step 4: Skills */}
-              {currentStep === 4 && (
+              {/* Step 5: Skills */}
+              {currentStep === 5 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   {cvData.skills && cvData.skills.length > 0 && (
                     <div className="space-y-3">
@@ -1325,10 +1343,10 @@ export default function CVBuilderPage() {
                         }}
                         onSelect={(values) => {
                           const skills = Array.isArray(values) ? values : [values]
-                          setCvData({
-                            ...cvData,
-                            skills: [...(cvData.skills || []), ...skills],
-                          })
+                          setCvData((prev) => ({
+                            ...prev,
+                            skills: [...(prev.skills || []), ...skills],
+                          }))
                         }}
                       >
                         <Button type="button" variant="outline" size="sm">
@@ -1361,8 +1379,8 @@ export default function CVBuilderPage() {
                 </div>
               )}
 
-              {/* Step 5: Languages */}
-              {currentStep === 5 && (
+              {/* Step 6: Languages */}
+              {currentStep === 6 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   {cvData.languages && cvData.languages.length > 0 && (
                     <div className="space-y-3">
@@ -1427,8 +1445,8 @@ export default function CVBuilderPage() {
                 </div>
               )}
 
-              {/* Step 6: Profile Photo */}
-              {currentStep === 6 && (
+              {/* Step 7: Profile Photo */}
+              {currentStep === 7 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   <div className="text-center space-y-4">
                     <div className="w-32 h-32 mx-auto rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-primary">
@@ -1485,8 +1503,8 @@ export default function CVBuilderPage() {
                 </div>
               )}
 
-              {/* Step 7: AI Enhancement */}
-              {currentStep === 7 && (
+              {/* Step 8: AI Enhancement */}
+              {currentStep === 8 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   <div className="text-center space-y-4">
                     <div className="inline-flex items-center justify-center size-20 rounded-full bg-primary/10 mb-4">
@@ -1552,9 +1570,6 @@ export default function CVBuilderPage() {
                         </>
                       )}
                     </Button>
-                    <Button onClick={() => setCurrentStep(6)} variant="outline" className="h-12">
-                      Skip
-                    </Button>
                   </div>
 
                   <Button onClick={handleSaveAndContinue} variant="default" className="w-full h-12 text-lg" size="lg">
@@ -1574,7 +1589,7 @@ export default function CVBuilderPage() {
               )}
 
               {/* Navigation Buttons */}
-              {currentStep < 7 && (
+              {currentStep < 8 && (
                 <div className="flex gap-4 pt-4">
                   {currentStep > 1 && (
                     <Button onClick={handlePreviousStep} variant="outline" className="flex-1 bg-transparent">

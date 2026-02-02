@@ -19,47 +19,66 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "enhance_cv") {
-      const cvEnhancementPrompt = `You are a professional CV writer for Sierra Leone. Enhance this CV with professional language and impactful descriptions.
+      const educationText = cvData.education?.length
+        ? cvData.education.map((edu: any) => `- ${edu.degree} in ${edu.fieldOfStudy} from ${edu.institution} (${edu.startDate} - ${edu.endDate})`).join("\n")
+        : "No education listed"
 
-**Personal Information:**
-Name: ${cvData.personalInfo?.fullName}
-Age: ${cvData.personalInfo?.age} years
-Location: ${cvData.personalInfo?.location}
-Current Summary: ${cvData.personalInfo?.summary}
+      const experienceText = cvData.experience?.length
+        ? cvData.experience.map((exp: any) => `- ${exp.position} at ${exp.company} (${exp.startDate} - ${exp.endDate})\n  Description: ${exp.description}`).join("\n\n")
+        : "No work experience listed"
 
-**Education:**
-${cvData.education?.map((edu: any) => `- ${edu.degree} in ${edu.fieldOfStudy} from ${edu.institution}`).join("\n")}
+      const cvEnhancementPrompt = `
+You are an expert CV writer specializing in the Sierra Leonean and West African job market. 
+Professionalize and enhance the following CV data.
 
-**Experience:**
-${cvData.experience?.map((exp: any) => `- ${exp.position} at ${exp.company}\n  Description: ${exp.description}`).join("\n\n")}
+PERSONAL INFORMATION:
+- Name: ${cvData.personalInfo?.fullName || "Not provided"}
+- Age: ${cvData.personalInfo?.age || "Not provided"}
+- Location: ${cvData.personalInfo?.location || "Sierra Leone"}
+- Current Summary: ${cvData.personalInfo?.summary || "None"}
 
-**Current Skills:**
-${cvData.skills?.join(", ")}
+EDUCATION:
+${educationText}
 
-**Languages:**
-${cvData.languages?.map((lang: any) => `${lang.language} (${lang.proficiency})`).join(", ")}
+EXPERIENCE:
+${experienceText}
 
-Please enhance this CV by:
-1. Rewriting the professional summary to be more impactful and tailored to Sierra Leone employers
-2. Improving each work experience description with strong action verbs and quantifiable achievements
-3. Suggesting 3-5 additional relevant skills based on their background
+SKILLS:
+${cvData.skills?.join(", ") || "None listed"}
 
-Return the response in this JSON format:
+LANGUAGES:
+${cvData.languages?.map((lang: any) => `${lang.language} (${lang.proficiency})`).join(", ") || "None listed"}
+
+INSTRUCTIONS:
+1. REWRITE the Professional Summary to be impactful, action-oriented, and professional. 
+   - Tailor it to the user's specific background.
+   - Use strong verbs and avoid clichés.
+   - MUST BE 2-4 sentences.
+2. ENHANCE Work Experience. 
+   - If descriptions are short or plain, expand them into 3-4 professional bullet points using action verbs.
+   - Ensure the position titles sound professional.
+3. OPTIMIZE Skills.
+   - Suggest relevant technical and soft skills valued in Sierra Leone.
+4. FORMAT: Return ONLY a JSON object.
+
+CRITICAL: Do not use placeholders like "[Name]" or "[Company]". If information is missing, use general professional language.
+
+RETURN ONLY VALID JSON:
 {
-  "summary": "enhanced professional summary",
+  "summary": "...",
   "experience": [
     {
-      "id": "same as input",
-      "company": "same as input",
-      "position": "same as input",
-      "location": "same as input",
-      "startDate": "same as input",
-      "endDate": "same as input",
-      "current": same as input,
-      "description": "enhanced description with bullet points"
+      "id": "original_id",
+      "position": "...",
+      "company": "...",
+      "location": "...",
+      "startDate": "...",
+      "endDate": "...",
+      "current": boolean,
+      "description": "bulleted list of achievements"
     }
   ],
-  "skills": ["existing skills plus 3-5 new suggestions"]
+  "skills": ["skill1", "skill2", ...]
 }`
 
       const response = await fetch(
@@ -80,7 +99,7 @@ Return the response in this JSON format:
               },
             ],
             generationConfig: {
-              temperature: 0.7,
+              temperature: 0.4, // Lower temperature for more consistent JSON
               maxOutputTokens: 2000,
             },
           }),
@@ -92,13 +111,21 @@ Return the response in this JSON format:
       }
 
       const data = await response.json()
-      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+      let generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+
+      // Clean up markdown code blocks if present
+      if (generatedText.includes("```json")) {
+        generatedText = generatedText.split("```json")[1].split("```")[0]
+      } else if (generatedText.includes("```")) {
+        generatedText = generatedText.split("```")[1].split("```")[0]
+      }
 
       // Try to parse JSON response
       try {
-        const enhancedData = JSON.parse(generatedText)
+        const enhancedData = JSON.parse(generatedText.trim())
         return NextResponse.json(enhancedData)
-      } catch {
+      } catch (e) {
+        console.error("[v0] JSON parsing error:", e, generatedText)
         // If not valid JSON, return as is
         return NextResponse.json({
           summary: generatedText.split("\n")[0],
@@ -112,25 +139,30 @@ Return the response in this JSON format:
     let fullPrompt = ""
 
     if (type === "summary") {
-      fullPrompt = `Generate a professional CV summary for someone with the following details:
-Education: ${context.education || "Not specified"}
-Experience: ${context.experience || "No experience"}
-Skills: ${context.skills || "General skills"}
+      const eduStr = context.education?.length
+        ? context.education.map((e: any) => `${e.degree} in ${e.fieldOfStudy}`).join(", ")
+        : "Not specified"
+      const expStr = context.experience?.length
+        ? context.experience.map((e: any) => e.position).join(", ")
+        : "No professional experience"
 
-Write a 2-3 sentence professional summary in third person that highlights their strengths and career goals. Make it specific to Sierra Leone job market.`
+      fullPrompt = `Generate a 2-3 sentence professional CV summary for a professional with:
+Education: ${eduStr}
+Experience Skills: ${expStr}
+Current Skills: ${context.skills?.join?.(", ") || "General skills"}
+
+Make it compelling and suitable for the Sierra Leonean job market.`
     } else if (type === "experience") {
-      fullPrompt = `Generate 3-5 professional bullet points for this work experience:
-Position: ${context.position || "Not specified"}
-Company: ${context.company || "Not specified"}
-Responsibilities: ${context.responsibilities || "General duties"}
+      fullPrompt = `Professionalize these responsibilities for a ${context.position} at ${context.company}:
+${context.responsibilities || "General duties"}
 
-Format as bullet points starting with action verbs. Include metrics where possible. Make it relevant to Sierra Leone employers.`
+Format as 3-4 impactful bullet points starting with action verbs. Relevant to Sierra Leone.`
     } else if (type === "skills") {
-      fullPrompt = `Suggest 8-10 relevant professional skills for someone with:
-Field of Study: ${context.fieldOfStudy || "General"}
-Experience: ${context.experience || "Entry level"}
+      fullPrompt = `Suggest 10 professional skills (hard and soft) for:
+Field: ${context.fieldOfStudy || "General"}
+Roles: ${context.experience || "Entry level"}
 
-Return only the skill names, one per line. Focus on skills valued in Sierra Leone job market.`
+Return only skill names, one per line.`
     } else {
       fullPrompt = prompt
     }
