@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Sparkles, Copy, Check, ArrowLeft } from "lucide-react"
@@ -14,6 +15,8 @@ import { mockJobs } from "@/lib/mock-jobs"
 export default function CoverLetterPage() {
     const router = useRouter()
     const { toast } = useToast()
+    const [jobTitle, setJobTitle] = useState("")
+    const [companyName, setCompanyName] = useState("")
     const [jobDescription, setJobDescription] = useState("")
     const [isGenerating, setIsGenerating] = useState(false)
     const [generatedLetter, setGeneratedLetter] = useState("")
@@ -33,6 +36,8 @@ export default function CoverLetterPage() {
         setSelectedJobId(jobId)
         const job = mockJobs.find(j => j.id === jobId)
         if (job) {
+            setJobTitle(job.title)
+            setCompanyName(job.company)
             setJobDescription(
                 `Position: ${job.title}\nCompany: ${job.company}\n\nDescription:\n${job.description}\n\nRequirements:\n${job.requirements.join(", ")}`
             )
@@ -44,6 +49,15 @@ export default function CoverLetterPage() {
     }
 
     const handleGenerate = async () => {
+        if (!jobTitle.trim() || !companyName.trim()) {
+            toast({
+                title: "Missing Information",
+                description: "Please enter both Job Title and Company Name.",
+                variant: "destructive",
+            })
+            return
+        }
+
         if (!jobDescription.trim()) {
             toast({
                 title: "Job Description Required",
@@ -72,7 +86,7 @@ export default function CoverLetterPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     action: "generate_cover_letter",
-                    prompt: jobDescription,
+                    prompt: `Job Title: ${jobTitle}\nCompany: ${companyName}\n\nJob Description:\n${jobDescription}`,
                     cvData: selectedCv,
                 }),
             })
@@ -164,10 +178,28 @@ export default function CoverLetterPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Job Description</label>
+                                <label className="text-sm font-medium">Job Title *</label>
+                                <Input
+                                    placeholder="e.g., Marketing Manager"
+                                    value={jobTitle}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setJobTitle(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Company Name *</label>
+                                <Input
+                                    placeholder="e.g., Orange Sierra Leone"
+                                    value={companyName}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCompanyName(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Job Description (Optional)</label>
                                 <Textarea
-                                    placeholder="Paste the job posting here..."
-                                    className="min-h-[200px]"
+                                    placeholder="Paste the job description here for a more tailored cover letter..."
+                                    className="min-h-[150px]"
                                     value={jobDescription}
                                     onChange={(e) => {
                                         setJobDescription(e.target.value)

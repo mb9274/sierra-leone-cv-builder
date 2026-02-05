@@ -7,10 +7,14 @@ export interface CVData {
     fullName: string
     email: string
     phone: string
-    location: string
-    age?: number // Added age field for 18-30 demographic
-    profilePhoto?: string // Added profile photo URL
-    summary: string
+    location?: string
+    addressCity?: string
+    addressCountry?: string
+    age?: string
+    summary?: string
+    profilePhoto?: string
+    linkedin?: string
+    portfolio?: string
   }
   education: Array<{
     id: string
@@ -29,13 +33,60 @@ export interface CVData {
     startDate: string
     endDate: string
     current: boolean
-    description: string
+    description?: string
+    achievements?: string
   }>
   skills: string[]
   languages: Array<{
     language: string
     proficiency: string
   }>
+  projects?: Array<{
+    id: string
+    name: string
+    description: string
+    link?: string
+    technologies?: string[]
+    outcome?: string
+  }>
+  technicalWriting?: Array<{
+    id: string
+    title: string
+    link: string
+    platform?: string
+  }>
+  certifications?: Array<{
+    id: string
+    name: string
+    organization: string
+    year: string
+  }>
+  volunteering?: Array<{
+    id: string
+    organization: string
+    role: string
+    startDate: string
+    endDate: string
+    description: string
+  }>
+  awards?: Array<{
+    id: string
+    name: string
+    organization: string
+    year: string
+    reason: string
+  }>
+  hobbies?: string[]
+  referees?: Array<{
+    id: string
+    name: string
+    title: string
+    organization: string
+    phone: string
+    email: string
+    availableOnRequest?: boolean
+  }>
+  availability?: string
   createdAt: Date
   updatedAt: Date
 }

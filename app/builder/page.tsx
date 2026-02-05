@@ -29,6 +29,12 @@ import {
   AlertCircle,
   LayoutTemplate,
   FileText,
+  Code,
+  BookOpen,
+  Heart,
+  Trophy,
+  Smile,
+  Users,
 } from "lucide-react"
 import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
@@ -40,9 +46,13 @@ const DEFAULT_PERSONAL_INFO = {
   email: "",
   phone: "",
   location: "",
+  addressCity: "",
+  addressCountry: "",
   summary: "",
-  age: undefined as number | undefined,
+  age: "",
   profilePhoto: "",
+  linkedin: "",
+  portfolio: "",
 }
 
 const steps = [
@@ -52,8 +62,14 @@ const steps = [
   { number: 4, title: "Experience", icon: Briefcase },
   { number: 5, title: "Skills", icon: Award },
   { number: 6, title: "Languages", icon: Globe },
-  { number: 7, title: "Profile Photo", icon: User },
-  { number: 8, title: "AI Enhancement", icon: Sparkles },
+  { number: 7, title: "Certifications", icon: FileText },
+  { number: 8, title: "Projects", icon: Code },
+  { number: 9, title: "Volunteering", icon: Heart },
+  { number: 10, title: "Awards", icon: Trophy },
+  { number: 11, title: "Hobbies", icon: Smile },
+  { number: 12, title: "Referees", icon: Users },
+  { number: 13, title: "Profile Photo", icon: User },
+  { number: 14, title: "AI Enhancement", icon: Sparkles },
 ]
 
 const templates = [
@@ -80,9 +96,16 @@ export default function CVBuilderPage() {
   const [cvData, setCvData] = useState<Partial<CVData>>({
     personalInfo: DEFAULT_PERSONAL_INFO,
     education: [],
-    experience: [],
     skills: [],
     languages: [],
+    projects: [],
+    certifications: [],
+    volunteering: [],
+    awards: [],
+    hobbies: [],
+    referees: [],
+    technicalWriting: [],
+    availability: "",
     templateId: "sierra-leone-professional",
   })
 
@@ -105,12 +128,63 @@ export default function CVBuilderPage() {
     endDate: "",
     current: false,
     description: "",
+    achievements: "",
   })
 
   // Skills state
   const [skillInput, setSkillInput] = useState("")
 
-  // Language state
+  // Projects form state
+  const [projectForm, setProjectForm] = useState({
+    name: "",
+    description: "",
+    link: "",
+    technologies: "",
+    outcome: "",
+  })
+
+  const [writingForm, setWritingForm] = useState({
+    title: "",
+    link: "",
+    platform: "",
+  })
+
+  // Certifications form state
+  const [certForm, setCertForm] = useState({
+    name: "",
+    organization: "",
+    year: "",
+  })
+
+  // Volunteering form state
+  const [volForm, setVolForm] = useState({
+    organization: "",
+    role: "",
+    startDate: "",
+    endDate: "",
+    description: "",
+  })
+
+  // Awards form state
+  const [awardForm, setAwardForm] = useState({
+    name: "",
+    organization: "",
+    year: "",
+    reason: "",
+  })
+
+  // Hobbies state
+  const [hobbyInput, setHobbyInput] = useState("")
+
+  // Referees form state
+  const [refereeForm, setRefereeForm] = useState({
+    name: "",
+    title: "",
+    organization: "",
+    phone: "",
+    email: "",
+    availableOnRequest: false,
+  })
   const [langForm, setLangForm] = useState({
     language: "",
     proficiency: "intermediate",
@@ -141,7 +215,7 @@ export default function CVBuilderPage() {
             phone: "076123456",
             location: "Freetown, Sierra Leone",
             summary: "Experienced professional with a background in administration.",
-            age: 28,
+            age: "28",
             profilePhoto: "",
           },
           education: [],
@@ -487,17 +561,18 @@ export default function CVBuilderPage() {
     }
 
     const cvToSave: CVData = {
+      ...cvData,
       id: cvId,
       personalInfo: completedPersonalInfo,
       education: cvData.education || [],
       experience: cvData.experience || [],
       skills: cvData.skills || [],
       languages: cvData.languages || [],
-      createdAt: new Date(),
+      createdAt: (cvData as any).createdAt || new Date(),
       updatedAt: new Date(),
       verificationId,
       verifiedAt: new Date().toISOString(),
-    }
+    } as CVData
 
     const existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
     existingCVs.push(cvToSave)
@@ -545,17 +620,18 @@ export default function CVBuilderPage() {
     }
 
     const completedCV: CVData = {
-      id: Math.random().toString(36).substr(2, 9),
+      ...cvData,
+      id: cvData.id || Math.random().toString(36).substr(2, 9),
       personalInfo: completedPersonalInfo,
       education: cvData.education || [],
       experience: cvData.experience || [],
       skills: cvData.skills || [],
       languages: cvData.languages || [],
-      createdAt: new Date(),
+      createdAt: (cvData as any).createdAt || new Date(),
       updatedAt: new Date(),
       verificationId, // Add verification ID
       verifiedAt: new Date().toISOString(),
-    }
+    } as CVData
 
     // Save to localStorage
     const existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
@@ -596,7 +672,7 @@ export default function CVBuilderPage() {
   }
 
   const handleNextStep = () => {
-    if (currentStep < 8) {
+    if (currentStep < 14) {
       // Validate fields before moving to the next step
       if (currentStep === 2) {
         validateField("fullName", cvData.personalInfo?.fullName || "")
@@ -628,7 +704,7 @@ export default function CVBuilderPage() {
         }
       }
       setCurrentStep(currentStep + 1)
-    } else if (currentStep === 8) {
+    } else if (currentStep === 14) {
       handleSaveAndContinue()
     }
   }
@@ -671,8 +747,99 @@ export default function CVBuilderPage() {
         endDate: "",
         current: false,
         description: "",
+        achievements: "",
       })
       toast({ title: "Experience added!" })
+    }
+  }
+
+  const addProject = () => {
+    if (projectForm.name && projectForm.description) {
+      setCvData((prev) => ({
+        ...prev,
+        projects: [
+          ...(prev.projects || []),
+          { ...projectForm, id: Date.now().toString(), technologies: projectForm.technologies.split(",").map((s) => s.trim()) },
+        ],
+      }))
+      setProjectForm({
+        name: "",
+        description: "",
+        link: "",
+        technologies: "",
+        outcome: "",
+      })
+      toast({ title: "Project added!" })
+    }
+  }
+
+  const addWriting = () => {
+    if (writingForm.title && writingForm.link) {
+      setCvData((prev) => ({
+        ...prev,
+        technicalWriting: [...(prev.technicalWriting || []), { ...writingForm, id: Date.now().toString() }],
+      }))
+      setWritingForm({
+        title: "",
+        link: "",
+        platform: "",
+      })
+      toast({ title: "Technical writing added!" })
+    }
+  }
+
+  const addCertification = () => {
+    if (certForm.name && certForm.organization) {
+      setCvData((prev) => ({
+        ...prev,
+        certifications: [...(prev.certifications || []), { ...certForm, id: Date.now().toString() }],
+      }))
+      setCertForm({ name: "", organization: "", year: "" })
+      toast({ title: "Certification added!" })
+    }
+  }
+
+  const addVolunteering = () => {
+    if (volForm.organization && volForm.role) {
+      setCvData((prev) => ({
+        ...prev,
+        volunteering: [...(prev.volunteering || []), { ...volForm, id: Date.now().toString() }],
+      }))
+      setVolForm({ organization: "", role: "", startDate: "", endDate: "", description: "" })
+      toast({ title: "Volunteering experience added!" })
+    }
+  }
+
+  const addAward = () => {
+    if (awardForm.name && awardForm.organization) {
+      setCvData((prev) => ({
+        ...prev,
+        awards: [...(prev.awards || []), { ...awardForm, id: Date.now().toString() }],
+      }))
+      setAwardForm({ name: "", organization: "", year: "", reason: "" })
+      toast({ title: "Award added!" })
+    }
+  }
+
+  const addReferee = () => {
+    if (refereeForm.name || refereeForm.availableOnRequest) {
+      setCvData((prev) => ({
+        ...prev,
+        referees: [...(prev.referees || []), { ...refereeForm, id: Date.now().toString() }],
+      }))
+      setRefereeForm({ name: "", title: "", organization: "", phone: "", email: "", availableOnRequest: false })
+      toast({ title: "Referee added!" })
+    }
+  }
+
+  const addHobby = () => {
+    if (hobbyInput.trim()) {
+      setCvData((prev) => ({
+        ...prev,
+        hobbies: [...(prev.hobbies || []), hobbyInput.trim()],
+      }))
+      setHobbyInput("")
+      toast({ title: "Hobby added!" })
     }
   }
 
@@ -991,6 +1158,48 @@ export default function CVBuilderPage() {
                     </div>
                   </div>
 
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="addressCity">City / Town</Label>
+                      <Input
+                        id="addressCity"
+                        placeholder="e.g., Freetown"
+                        value={cvData.personalInfo?.addressCity || ""}
+                        onChange={(e) => handlePersonalInfoChange("addressCity", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="addressCountry">Country</Label>
+                      <Input
+                        id="addressCountry"
+                        placeholder="e.g., Sierra Leone"
+                        value={cvData.personalInfo?.addressCountry || ""}
+                        onChange={(e) => handlePersonalInfoChange("addressCountry", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="linkedin">LinkedIn Profile (Optional)</Label>
+                      <Input
+                        id="linkedin"
+                        placeholder="https://linkedin.com/in/..."
+                        value={cvData.personalInfo?.linkedin || ""}
+                        onChange={(e) => handlePersonalInfoChange("linkedin", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="portfolio">Portfolio or Website (Optional)</Label>
+                      <Input
+                        id="portfolio"
+                        placeholder="https://..."
+                        value={cvData.personalInfo?.portfolio || ""}
+                        onChange={(e) => handlePersonalInfoChange("portfolio", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="flex items-center gap-2">
                       Phone Number <span className="text-red-500">*</span>
@@ -1020,6 +1229,24 @@ export default function CVBuilderPage() {
                     </div>
                     {validationErrors.phone && <p className="text-xs text-red-500">{validationErrors.phone}</p>}
                     <p className="text-xs text-muted-foreground">8 digits only (e.g., 76123456)</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="availability">Availability</Label>
+                    <Select
+                      value={cvData.availability || ""}
+                      onValueChange={(value) => setCvData((prev) => ({ ...prev, availability: value }))}
+                    >
+                      <SelectTrigger id="availability">
+                        <SelectValue placeholder="Select availability" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="immediate">Immediate</SelectItem>
+                        <SelectItem value="two-weeks">2 Weeks Notice</SelectItem>
+                        <SelectItem value="one-month">1 Month Notice</SelectItem>
+                        <SelectItem value="flexible">Flexible</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -1223,6 +1450,26 @@ export default function CVBuilderPage() {
                           onChange={(e) => setExpForm({ ...expForm, position: e.target.value })}
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Key Responsibilities</Label>
+                      <Textarea
+                        placeholder="Describe your role and what you did day-to-day"
+                        value={expForm.description}
+                        onChange={(e) => setExpForm({ ...expForm, description: e.target.value })}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Key Achievements</Label>
+                      <Textarea
+                        placeholder="What did you do well? (e.g., Increased sales by 20%, Led a team of 5)"
+                        value={expForm.achievements}
+                        onChange={(e) => setExpForm({ ...expForm, achievements: e.target.value })}
+                        rows={2}
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -1445,8 +1692,427 @@ export default function CVBuilderPage() {
                 </div>
               )}
 
-              {/* Step 7: Profile Photo */}
+              {/* Step 7: Certifications */}
               {currentStep === 7 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.certifications && cvData.certifications.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Added Certifications</h4>
+                      <div className="grid gap-3">
+                        {cvData.certifications.map((cert) => (
+                          <div key={cert.id} className="p-3 border rounded-lg bg-muted/30 flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{cert.name}</p>
+                              <p className="text-xs text-muted-foreground">{cert.organization} ({cert.year})</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => setCvData(prev => ({ ...prev, certifications: prev.certifications?.filter(c => c.id !== cert.id) }))}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold text-foreground">Add Certification</h4>
+                    <div className="space-y-2">
+                      <Label>Course or Certificate Name *</Label>
+                      <Input
+                        placeholder="e.g., AWS Certified Developer"
+                        value={certForm.name}
+                        onChange={(e) => setCertForm({ ...certForm, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Organization / Issuer *</Label>
+                      <Input
+                        placeholder="e.g., Amazon Web Services"
+                        value={certForm.organization}
+                        onChange={(e) => setCertForm({ ...certForm, organization: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Year Completed</Label>
+                      <Input
+                        placeholder="e.g., 2023"
+                        value={certForm.year}
+                        onChange={(e) => setCertForm({ ...certForm, year: e.target.value })}
+                      />
+                    </div>
+                    <Button type="button" onClick={addCertification} className="w-full">
+                      <Plus className="size-4 mr-2" />
+                      Add Certification
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 8: Projects */}
+              {currentStep === 8 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.projects && cvData.projects.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Projects</h4>
+                      <div className="grid gap-3">
+                        {cvData.projects.map((proj) => (
+                          <div key={proj.id} className="p-3 border rounded-lg bg-muted/30 flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{proj.name}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-2">{proj.description}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => setCvData(prev => ({ ...prev, projects: prev.projects?.filter(p => p.id !== proj.id) }))}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold text-foreground">Add Project</h4>
+                    <div className="space-y-2">
+                      <Label>Project Title *</Label>
+                      <Input
+                        placeholder="e.g., Hospital Management System"
+                        value={projectForm.name}
+                        onChange={(e) => setProjectForm({ ...projectForm, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Short Description *</Label>
+                      <Textarea
+                        placeholder="What was the project about?"
+                        value={projectForm.description}
+                        onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Outcome or Result</Label>
+                      <Input
+                        placeholder="e.g., Successfully launched and used by 10 departments"
+                        value={projectForm.outcome}
+                        onChange={(e) => setProjectForm({ ...projectForm, outcome: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Link</Label>
+                        <Input
+                          placeholder="https://..."
+                          value={projectForm.link}
+                          onChange={(e) => setProjectForm({ ...projectForm, link: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tools / Skills Used</Label>
+                        <Input
+                          placeholder="e.g., React, Node, SQL"
+                          value={projectForm.technologies}
+                          onChange={(e) => setProjectForm({ ...projectForm, technologies: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <Button type="button" onClick={addProject} className="w-full">
+                      <Plus className="size-4 mr-2" />
+                      Add Project
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 9: Volunteering */}
+              {currentStep === 9 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.volunteering && cvData.volunteering.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Volunteering Experience</h4>
+                      <div className="grid gap-3">
+                        {cvData.volunteering.map((vol) => (
+                          <div key={vol.id} className="p-3 border rounded-lg bg-muted/30 flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{vol.organization}</p>
+                              <p className="text-xs text-muted-foreground">{vol.role}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => setCvData(prev => ({ ...prev, volunteering: prev.volunteering?.filter(v => v.id !== vol.id) }))}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold text-foreground">Add Volunteering</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Organization Name *</Label>
+                        <Input
+                          placeholder="e.g., Red Cross"
+                          value={volForm.organization}
+                          onChange={(e) => setVolForm({ ...volForm, organization: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Role *</Label>
+                        <Input
+                          placeholder="e.g., Youth Mentor"
+                          value={volForm.role}
+                          onChange={(e) => setVolForm({ ...volForm, role: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Start Date</Label>
+                        <Input
+                          placeholder="e.g., Jan 2022"
+                          value={volForm.startDate}
+                          onChange={(e) => setVolForm({ ...volForm, startDate: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>End Date</Label>
+                        <Input
+                          placeholder="e.g., Present"
+                          value={volForm.endDate}
+                          onChange={(e) => setVolForm({ ...volForm, endDate: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>What you helped with</Label>
+                      <Textarea
+                        placeholder="Describe your activities"
+                        value={volForm.description}
+                        onChange={(e) => setVolForm({ ...volForm, description: e.target.value })}
+                      />
+                    </div>
+                    <Button type="button" onClick={addVolunteering} className="w-full">
+                      <Plus className="size-4 mr-2" />
+                      Add Volunteering
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 10: Awards */}
+              {currentStep === 10 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.awards && cvData.awards.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Awards & Achievements</h4>
+                      <div className="grid gap-3">
+                        {cvData.awards.map((award) => (
+                          <div key={award.id} className="p-3 border rounded-lg bg-muted/30 flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{award.name}</p>
+                              <p className="text-xs text-muted-foreground">{award.organization} ({award.year})</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => setCvData(prev => ({ ...prev, awards: prev.awards?.filter(a => a.id !== award.id) }))}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold text-foreground">Add Award</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Award Name *</Label>
+                        <Input
+                          placeholder="e.g., Employee of the Year"
+                          value={awardForm.name}
+                          onChange={(e) => setAwardForm({ ...awardForm, name: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Organization *</Label>
+                        <Input
+                          placeholder="e.g., Company ABC"
+                          value={awardForm.organization}
+                          onChange={(e) => setAwardForm({ ...awardForm, organization: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Year</Label>
+                        <Input
+                          placeholder="e.g., 2023"
+                          value={awardForm.year}
+                          onChange={(e) => setAwardForm({ ...awardForm, year: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Reason for Award</Label>
+                        <Input
+                          placeholder="e.g., Exceptional sales performance"
+                          value={awardForm.reason}
+                          onChange={(e) => setAwardForm({ ...awardForm, reason: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <Button type="button" onClick={addAward} className="w-full">
+                      <Plus className="size-4 mr-2" />
+                      Add Award
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 11: Hobbies */}
+              {currentStep === 11 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-foreground">Hobbies & Interests</h4>
+                    <p className="text-xs text-muted-foreground">Activities that show positive traits (sports, reading, community work)</p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {cvData.hobbies?.map((hobby, index) => (
+                        <span key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm flex items-center gap-2">
+                          {hobby}
+                          <Trash2 className="size-3 cursor-pointer" onClick={() => setCvData(prev => ({ ...prev, hobbies: prev.hobbies?.filter((_, i) => i !== index) }))} />
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="e.g., Reading, Football, Volunteering"
+                        value={hobbyInput}
+                        onChange={(e) => setHobbyInput(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && addHobby()}
+                      />
+                      <Button onClick={addHobby} type="button">Add</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 12: Referees */}
+              {currentStep === 12 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Checkbox
+                      id="available-on-request"
+                      checked={refereeForm.availableOnRequest}
+                      onCheckedChange={(checked) => setRefereeForm({ ...refereeForm, availableOnRequest: checked as boolean })}
+                    />
+                    <Label htmlFor="available-on-request" className="text-sm cursor-pointer font-medium">
+                      Or write: "Referees available on request"
+                    </Label>
+                  </div>
+
+                  {!refereeForm.availableOnRequest && (
+                    <>
+                      {cvData.referees && cvData.referees.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-foreground">Added Referees</h4>
+                          <div className="grid gap-3">
+                            {cvData.referees.map((ref) => (
+                              <div key={ref.id} className="p-3 border rounded-lg bg-muted/30 flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium">{ref.name}</p>
+                                  <p className="text-xs text-muted-foreground">{ref.title} at {ref.organization}</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 text-muted-foreground hover:text-destructive"
+                                  onClick={() => setCvData(prev => ({ ...prev, referees: prev.referees?.filter(r => r.id !== ref.id) }))}
+                                >
+                                  <Trash2 className="size-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                        <h4 className="font-semibold text-foreground">Add Referee</h4>
+                        <div className="space-y-2">
+                          <Label>Referee Full Name *</Label>
+                          <Input
+                            placeholder="e.g., Mr. John Sesay"
+                            value={refereeForm.name}
+                            onChange={(e) => setRefereeForm({ ...refereeForm, name: e.target.value })}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Job Title</Label>
+                            <Input
+                              placeholder="e.g., HR Manager"
+                              value={refereeForm.title}
+                              onChange={(e) => setRefereeForm({ ...refereeForm, title: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Organization</Label>
+                            <Input
+                              placeholder="e.g., Rokel Commercial Bank"
+                              value={refereeForm.organization}
+                              onChange={(e) => setRefereeForm({ ...refereeForm, organization: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Phone Number</Label>
+                            <Input
+                              placeholder="e.g., 076 123456"
+                              value={refereeForm.phone}
+                              onChange={(e) => setRefereeForm({ ...refereeForm, phone: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Email Address</Label>
+                            <Input
+                              placeholder="e.g., john.sesay@email.com"
+                              value={refereeForm.email}
+                              onChange={(e) => setRefereeForm({ ...refereeForm, email: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <Button type="button" onClick={addReferee} className="w-full">
+                    <Plus className="size-4 mr-2" />
+                    {refereeForm.availableOnRequest ? "Set Referees as Available on Request" : "Add Referee"}
+                  </Button>
+                </div>
+              )}
+
+              {/* Step 13: Profile Photo */}
+              {currentStep === 13 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   <div className="text-center space-y-4">
                     <div className="w-32 h-32 mx-auto rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-primary">
@@ -1503,8 +2169,8 @@ export default function CVBuilderPage() {
                 </div>
               )}
 
-              {/* Step 8: AI Enhancement */}
-              {currentStep === 8 && (
+              {/* Step 14: AI Enhancement */}
+              {currentStep === 14 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   <div className="text-center space-y-4">
                     <div className="inline-flex items-center justify-center size-20 rounded-full bg-primary/10 mb-4">
@@ -1589,7 +2255,7 @@ export default function CVBuilderPage() {
               )}
 
               {/* Navigation Buttons */}
-              {currentStep < 8 && (
+              {currentStep < 14 && (
                 <div className="flex gap-4 pt-4">
                   {currentStep > 1 && (
                     <Button onClick={handlePreviousStep} variant="outline" className="flex-1 bg-transparent">
@@ -1609,6 +2275,6 @@ export default function CVBuilderPage() {
       </div>
 
       <Toaster />
-    </div>
+    </div >
   )
 }
