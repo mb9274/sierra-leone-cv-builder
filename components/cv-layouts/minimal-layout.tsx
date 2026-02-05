@@ -180,6 +180,25 @@ export function MinimalLayout({ cvData, theme, isEditing, editedData, onEdit }: 
                 </div>
             </div>
 
+            {data.technicalWriting && data.technicalWriting.length > 0 && (
+                <div className="mb-10">
+                    <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 border-b border-slate-100 pb-2">
+                        Technical Writing
+                    </h2>
+                    <div className="space-y-4">
+                        {data.technicalWriting.map((item) => (
+                            <div key={item.id} className="border-l-2 border-slate-100 pl-4 py-1">
+                                <h3 className="font-bold text-slate-800">{item.title}</h3>
+                                <div className="flex justify-between items-center text-xs text-slate-500 mt-1">
+                                    <span>{item.platform}</span>
+                                    <span className="font-mono underline">{item.link}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
                 <div>
                     <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 border-b border-slate-100 pb-2">

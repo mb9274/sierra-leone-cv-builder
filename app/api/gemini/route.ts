@@ -7,8 +7,42 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY || providedApiKey
 
     if (!apiKey) {
-      // Return friendly message with fallback templates
       console.log("[v0] Gemini API key not found, using template fallback")
+
+      if (action === "generate_cover_letter") {
+        const fallbackLetter = `Dear Hiring Manager,
+
+I am writing to express my strong interest in the ${prompt.split('\n')[0] || 'position'} at your company. With my background in ${cvData.experience?.[0]?.position || 'the field'}, I am confident that I would be a valuable asset to your team.
+
+My experience at ${cvData.experience?.[0]?.company || 'my previous company'} has equipped me with strong skills in ${cvData.skills?.slice(0, 3).join(", ") || "professional communication and problem solving"}. I am impressed by your company's reputation and would welcome the opportunity to contribute my skills to your projects.
+
+Thank you for your time and consideration. I look forward to hearing from you.
+
+Sincerely,
+${cvData.personalInfo?.fullName || "Your Name"}`
+
+        return NextResponse.json({ coverLetter: fallbackLetter, fallback: true })
+      }
+
+      if (action === "mock_interview") {
+        if (prompt === "start") {
+          return NextResponse.json({
+            questions: [
+              "Could you tell me about your background and experience?",
+              "What are your greatest professional strengths?",
+              "Why are you interested in this position?",
+              "Where do you see yourself in five years?",
+              "Do you have any questions for us?"
+            ],
+            fallback: true
+          })
+        }
+        return NextResponse.json({
+          message: "That's a great answer. Can you tell me more about a specific challenge you faced in your previous role?",
+          fallback: true
+        })
+      }
+
       return NextResponse.json(
         {
           error: "Using smart templates instead of AI",
@@ -133,6 +167,108 @@ RETURN ONLY VALID JSON:
           skills: cvData.skills,
         })
       }
+    } else if (action === "generate_cover_letter") {
+      const cvText = `
+Name: ${cvData.personalInfo?.fullName}
+Summary: ${cvData.personalInfo?.summary}
+Experience: ${cvData.experience?.map((e: any) => `${e.position} at ${e.company} (${e.description})`).join("; ")}
+Skills: ${cvData.skills?.join(", ")}
+`
+      const coverLetterPrompt = `
+You are an expert career coach from Sierra Leone. 
+Write a highly professional and tailored cover letter based on the following:
+
+USER CV DATA:
+${cvText}
+
+JOB DETAILS:
+${prompt}
+
+INSTRUCTIONS:
+1. Use a professional, confident, and polite tone.
+2. Highlight relevant skills and experiences from the CV that match the job details.
+3. Keep it within 300-400 words.
+4. Use standard cover letter layout (Salutation, Introduction, Body Paragraphs, Conclusion, Sign-off).
+5. Ensure it feels local to the Sierra Leonean job market (e.g., formal and respectful).
+
+RETURN ONLY THE COVER LETTER TEXT.`
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: coverLetterPrompt }] }],
+          }),
+        }
+      )
+
+      if (!response.ok) throw new Error(`Gemini API error: ${response.statusText}`)
+      const data = await response.json()
+      const coverLetter = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+      return NextResponse.json({ coverLetter })
+
+    } else if (action === "mock_interview") {
+      const cvText = `
+Name: ${cvData.personalInfo?.fullName}
+Experience: ${cvData.experience?.map((e: any) => `${e.position} at ${e.company}`).join(", ")}
+Skills: ${cvData.skills?.join(", ")}
+`
+      let interviewPrompt = ""
+      if (prompt === "start") {
+        interviewPrompt = `
+You are an HR Manager conducting a mock interview for the following candidate:
+${cvText}
+
+INSTRUCTIONS:
+1. Generate 5 challenging but fair interview questions based on their experience and skills.
+2. Return the questions as a JSON array of strings.
+
+RETURN ONLY VALID JSON:
+{ "questions": ["Question 1", "Question 2", ...] }`
+      } else {
+        interviewPrompt = `
+You are an HR Manager conducting a mock interview.
+Candidate CV: ${cvText}
+User Response: "${prompt}"
+
+INSTRUCTIONS:
+1. Provide briefly constructive feedback on their response.
+2. Then ask the NEXT relevant follow-up question.
+3. Be professional and encouraging.
+
+RETURN THE FEEDBACK AND NEXT QUESTION AS PLAIN TEXT.`
+      }
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: interviewPrompt }] }],
+          }),
+        }
+      )
+
+      if (!response.ok) throw new Error(`Gemini API error: ${response.statusText}`)
+      const data = await response.json()
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+
+      if (prompt === "start") {
+        try {
+          // Clean possible markdown
+          let jsonStr = text
+          if (jsonStr.includes("```json")) jsonStr = jsonStr.split("```json")[1].split("```")[0]
+          else if (jsonStr.includes("```")) jsonStr = jsonStr.split("```")[1].split("```")[0]
+          return NextResponse.json(JSON.parse(jsonStr.trim()))
+        } catch (e) {
+          return NextResponse.json({ questions: ["Tell me about yourself.", "Why should we hire you?"] })
+        }
+      }
+
+      return NextResponse.json({ message: text })
     }
 
     // Build context-aware prompt

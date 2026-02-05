@@ -213,25 +213,24 @@ export function StandardLayout({ cvData, theme, isEditing, editedData, onEdit }:
             </div>
 
             <div className="mb-8">
-                <h2 className={`text-2xl font-bold ${theme.primary} mb-4 uppercase tracking-wide border-l-4 ${theme.border} pl-3`}>
+                <h2 className={`text-2xl font-bold ${theme.primary} mb-4 uppercase tracking-wide border-l-4 ${theme.border} pl-3 text-primary`}>
                     Featured Projects
                 </h2>
                 <div className="space-y-4">
                     {data.projects && data.projects.length > 0 ? data.projects.map((proj) => (
                         <div
                             key={proj.id}
-                            className={`p-3 rounded-lg border-l-2 ${theme.border.replace("border-", "border-opacity-30 ")}`}
+                            className={`p-4 rounded-xl border-l-4 ${theme.border} bg-slate-50/50 hover:bg-slate-50 transition-colors shadow-sm`}
                         >
                             <div className="flex justify-between items-start mb-2">
-                                <h3 className={`text-lg font-semibold ${theme.icon_text}`}>{proj.name}</h3>
-                                {proj.link && <span className={`text-xs text-primary font-mono lowercase`}>{proj.link}</span>}
+                                <h3 className={`text-lg font-bold ${theme.icon_text}`}>{proj.name}</h3>
+                                {proj.link && <span className={`text-[10px] text-primary font-mono lowercase bg-white px-2 py-0.5 rounded border`}>{proj.link}</span>}
                             </div>
-                            <p className="text-foreground leading-relaxed italic text-sm mb-2">{proj.description}</p>
-                            {proj.outcome && <p className="text-xs font-bold text-muted-foreground bg-slate-50 p-1 inline-block rounded mb-2">Outcome: {proj.outcome}</p>}
+                            <p className="text-foreground leading-relaxed text-sm mb-3">{proj.description}</p>
                             {proj.technologies && proj.technologies.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mt-2">
                                     {proj.technologies.map((tech, i) => (
-                                        <span key={i} className={`text-[9px] ${theme.icon_bg} ${theme.icon_text} px-2 py-0.5 rounded border border-current opacity-70`}>
+                                        <span key={i} className={`text-[10px] font-semibold ${theme.icon_bg} ${theme.icon_text} px-3 py-1 rounded-full border border-current/20`}>
                                             {tech}
                                         </span>
                                     ))}
@@ -241,6 +240,25 @@ export function StandardLayout({ cvData, theme, isEditing, editedData, onEdit }:
                     )) : <p className="text-muted-foreground italic p-4 text-center">No projects listed</p>}
                 </div>
             </div>
+
+            {data.technicalWriting && data.technicalWriting.length > 0 && (
+                <div className="mb-8">
+                    <h2 className={`text-2xl font-bold ${theme.primary} mb-4 uppercase tracking-wide border-l-4 ${theme.border} pl-3`}>
+                        Technical Writing & Publications
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {data.technicalWriting.map((item) => (
+                            <div key={item.id} className="p-4 rounded-xl border border-slate-200 bg-white hover:border-primary/30 transition-all shadow-sm group">
+                                <h3 className="font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors">{item.title}</h3>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-semibold text-slate-500">{item.platform}</span>
+                                    <span className="text-[10px] text-primary font-mono truncate max-w-[120px]">{item.link}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 <div>

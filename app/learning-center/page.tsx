@@ -50,7 +50,7 @@ export default function LearningCenterPage() {
                             {/* Action Buttons */}
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <a
-                                    href="https://www.christex.foundation/"
+                                    href="https://airtable.com/apptvIfjIHaMyTkYV/pag0vAEiN51dM8KBt/form"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="bg-white text-blue-600 hover:bg-blue-50 font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg text-center"

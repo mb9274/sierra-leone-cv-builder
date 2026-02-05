@@ -64,12 +64,13 @@ const steps = [
   { number: 6, title: "Languages", icon: Globe },
   { number: 7, title: "Certifications", icon: FileText },
   { number: 8, title: "Projects", icon: Code },
-  { number: 9, title: "Volunteering", icon: Heart },
-  { number: 10, title: "Awards", icon: Trophy },
-  { number: 11, title: "Hobbies", icon: Smile },
-  { number: 12, title: "Referees", icon: Users },
-  { number: 13, title: "Profile Photo", icon: User },
-  { number: 14, title: "AI Enhancement", icon: Sparkles },
+  { number: 9, title: "Technical Writing", icon: FileText },
+  { number: 10, title: "Volunteering", icon: Heart },
+  { number: 11, title: "Awards", icon: Trophy },
+  { number: 12, title: "Hobbies", icon: Smile },
+  { number: 13, title: "Referees", icon: Users },
+  { number: 14, title: "Profile Photo", icon: Upload },
+  { number: 15, title: "AI Enhancement", icon: Sparkles },
 ]
 
 const templates = [
@@ -672,7 +673,7 @@ export default function CVBuilderPage() {
   }
 
   const handleNextStep = () => {
-    if (currentStep < 14) {
+    if (currentStep < 15) {
       // Validate fields before moving to the next step
       if (currentStep === 2) {
         validateField("fullName", cvData.personalInfo?.fullName || "")
@@ -704,7 +705,7 @@ export default function CVBuilderPage() {
         }
       }
       setCurrentStep(currentStep + 1)
-    } else if (currentStep === 14) {
+    } else if (currentStep === 15) {
       handleSaveAndContinue()
     }
   }
@@ -2014,8 +2015,227 @@ export default function CVBuilderPage() {
                 </div>
               )}
 
-              {/* Step 12: Referees */}
+              {/* Step 8: Projects */}
+              {currentStep === 8 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.projects && cvData.projects.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Added Projects:</h4>
+                      {cvData.projects.map((proj) => (
+                        <div key={proj.id} className="p-4 bg-muted rounded-lg flex justify-between items-center">
+                          <div>
+                            <p className="font-semibold">{proj.name}</p>
+                            <p className="text-sm text-muted-foreground">{proj.description.substring(0, 100)}...</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCvData(prev => ({ ...prev, projects: prev.projects?.filter(p => p.id !== proj.id) }))}
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold">Add Project</h4>
+                    <div className="space-y-2">
+                      <Label>Project Name</Label>
+                      <Input value={projectForm.name} onChange={e => setProjectForm({ ...projectForm, name: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea value={projectForm.description} onChange={e => setProjectForm({ ...projectForm, description: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Technologies (comma separated)</Label>
+                      <Input value={projectForm.technologies} onChange={e => setProjectForm({ ...projectForm, technologies: e.target.value })} />
+                    </div>
+                    <Button onClick={addProject} className="w-full">Add Project</Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 9: Technical Writing */}
+              {currentStep === 9 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  <div className="text-center space-y-2 mb-4">
+                    <FileText className="size-12 text-primary mx-auto opacity-20" />
+                    <h3 className="text-lg font-bold">Technical Writing & Publications</h3>
+                    <p className="text-sm text-muted-foreground">Add links to articles, blog posts, or documentation you've written.</p>
+                  </div>
+                  {cvData.technicalWriting && cvData.technicalWriting.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Your Publications:</h4>
+                      {cvData.technicalWriting.map((item) => (
+                        <div key={item.id} className="p-4 bg-muted rounded-lg flex justify-between items-center border">
+                          <div>
+                            <p className="font-semibold">{item.title}</p>
+                            <p className="text-sm text-primary">{item.platform}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCvData(prev => ({ ...prev, technicalWriting: prev.technicalWriting?.filter(p => p.id !== item.id) }))}
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="space-y-4 p-4 border rounded-lg bg-card shadow-sm">
+                    <div className="space-y-2">
+                      <Label>Title of Article/Post</Label>
+                      <Input
+                        placeholder="e.g., How to build a React App"
+                        value={writingForm.title}
+                        onChange={e => setWritingForm({ ...writingForm, title: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Platform</Label>
+                        <Input
+                          placeholder="e.g., Medium, Hashnode, Dev.to"
+                          value={writingForm.platform}
+                          onChange={e => setWritingForm({ ...writingForm, platform: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Link</Label>
+                        <Input
+                          placeholder="https://..."
+                          value={writingForm.link}
+                          onChange={e => setWritingForm({ ...writingForm, link: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <Button onClick={addWriting} className="w-full" variant="outline">
+                      <Plus className="size-4 mr-2" />
+                      Add Publication
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 10: Volunteering */}
+              {currentStep === 10 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.volunteering && cvData.volunteering.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Added Volunteering:</h4>
+                      {cvData.volunteering.map((item) => (
+                        <div key={item.id} className="p-4 bg-muted rounded-lg flex justify-between items-center">
+                          <div>
+                            <p className="font-semibold">{item.role}</p>
+                            <p className="text-sm text-muted-foreground">{item.organization}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCvData(prev => ({ ...prev, volunteering: prev.volunteering?.filter(v => v.id !== item.id) }))}
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold">Add Volunteering</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Organization</Label>
+                        <Input value={volForm.organization} onChange={e => setVolForm({ ...volForm, organization: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Role</Label>
+                        <Input value={volForm.role} onChange={e => setVolForm({ ...volForm, role: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea value={volForm.description} onChange={e => setVolForm({ ...volForm, description: e.target.value })} />
+                    </div>
+                    <Button onClick={addVolunteering} className="w-full">Add Volunteering</Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 11: Awards */}
+              {currentStep === 11 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {cvData.awards && cvData.awards.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Added Awards:</h4>
+                      {cvData.awards.map((item) => (
+                        <div key={item.id} className="p-4 bg-muted rounded-lg flex justify-between items-center">
+                          <div>
+                            <p className="font-semibold">{item.name}</p>
+                            <p className="text-sm text-muted-foreground">{item.organization} ({item.year})</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCvData(prev => ({ ...prev, awards: prev.awards?.filter(a => a.id !== item.id) }))}
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-lg">
+                    <h4 className="font-semibold">Add Award</h4>
+                    <div className="space-y-2">
+                      <Label>Award Name</Label>
+                      <Input value={awardForm.name} onChange={e => setAwardForm({ ...awardForm, name: e.target.value })} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Organization</Label>
+                        <Input value={awardForm.organization} onChange={e => setAwardForm({ ...awardForm, organization: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Year</Label>
+                        <Input value={awardForm.year} onChange={e => setAwardForm({ ...awardForm, year: e.target.value })} />
+                      </div>
+                    </div>
+                    <Button onClick={addAward} className="w-full">Add Award</Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 12: Hobbies */}
               {currentStep === 12 && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  <div className="space-y-4">
+                    <Label className="text-lg font-bold">Hobbies & Interests</Label>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {cvData.hobbies?.map((hobby, index) => (
+                        <span key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                          {hobby}
+                          <Trash2 className="size-3 cursor-pointer" onClick={() => setCvData(prev => ({ ...prev, hobbies: prev.hobbies?.filter((_, i) => i !== index) }))} />
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="e.g., Reading, Football, Volunteering"
+                        value={hobbyInput}
+                        onChange={(e) => setHobbyInput(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && addHobby()}
+                      />
+                      <Button onClick={addHobby} type="button">Add</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 13: Referees */}
+              {currentStep === 13 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   <div className="flex items-center space-x-2 mb-4">
                     <Checkbox
@@ -2100,77 +2320,91 @@ export default function CVBuilderPage() {
                             />
                           </div>
                         </div>
+                        <Button type="button" onClick={addReferee} className="w-full" variant="outline">
+                          Add Referee
+                        </Button>
                       </div>
                     </>
                   )}
-
-                  <Button type="button" onClick={addReferee} className="w-full">
-                    <Plus className="size-4 mr-2" />
-                    {refereeForm.availableOnRequest ? "Set Referees as Available on Request" : "Add Referee"}
-                  </Button>
+                  {refereeForm.availableOnRequest && (
+                    <Button type="button" onClick={addReferee} className="w-full">
+                      Set Referees as Available on Request
+                    </Button>
+                  )}
                 </div>
               )}
 
-              {/* Step 13: Profile Photo */}
-              {currentStep === 13 && (
+              {/* Step 14: Profile Photo */}
+              {currentStep === 14 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   <div className="text-center space-y-4">
-                    <div className="w-32 h-32 mx-auto rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-primary">
-                      {profilePhotoPreview ? (
-                        <img
-                          src={profilePhotoPreview || "/placeholder.svg"}
-                          alt="Profile"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="size-16 text-muted-foreground" />
-                      )}
+                    <div className="relative group w-40 h-40 mx-auto">
+                      <div className="w-full h-full rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-primary shadow-xl">
+                        {profilePhotoPreview ? (
+                          <img
+                            src={profilePhotoPreview || "/placeholder.svg"}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="size-20 text-muted-foreground" />
+                        )}
+                      </div>
+                      <Label
+                        htmlFor="photo-upload"
+                        className="absolute bottom-2 right-2 size-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-primary/90 transition-all transform hover:scale-110"
+                      >
+                        <Plus className="size-6" />
+                      </Label>
                     </div>
 
                     <div className="space-y-2">
-                      <h3 className="text-xl font-semibold text-foreground">Add Your Profile Photo</h3>
-                      <p className="text-muted-foreground">
-                        A professional photo helps employers remember you and builds trust.
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+                        Personalize Your CV
+                      </h3>
+                      <p className="text-muted-foreground max-w-sm mx-auto">
+                        A professional photo can increase your chances of being noticed by 21 times!
                       </p>
                     </div>
 
                     <div className="space-y-4 max-w-md mx-auto">
-                      <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary transition-colors">
+                      <div className="border-2 border-dashed border-primary/20 rounded-xl p-8 hover:border-primary/50 transition-all bg-card/50 backdrop-blur-sm group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <Input
                           type="file"
                           accept="image/*"
                           onChange={handlePhotoUpload}
-                          className="cursor-pointer file:hidden"
+                          className="cursor-pointer file:hidden absolute inset-0 opacity-0 z-10"
                           id="photo-upload"
                         />
-                        <Label htmlFor="photo-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                          <Upload className="size-8 text-muted-foreground" />
-                          <p className="text-sm font-medium text-foreground">Click to upload or drag and drop</p>
-                          <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
-                        </Label>
+                        <div className="flex flex-col items-center gap-3 relative z-20">
+                          <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                            <Upload className="size-6 text-primary" />
+                          </div>
+                          <p className="text-sm font-semibold">Click or drag to upload photo</p>
+                          <span className="text-xs text-muted-foreground">JPG, PNG or WEBP (Max 2MB)</span>
+                        </div>
                       </div>
 
-                      <div className="bg-muted p-4 rounded-lg text-left space-y-2">
-                        <h4 className="font-semibold text-sm text-foreground">Photo Tips:</h4>
-                        <ul className="text-xs text-muted-foreground space-y-1">
-                          <li>✓ Use a recent photo with good lighting</li>
-                          <li>✓ Dress professionally (business attire)</li>
-                          <li>✓ Face the camera directly with a neutral or friendly expression</li>
-                          <li>✓ Use a plain background (white or light colored)</li>
-                          <li>✗ Avoid selfies, group photos, or casual pictures</li>
+                      <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg text-left border border-blue-100 dark:border-blue-900/20">
+                        <h4 className="font-bold text-sm text-blue-900 dark:text-blue-300 flex items-center gap-2 mb-2">
+                          <CheckCircle2 className="size-4" />
+                          Professional Photo Tips
+                        </h4>
+                        <ul className="text-xs text-blue-800/70 dark:text-blue-400/70 space-y-1.5 ml-6 list-disc">
+                          <li>Use a clear, high-quality headshot</li>
+                          <li>Ensure good lighting and a plain background</li>
+                          <li>Wear appropriate professional attire</li>
+                          <li>Smile and look directly at the camera</li>
                         </ul>
                       </div>
-
-                      <p className="text-xs text-muted-foreground italic">
-                        Optional: You can skip this step and add a photo later
-                      </p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Step 14: AI Enhancement */}
-              {currentStep === 14 && (
+              {/* Step 15: AI Enhancement */}
+              {currentStep === 15 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
                   <div className="text-center space-y-4">
                     <div className="inline-flex items-center justify-center size-20 rounded-full bg-primary/10 mb-4">

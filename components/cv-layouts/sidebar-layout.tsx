@@ -254,6 +254,25 @@ export function SidebarLayout({ cvData, theme, isEditing, editedData, onEdit }: 
                     </div>
                 </div>
 
+                {data.technicalWriting && data.technicalWriting.length > 0 && (
+                    <div className="mb-10">
+                        <h2 className={`text-lg font-bold uppercase tracking-widest ${theme.primary} mb-6 flex items-center gap-2`}>
+                            <span className={`w-8 h-1 ${theme.accent} inline-block rounded-full`}></span> Technical Writing
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {data.technicalWriting.map((item) => (
+                                <div key={item.id} className="p-4 border rounded-xl bg-slate-50/30 hover:bg-slate-50 transition-all group">
+                                    <h3 className="font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors">{item.title}</h3>
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="font-semibold text-slate-500">{item.platform}</span>
+                                        <span className="text-[9px] text-primary italic truncate max-w-[100px]">{item.link}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
                     <div>
                         <h2 className={`text-md font-bold uppercase tracking-widest ${theme.primary} mb-6 flex items-center gap-2`}>
