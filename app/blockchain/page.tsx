@@ -35,9 +35,13 @@ export default function BlockchainPage() {
     }
 
     // Load CV data from localStorage
-    const cvs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-    if (cvs.length > 0) {
-      setCvData(cvs[0]) // Use first CV
+    try {
+      const cvs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
+      if (cvs.length > 0) {
+        setCvData(cvs[0]) // Use first CV
+      }
+    } catch (e) {
+      console.error("[v0] Failed to parse CVs:", e)
     }
   }, [])
 

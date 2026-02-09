@@ -1,17 +1,4 @@
-interface CVData {
-  personalInfo: {
-    summary: string
-  }
-  skills: string[]
-  experience: {
-    description: string
-  }[]
-}
-
-interface Job {
-  requirements: string[]
-  matchScore?: number
-}
+import type { CVData, Job } from "./types"
 
 export const getAISuggestions = {
   summary: (education: string, experience: string) => {
@@ -67,10 +54,10 @@ export const getAISuggestions = {
 export const scanCVForJobs = (cv: CVData, jobs: Job[]): Job[] => {
   return jobs
     .map((job) => {
-      let score = 0
-      const cvText = `${cv.personalInfo.summary} ${cv.skills.join(" ")} ${cv.experience.map((e) => e.description).join(" ")}`
+      const cvText = `${cv.personalInfo.summary || ""} ${cv.skills.join(" ")} ${cv.experience.map((e) => e.description || "").join(" ")}`
 
       // Simple keyword matching
+      let score = 0
       job.requirements.forEach((req) => {
         if (cvText.toLowerCase().includes(req.toLowerCase())) {
           score += 20

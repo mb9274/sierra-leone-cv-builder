@@ -109,7 +109,7 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent>
                 <a
-                  href="https://www.google.com/maps/place/Christex+Foundation/@8.480330"
+                  href="https://www.google.com/maps/place/Christex+Foundation/@8.4803307,-13.2222846,17z/data=!3m1!4b1!4m6!3m5!1s0xf04c395e1620bd5:0x80b0034ae8b982d8!8m2!3d8.4803307!4d-13.2222846!16s%2Fg%2F11v0mvnt_l?entry=ttu&g_ep=EgoyMDI2MDEyNS4wIKXMDSoASAFQAw%3D%3D"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block group"

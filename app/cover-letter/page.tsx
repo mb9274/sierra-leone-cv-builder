@@ -145,7 +145,7 @@ export default function CoverLetterPage() {
                                     <SelectContent>
                                         {cvs.map((cv) => (
                                             <SelectItem key={cv.id} value={cv.id}>
-                                                {cv.personalInfo.fullName} - {cv.personalInfo.summary.substring(0, 30)}...
+                                                {cv.personalInfo.fullName} - {cv.personalInfo.summary?.substring(0, 30)}...
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

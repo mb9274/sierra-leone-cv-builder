@@ -15,7 +15,12 @@ export default function ApplicationsPage() {
   useEffect(() => {
     const savedApplications = localStorage.getItem("job_applications")
     if (savedApplications) {
-      setApplications(JSON.parse(savedApplications))
+      try {
+        setApplications(JSON.parse(savedApplications))
+      } catch (e) {
+        console.error("[v0] Failed to parse job applications:", e)
+        setApplications([])
+      }
     }
   }, [])
 

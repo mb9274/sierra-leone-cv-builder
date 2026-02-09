@@ -51,7 +51,7 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
         fullName: cv.personalInfo.fullName,
         email: cv.personalInfo.email,
         phone: cv.personalInfo.phone,
-        location: cv.personalInfo.location,
+        location: cv.personalInfo.location || "",
       }))
     }
   })
@@ -172,9 +172,8 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center gap-2 flex-1">
                 <div
-                  className={`flex items-center justify-center size-8 rounded-full font-semibold ${
-                    step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}
+                  className={`flex items-center justify-center size-8 rounded-full font-semibold ${step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    }`}
                 >
                   {s}
                 </div>

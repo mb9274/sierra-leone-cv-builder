@@ -67,11 +67,11 @@ export function analyzeCVScore(cvData: CVData) {
   if (cvData.skills.length >= 5) atsScore += 15
 
   // Tone Score
-  if (cvData.summary && cvData.summary.length > 50) toneScore += 20
+  if (cvData.personalInfo.summary && cvData.personalInfo.summary.length > 50) toneScore += 20
   if (cvData.experience.some((exp) => exp.description && exp.description.length > 100)) toneScore += 20
 
   // Grammar Score
-  if (cvData.summary && !cvData.summary.match(/\b(i|me|my)\b/i)) grammarScore += 10
+  if (cvData.personalInfo.summary && !cvData.personalInfo.summary.match(/\b(i|me|my)\b/i)) grammarScore += 10
   if (cvData.experience.length > 0) grammarScore += 20
 
   // Match Score
@@ -132,7 +132,7 @@ export function analyzeCVScore(cvData: CVData) {
 
 // Generate interview questions
 export function generateInterviewQuestions(cvData: CVData) {
-  const role = cvData.experience[0]?.role || "this position"
+  const role = cvData.experience[0]?.position || "this position"
   const field = cvData.education[0]?.fieldOfStudy || "your field"
 
   return {

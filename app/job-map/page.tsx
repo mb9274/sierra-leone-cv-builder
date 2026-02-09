@@ -13,16 +13,16 @@ import { Toaster } from "@/components/ui/toaster"
 
 // Mock locations for Sierra Leone districts
 const jobLocations = [
-  { jobId: "job-1", lat: 8.4657, lng: -13.2317, district: "Western Area", address: "Tower Hill, Freetown" },
-  { jobId: "job-2", lat: 8.4845, lng: -13.2344, district: "Western Area", address: "Wilkinson Road, Freetown" },
-  { jobId: "job-3", lat: 7.9465, lng: -12.5211, district: "Bo", address: "City Center, Bo" },
-  { jobId: "job-4", lat: 8.8899, lng: -12.0499, district: "Makeni", address: "Main Street, Makeni" },
-  { jobId: "job-5", lat: 8.4871, lng: -13.2372, district: "Western Area", address: "Siaka Stevens Street, Freetown" },
-  { jobId: "job-6", lat: 8.4234, lng: -13.1794, district: "Western Area", address: "Wilberforce, Freetown" },
-  { jobId: "job-7", lat: 7.9465, lng: -12.5211, district: "Bo", address: "Government Road, Bo" },
-  { jobId: "job-8", lat: 8.8899, lng: -12.0499, district: "Makeni", address: "Agricultural Center, Makeni" },
+  { jobId: "1", lat: 8.4657, lng: -13.2317, district: "Western Area", address: "Tower Hill, Freetown" },
+  { jobId: "2", lat: 8.4845, lng: -13.2344, district: "Western Area", address: "Wilkinson Road, Freetown" },
+  { jobId: "3", lat: 7.9465, lng: -12.5211, district: "Bo", address: "City Center, Bo" },
+  { jobId: "4", lat: 8.8899, lng: -12.0499, district: "Makeni", address: "Main Street, Makeni" },
+  { jobId: "5", lat: 8.4871, lng: -13.2372, district: "Western Area", address: "Siaka Stevens Street, Freetown" },
+  { jobId: "6", lat: 8.4234, lng: -13.1794, district: "Western Area", address: "Wilberforce, Freetown" },
+  { jobId: "7", lat: 7.9465, lng: -12.5211, district: "Bo", address: "Government Road, Bo" },
+  { jobId: "8", lat: 8.8899, lng: -12.0499, district: "Makeni", address: "Agricultural Center, Makeni" },
   {
-    jobId: "job-9",
+    jobId: "9",
     lat: 8.4657,
     lng: -13.2317,
     district: "Western Area",
@@ -81,9 +81,9 @@ export default function JobMapPage() {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((userLocation.lat * Math.PI) / 180) *
-        Math.cos((jobLoc.lat * Math.PI) / 180) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2)
+      Math.cos((jobLoc.lat * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     const distance = R * c
 
@@ -190,15 +190,13 @@ export default function JobMapPage() {
                     <button
                       key={job.id}
                       onClick={() => setSelectedJob(job)}
-                      className={`absolute size-8 -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-125 ${
-                        selectedJob?.id === job.id ? "scale-150" : ""
-                      }`}
+                      className={`absolute size-8 -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-125 ${selectedJob?.id === job.id ? "scale-150" : ""
+                        }`}
                       style={{ left: `${x}%`, top: `${y}%` }}
                     >
                       <MapPin
-                        className={`size-8 ${
-                          selectedJob?.id === job.id ? "text-[#4CAF50]" : "text-primary"
-                        } drop-shadow-lg`}
+                        className={`size-8 ${selectedJob?.id === job.id ? "text-[#4CAF50]" : "text-primary"
+                          } drop-shadow-lg`}
                         fill="currentColor"
                       />
                     </button>
@@ -230,11 +228,10 @@ export default function JobMapPage() {
                 return (
                   <Card
                     key={job.id}
-                    className={`cursor-pointer transition-all border-2 ${
-                      selectedJob?.id === job.id
+                    className={`cursor-pointer transition-all border-2 ${selectedJob?.id === job.id
                         ? "border-[#4CAF50] shadow-lg"
                         : "border-[#4CAF50]/20 hover:border-[#4CAF50]/50"
-                    }`}
+                      }`}
                     onClick={() => setSelectedJob(job)}
                   >
                     <CardHeader>

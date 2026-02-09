@@ -97,16 +97,14 @@ export function SuccessStoriesCarousel() {
         {successStories.map((story, index) => (
           <div
             key={story.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentIndex ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentIndex ? "opacity-100" : "opacity-0"
+              }`}
           >
             <Image
               src={story.image || "/placeholder.svg"}
               alt={story.title}
               fill
               className="object-cover"
-              query={story.query}
             />
             {/* Overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
@@ -144,9 +142,8 @@ export function SuccessStoriesCarousel() {
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
-              className={`h-2 rounded-full transition-all ${
-                index === currentIndex ? "w-8 bg-white" : "w-2 bg-white/50"
-              }`}
+              className={`h-2 rounded-full transition-all ${index === currentIndex ? "w-8 bg-white" : "w-2 bg-white/50"
+                }`}
               aria-label={`Go to story ${index + 1}`}
             />
           ))}

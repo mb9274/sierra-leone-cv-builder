@@ -106,9 +106,14 @@ export default function PreviewPage() {
   useEffect(() => {
     const savedCV = localStorage.getItem("cvbuilder_current")
     if (savedCV) {
-      const data = JSON.parse(savedCV)
-      setCvData(data)
-      setEditedData(data)
+      try {
+        const data = JSON.parse(savedCV)
+        setCvData(data)
+        setEditedData(data)
+      } catch (e) {
+        console.error("[v0] Failed to parse current CV:", e)
+        router.push("/builder")
+      }
     } else {
       router.push("/builder")
     }
@@ -119,11 +124,21 @@ export default function PreviewPage() {
       setSaving(true)
       localStorage.setItem("cvbuilder_current", JSON.stringify(editedData))
 
-      const savedCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
+      let savedCVs = []
+      try {
+        savedCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
+      } catch (e) {
+        console.error("[v0] Failed to parse saved CVs:", e)
+      }
+
       const index = savedCVs.findIndex((cv: CVData) => cv.id === editedData.id)
       if (index !== -1) {
         savedCVs[index] = editedData
-        localStorage.setItem("cvbuilder_cvs", JSON.stringify(savedCVs))
+        try {
+          localStorage.setItem("cvbuilder_cvs", JSON.stringify(savedCVs))
+        } catch (e) {
+          console.error("[v0] Failed to save CVs to localStorage:", e)
+        }
       }
 
       setCvData(editedData)

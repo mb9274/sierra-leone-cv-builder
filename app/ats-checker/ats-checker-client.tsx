@@ -63,13 +63,21 @@ export default function ATSCheckerClient() {
     // Load current CV from preview
     const currentCV = localStorage.getItem("cvbuilder_current")
     if (currentCV) {
-      setCvData(JSON.parse(currentCV))
+      try {
+        setCvData(JSON.parse(currentCV))
+      } catch (e) {
+        console.error("[v0] Failed to parse current CV:", e)
+      }
     }
 
     // Load all saved CVs
     const allCVs = localStorage.getItem("cvbuilder_cvs")
     if (allCVs) {
-      setSavedCVs(JSON.parse(allCVs))
+      try {
+        setSavedCVs(JSON.parse(allCVs))
+      } catch (e) {
+        console.error("[v0] Failed to parse saved CVs:", e)
+      }
     }
   }, [])
 
@@ -194,7 +202,7 @@ export default function ATSCheckerClient() {
           "reduced",
           "achieved",
         ]
-        const hasActionVerbs = actionVerbs.some((verb) => exp.description.toLowerCase().includes(verb))
+        const hasActionVerbs = actionVerbs.some((verb) => exp.description?.toLowerCase().includes(verb))
 
         if (!hasActionVerbs) {
           improvements.push(`Use action verbs in ${exp.position} description (e.g., Led, Managed, Developed)`)
@@ -625,9 +633,8 @@ export default function ATSCheckerClient() {
                       {savedCVs.map((cv) => (
                         <Card
                           key={cv.id}
-                          className={`cursor-pointer transition-all hover:border-blue-500 ${
-                            selectedCV === cv.id ? "border-blue-500 bg-blue-50" : ""
-                          }`}
+                          className={`cursor-pointer transition-all hover:border-blue-500 ${selectedCV === cv.id ? "border-blue-500 bg-blue-50" : ""
+                            }`}
                           onClick={() => handleSelectCV(cv.id)}
                         >
                           <CardContent className="pt-6">
@@ -773,11 +780,10 @@ export default function ATSCheckerClient() {
                           {result.issues.map((issue, idx) => (
                             <div
                               key={idx}
-                              className={`p-4 rounded-lg ${
-                                issue.type === "error"
-                                  ? "bg-red-50 border border-red-200"
-                                  : "bg-yellow-50 border border-yellow-200"
-                              }`}
+                              className={`p-4 rounded-lg ${issue.type === "error"
+                                ? "bg-red-50 border border-red-200"
+                                : "bg-yellow-50 border border-yellow-200"
+                                }`}
                             >
                               <div className="flex items-start gap-3">
                                 {issue.type === "error" ? (
@@ -1018,11 +1024,10 @@ export default function ATSCheckerClient() {
                           {testResult.issues.map((issue: any, idx: number) => (
                             <div
                               key={idx}
-                              className={`p-4 rounded-lg ${
-                                issue.type === "error"
-                                  ? "bg-red-50 border border-red-200"
-                                  : "bg-yellow-50 border border-yellow-200"
-                              }`}
+                              className={`p-4 rounded-lg ${issue.type === "error"
+                                ? "bg-red-50 border border-red-200"
+                                : "bg-yellow-50 border border-yellow-200"
+                                }`}
                             >
                               <div className="flex items-start gap-3">
                                 {issue.type === "error" ? (

@@ -33,8 +33,18 @@ export default function CVScorePage() {
   useEffect(() => {
     const savedCV = localStorage.getItem("cvbuilder_current")
     if (savedCV) {
-      const cvData = JSON.parse(savedCV)
-      setCv(cvData)
+      try {
+        const cvData = JSON.parse(savedCV)
+        setCv(cvData)
+      } catch (e) {
+        console.error("[v0] Failed to parse current CV:", e)
+        toast({
+          title: "Error Loading CV",
+          description: "The saved CV data is invalid. Returning to dashboard.",
+          variant: "destructive",
+        })
+        router.push("/dashboard")
+      }
     } else {
       toast({
         title: "No CV Found",

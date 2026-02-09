@@ -251,7 +251,11 @@ export default function CVBuilderPage() {
     // Load preferences from onboarding
     const savedPrefs = localStorage.getItem("cvbuilder_preferences")
     if (savedPrefs) {
-      setPreferences(JSON.parse(savedPrefs))
+      try {
+        setPreferences(JSON.parse(savedPrefs))
+      } catch (e) {
+        console.error("[v0] Failed to load preferences:", e)
+      }
     }
   }, [])
 
@@ -348,7 +352,11 @@ export default function CVBuilderPage() {
     const autoSave = setTimeout(() => {
       if (cvData && Object.keys(cvData).length > 0) {
         setSaving(true)
-        localStorage.setItem("cvbuilder_current", JSON.stringify(cvData))
+        try {
+          localStorage.setItem("cvbuilder_current", JSON.stringify(cvData))
+        } catch (e) {
+          console.error("[v0] Auto-save failed:", e)
+        }
         setTimeout(() => {
           setSaving(false)
         }, 500)
@@ -554,8 +562,8 @@ export default function CVBuilderPage() {
 
     setSaving(true)
 
-    const verificationId = `CV${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`
-    const cvId = Date.now().toString()
+    const verificationId = cvData.verificationId || `CV${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`
+    const cvId = cvData.id || Date.now().toString()
     const completedPersonalInfo = {
       ...DEFAULT_PERSONAL_INFO,
       ...(cvData.personalInfo || {}),
@@ -572,13 +580,39 @@ export default function CVBuilderPage() {
       createdAt: (cvData as any).createdAt || new Date(),
       updatedAt: new Date(),
       verificationId,
-      verifiedAt: new Date().toISOString(),
+      verifiedAt: cvData.verifiedAt || new Date().toISOString(),
     } as CVData
 
-    const existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-    existingCVs.push(cvToSave)
-    localStorage.setItem("cvbuilder_cvs", JSON.stringify(existingCVs))
-    localStorage.setItem("cvbuilder_current", JSON.stringify(cvToSave))
+    try {
+      // Save to localStorage
+      let existingCVs = []
+      try {
+        existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
+      } catch (e) {
+        console.error("[v0] Failed to parse existing CVs:", e)
+      }
+
+      const index = existingCVs.findIndex((c: any) => c.id === cvId)
+      if (index !== -1) {
+        existingCVs[index] = cvToSave
+      } else {
+        existingCVs.push(cvToSave)
+      }
+
+      localStorage.setItem("cvbuilder_cvs", JSON.stringify(existingCVs))
+      localStorage.setItem("cvbuilder_current", JSON.stringify(cvToSave))
+    } catch (e) {
+      console.error("[v0] Failed to save CV to localStorage:", e)
+      if (e instanceof Error && e.name === "QuotaExceededError") {
+        toast({
+          title: "Storage Limit Exceeded",
+          description: "Your browser's storage is full. Please delete some old CVs from your dashboard to save this one.",
+          variant: "destructive",
+        })
+        setSaving(false)
+        return
+      }
+    }
 
     try {
       if (cvData.personalInfo?.email) {
@@ -635,10 +669,34 @@ export default function CVBuilderPage() {
     } as CVData
 
     // Save to localStorage
-    const existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-    existingCVs.push(completedCV)
-    localStorage.setItem("cvbuilder_cvs", JSON.stringify(existingCVs))
-    localStorage.setItem("cvbuilder_current", JSON.stringify(completedCV))
+    try {
+      let existingCVs = []
+      try {
+        existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
+      } catch (e) {
+        console.error("[v0] Failed to parse existing CVs:", e)
+      }
+
+      const index = existingCVs.findIndex((c: any) => c.id === completedCV.id)
+      if (index !== -1) {
+        existingCVs[index] = completedCV
+      } else {
+        existingCVs.push(completedCV)
+      }
+
+      localStorage.setItem("cvbuilder_cvs", JSON.stringify(existingCVs))
+      localStorage.setItem("cvbuilder_current", JSON.stringify(completedCV))
+    } catch (e) {
+      console.error("[v0] Failed to save CV to localStorage:", e)
+      if (e instanceof Error && e.name === "QuotaExceededError") {
+        toast({
+          title: "Storage Limit Exceeded",
+          description: "Your browser's storage is full. Please delete some old CVs from your dashboard to save this one.",
+          variant: "destructive",
+        })
+        return
+      }
+    }
 
     try {
       if (cvData.personalInfo?.email) {
@@ -2489,7 +2547,7 @@ export default function CVBuilderPage() {
               )}
 
               {/* Navigation Buttons */}
-              {currentStep < 14 && (
+              {currentStep < 15 && (
                 <div className="flex gap-4 pt-4">
                   {currentStep > 1 && (
                     <Button onClick={handlePreviousStep} variant="outline" className="flex-1 bg-transparent">
