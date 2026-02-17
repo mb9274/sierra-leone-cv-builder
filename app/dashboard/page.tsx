@@ -18,6 +18,7 @@ import {
   Building2,
   FileSearch,
   Phone,
+  Landmark,
 } from "lucide-react"
 import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
@@ -168,6 +169,14 @@ export default function DashboardPage() {
             >
               <Phone className="mr-2 size-4" />
               Contact Us
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push("/services")}
+              className="border-[#4CAF50]/40 bg-gradient-to-r from-[#F5F9F5] to-white hover:from-[#E8F5E9] hover:to-[#F5F9F5]"
+            >
+              <Landmark className="mr-2 size-4" />
+              Citizens Services
             </Button>
           </div>
         </div>
@@ -376,6 +385,17 @@ export default function DashboardPage() {
                 <Phone className="size-10 text-green-600 mb-4" />
                 <h3 className="text-xl font-bold text-foreground mb-2">Contact Us</h3>
                 <p className="text-muted-foreground">Get help with CV building, jobs, or learning resources.</p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="border-2 border-[#4CAF50]/40 hover:border-[#4CAF50] transition-colors cursor-pointer bg-gradient-to-br from-[#F5F9F5] to-white shadow-sm hover:shadow-md"
+              onClick={() => router.push("/services")}
+            >
+              <CardContent className="pt-6">
+                <Landmark className="size-10 text-[#4CAF50] mb-4" />
+                <h3 className="text-xl font-bold text-foreground mb-2">Citizens Services</h3>
+                <p className="text-muted-foreground">Access community and health services across Sierra Leone.</p>
               </CardContent>
             </Card>
           </div>

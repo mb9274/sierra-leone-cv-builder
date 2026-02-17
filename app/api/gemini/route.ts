@@ -148,23 +148,31 @@ RETURN ONLY VALID JSON:
       let generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
       // Clean up markdown code blocks if present
-      if (generatedText.includes("```json")) {
-        generatedText = generatedText.split("```json")[1].split("```")[0]
-      } else if (generatedText.includes("```")) {
-        generatedText = generatedText.split("```")[1].split("```")[0]
+      let jsonString = generatedText.trim()
+      if (jsonString.includes("```json")) {
+        jsonString = jsonString.split("```json")[1].split("```")[0].trim()
+      } else if (jsonString.includes("```")) {
+        jsonString = jsonString.split("```")[1].split("```")[0].trim()
+      }
+
+      // Final attempt to clean up any leading/trailing non-JSON characters
+      if (jsonString.includes("{")) {
+        jsonString = jsonString.substring(jsonString.indexOf("{"), jsonString.lastIndexOf("}") + 1)
       }
 
       // Try to parse JSON response
       try {
-        const enhancedData = JSON.parse(generatedText.trim())
+        const enhancedData = JSON.parse(jsonString)
         return NextResponse.json(enhancedData)
       } catch (e) {
-        console.error("[v0] JSON parsing error:", e, generatedText)
-        // If not valid JSON, return as is
+        console.error("[v0] JSON parsing error:", e, jsonString)
+        // If not valid JSON, but has something that looks like a summary, try to extract it
+        const summaryMatch = generatedText.match(/"summary":\s*"([^"]*)"/)
         return NextResponse.json({
-          summary: generatedText.split("\n")[0],
-          experience: cvData.experience,
-          skills: cvData.skills,
+          summary: summaryMatch ? summaryMatch[1] : generatedText.split("\n")[0].substring(0, 200),
+          experience: cvData.experience || [],
+          skills: cvData.skills || [],
+          fallback: true,
         })
       }
     } else if (action === "generate_cover_letter") {
