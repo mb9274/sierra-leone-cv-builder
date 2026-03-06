@@ -37,6 +37,11 @@ export interface CVData {
     achievements?: string
   }>
   skills: string[]
+  links?: Array<{
+    id: string
+    label: string
+    url: string
+  }>
   languages: Array<{
     language: string
     proficiency: string
@@ -89,6 +94,19 @@ export interface CVData {
   availability?: string
   createdAt: Date
   updatedAt: Date
+  styles?: Record<string, {
+    fontSize?: string;
+    fontWeight?: string;
+    fontFamily?: string;
+    color?: string;
+    textAlign?: "left" | "center" | "right" | "justify";
+    lineHeight?: string;
+    letterSpacing?: string;
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    strike?: boolean;
+  }>
 }
 
 export interface Job {

@@ -9,63 +9,63 @@ const successStories = [
     id: 1,
     title: "Creating First CV",
     description: "A final-year student created her first CV with our easy builder",
-    image: "/success-story-creating-cv.jpg",
+    image: "/success_face_1.png",
     query: "African female student happily creating CV on laptop smiling",
   },
   {
     id: 2,
     title: "Passed ATS Screening",
     description: "She passed ATS screening with flying colors",
-    image: "/success-story-ats-pass.jpg",
+    image: "/success_face_2.png",
     query: "African woman celebrating CV passing ATS scan on computer screen",
   },
   {
     id: 3,
     title: "Got Interview Call",
     description: "She got an interview call within days",
-    image: "/success-story-interview-call.jpg",
+    image: "/success_face_3.png",
     query: "Happy African woman on phone call getting job interview news",
   },
   {
     id: 4,
     title: "CV Improved with AI",
     description: "A graduate improved his CV with AI suggestions",
-    image: "/success-story-ai-improvement.jpg",
+    image: "/success_face_1.png",
     query: "African male graduate using AI to improve CV on laptop",
   },
   {
     id: 5,
     title: "Added Right Skills",
     description: "He added the right skills that employers look for",
-    image: "/success-story-adding-skills.jpg",
+    image: "/success_face_2.png",
     query: "African man typing skills into CV builder looking confident",
   },
   {
     id: 6,
     title: "Got Shortlisted",
     description: "He got shortlisted for multiple positions",
-    image: "/success-story-shortlisted.jpg",
+    image: "/success_face_3.png",
     query: "Happy African man reading job shortlist email on phone",
   },
   {
     id: 7,
     title: "Applied with Confidence",
     description: "A job seeker applied with confidence",
-    image: "/success-story-confident-apply.jpg",
+    image: "/success_face_1.png",
     query: "Confident African professional submitting job application",
   },
   {
     id: 8,
     title: "Professional CV",
     description: "His CV looked professional and impressive",
-    image: "/success-story-professional-cv.jpg",
+    image: "/success_face_2.png",
     query: "African man holding professional looking CV document proudly",
   },
   {
     id: 9,
     title: "Found Work Faster",
     description: "He found work faster than expected",
-    image: "/success-story-got-job.jpg",
+    image: "/success_face_3.png",
     query: "Celebrating African professional shaking hands at new job",
   },
 ]
@@ -104,7 +104,7 @@ export function SuccessStoriesCarousel() {
               src={story.image || "/placeholder.svg"}
               alt={story.title}
               fill
-              className="object-cover"
+              className="object-cover object-center"
             />
             {/* Overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
@@ -112,7 +112,7 @@ export function SuccessStoriesCarousel() {
             {/* Story text overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
               <div className="space-y-2">
-                <div className="text-sm font-semibold text-green-300 tracking-wide">Step {story.id} of 9</div>
+                <div className="text-sm font-semibold text-primary tracking-wide">Step {story.id} of 9</div>
                 <h3 className="text-3xl font-bold">{story.title}</h3>
                 <p className="text-lg text-white/90">{story.description}</p>
               </div>

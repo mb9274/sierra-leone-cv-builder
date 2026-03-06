@@ -22,9 +22,39 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
 
+  const isDemoAuthEnabled = () => process.env.NEXT_PUBLIC_DEMO_AUTH === "true"
+
+  const isSupabaseConfigured = () => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    return !!(url && key && url !== "https://placeholder.supabase.co" && key !== "placeholder-key")
+  }
+
+  const signInWithDemoFallback = (provider: "email" | "google") => {
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        id: Date.now().toString(),
+        email: provider === "email" ? email : "demo@gmail.com",
+        name: provider === "email" ? (email.split("@")[0] || "Demo User") : "Demo User",
+        provider,
+        loggedIn: true,
+        demo: true,
+      }),
+    )
+    router.push("/dashboard")
+    router.refresh()
+  }
+
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true)
     setError(null)
+
+    if (!isSupabaseConfigured()) {
+      signInWithDemoFallback("google")
+      setIsGoogleLoading(false)
+      return
+    }
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -33,38 +63,13 @@ export default function LoginPage() {
           redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
         },
       })
-
-      if (error) {
-        // If Supabase OAuth fails, use localStorage fallback
-        console.log("[v0] Supabase OAuth not configured, using localStorage")
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: Date.now().toString(),
-            email: "demo@gmail.com",
-            name: "Demo User",
-            provider: "google",
-            loggedIn: true,
-          }),
-        )
-        router.push("/dashboard")
-        router.refresh()
+      if (error) throw error
+    } catch (e: any) {
+      if (isDemoAuthEnabled()) {
+        signInWithDemoFallback("google")
+      } else {
+        setError(e?.message || "Google sign-in failed")
       }
-    } catch (error: unknown) {
-      console.log("[v0] OAuth error, using localStorage fallback", error)
-      // Fallback to localStorage if Supabase not configured
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: Date.now().toString(),
-          email: "demo@gmail.com",
-          name: "Demo User",
-          provider: "google",
-          loggedIn: true,
-        }),
-      )
-      router.push("/dashboard")
-      router.refresh()
     } finally {
       setIsGoogleLoading(false)
     }
@@ -74,6 +79,12 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+
+    if (!isSupabaseConfigured()) {
+      signInWithDemoFallback("email")
+      setIsLoading(false)
+      return
+    }
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -85,39 +96,30 @@ export default function LoginPage() {
 
       router.push("/dashboard")
       router.refresh()
-    } catch (error: unknown) {
-      console.log("[v0] Supabase login failed, using localStorage fallback", error)
-      // Fallback: Use localStorage for demo purposes
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: Date.now().toString(),
-          email: email,
-          name: email.split("@")[0],
-          provider: "email",
-          loggedIn: true,
-        }),
-      )
-      router.push("/dashboard")
-      router.refresh()
+    } catch (e: any) {
+      if (isDemoAuthEnabled()) {
+        signInWithDemoFallback("email")
+      } else {
+        setError(e?.message || "Sign-in failed")
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-blue-50 via-yellow-50 to-green-50 p-6">
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-6">
       <div className="w-full max-w-md">
-        <Card>
+        <Card className="bg-card border-border">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
-            <CardDescription className="text-center">Login to continue building your CV</CardDescription>
+            <CardTitle className="text-2xl font-bold text-center text-foreground">Welcome Back</CardTitle>
+            <CardDescription className="text-center text-muted-foreground">Login to continue building your CV</CardDescription>
           </CardHeader>
           <CardContent>
             <Button
               type="button"
               variant="outline"
-              className="w-full mb-4 bg-transparent"
+              className="w-full mb-4 bg-transparent border-border hover:bg-muted/50"
               onClick={handleGoogleLogin}
               disabled={isGoogleLoading}
             >
@@ -147,7 +149,7 @@ export default function LoginPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">Or continue with email</span>
+                <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
               </div>
             </div>
 
@@ -173,15 +175,15 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              {error && <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg text-sm">{error}</div>}
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
                 <LogIn className="mr-2 h-4 w-4" />
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
             </form>
-            <div className="mt-4 text-center text-sm">
-              Don't have an account?{" "}
-              <Link href="/auth/sign-up" className="text-blue-600 hover:underline font-semibold">
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">
                 Sign up
               </Link>
             </div>

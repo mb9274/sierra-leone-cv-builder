@@ -1,20 +1,29 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Eye, Edit, User } from "lucide-react"
 import type { CVData } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [cvs, setCvs] = useState<CVData[]>([])
   const [userInfo, setUserInfo] = useState({ name: "", email: "" })
+  const [avatarDataUrl, setAvatarDataUrl] = useState<string>("")
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     const savedCvs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
     setCvs(savedCvs)
+
+    const savedAvatar = localStorage.getItem("profile_avatar")
+    if (savedAvatar) {
+      setAvatarDataUrl(savedAvatar)
+    }
 
     if (savedCvs.length > 0) {
       setUserInfo({
@@ -24,14 +33,60 @@ export default function ProfilePage() {
     }
   }, [])
 
+  const handlePickAvatar = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleAvatarSelected = (file: File | null) => {
+    if (!file) return
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid File",
+        description: "Please select an image file.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : ""
+      if (!result) return
+      try {
+        localStorage.setItem("profile_avatar", result)
+      } catch {}
+      setAvatarDataUrl(result)
+      toast({
+        title: "Profile Photo Updated",
+        description: "Your profile image has been saved.",
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveAvatar = () => {
+    try {
+      localStorage.removeItem("profile_avatar")
+    } catch {}
+    setAvatarDataUrl("")
+    toast({
+      title: "Profile Photo Removed",
+      description: "Your profile image has been removed.",
+    })
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Card className="mb-8">
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="size-8 text-primary" />
+              <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                {avatarDataUrl ? (
+                  <img src={avatarDataUrl} alt="Profile" className="size-full object-cover" />
+                ) : (
+                  <User className="size-8 text-primary" />
+                )}
               </div>
               <div>
                 <CardTitle className="text-2xl">{userInfo.name || "User Profile"}</CardTitle>
@@ -40,6 +95,24 @@ export default function ProfilePage() {
             </div>
           </CardHeader>
           <CardContent>
+            <div className="flex flex-wrap gap-2 mb-6">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleAvatarSelected(e.target.files?.[0] || null)}
+              />
+              <Button variant="outline" onClick={handlePickAvatar}>
+                {avatarDataUrl ? "Change Photo" : "Upload Photo"}
+              </Button>
+              {avatarDataUrl && (
+                <Button variant="outline" onClick={handleRemoveAvatar}>
+                  Remove Photo
+                </Button>
+              )}
+            </div>
+
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-foreground">{cvs.length}</p>
@@ -67,7 +140,7 @@ export default function ProfilePage() {
               <div className="text-center py-12">
                 <FileText className="size-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">No CVs created yet</p>
-                <Button onClick={() => router.push("/templates")}>Create Your First CV</Button>
+                <Button onClick={() => router.push("/builder")}>Create Your First CV</Button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -86,10 +159,24 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => router.push("/preview")}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          localStorage.setItem("cvbuilder_current", JSON.stringify(cv))
+                          router.push("/preview")
+                        }}
+                      >
                         <Eye className="size-4" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => router.push("/builder")}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          localStorage.setItem("cvbuilder_current", JSON.stringify(cv))
+                          router.push("/builder")
+                        }}
+                      >
                         <Edit className="size-4" />
                       </Button>
                     </div>

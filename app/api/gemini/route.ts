@@ -145,7 +145,7 @@ RETURN ONLY VALID JSON:
       }
 
       const data = await response.json()
-      let generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
       // Clean up markdown code blocks if present
       let jsonString = generatedText.trim()

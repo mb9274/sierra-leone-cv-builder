@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,6 +13,20 @@ export default function OnboardingPage() {
   const router = useRouter()
   const [jobRole, setJobRole] = useState("")
   const [experienceLevel, setExperienceLevel] = useState("")
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const userStr = localStorage.getItem("user")
+        const user = userStr ? JSON.parse(userStr) : null
+        if (!user?.loggedIn) {
+          router.replace("/auth/sign-in")
+        }
+      } catch {
+        router.replace("/auth/sign-in")
+      }
+    }
+  }, [router])
 
   const handleStart = () => {
     if (jobRole && experienceLevel) {

@@ -1,8 +1,9 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Chatbot } from "@/components/chatbot"
-import { MobileNav } from "@/components/mobile-nav"
+import { AppFrame } from "@/components/app-frame"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -28,6 +29,8 @@ export const metadata: Metadata = {
   },
 }
 
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,9 +38,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">
-        <MobileNav />
-        {children}
+      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
+        <AppFrame>{children}</AppFrame>
         <Chatbot />
         <Analytics />
       </body>

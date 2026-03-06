@@ -24,9 +24,39 @@ export default function SignUpPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
 
+  const isDemoAuthEnabled = () => process.env.NEXT_PUBLIC_DEMO_AUTH === "true"
+
+  const isSupabaseConfigured = () => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    return !!(url && key && url !== "https://placeholder.supabase.co" && key !== "placeholder-key")
+  }
+
+  const signUpWithDemoFallback = (provider: "email" | "google") => {
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        id: Date.now().toString(),
+        email: provider === "email" ? email : "demo@gmail.com",
+        name: provider === "email" ? fullName || (email.split("@")[0] || "Demo User") : "Demo User",
+        provider,
+        loggedIn: true,
+        demo: true,
+      }),
+    )
+    router.push("/dashboard")
+    router.refresh()
+  }
+
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true)
     setError(null)
+
+    if (!isSupabaseConfigured()) {
+      signUpWithDemoFallback("google")
+      setIsGoogleLoading(false)
+      return
+    }
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -35,36 +65,13 @@ export default function SignUpPage() {
           redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
         },
       })
-
-      if (error) {
-        console.log("[v0] Supabase OAuth not configured, using localStorage")
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: Date.now().toString(),
-            email: "demo@gmail.com",
-            name: "Demo User",
-            provider: "google",
-            loggedIn: true,
-          }),
-        )
-        router.push("/dashboard")
-        router.refresh()
+      if (error) throw error
+    } catch (e: any) {
+      if (isDemoAuthEnabled()) {
+        signUpWithDemoFallback("google")
+      } else {
+        setError(e?.message || "Google sign-up failed")
       }
-    } catch (error: unknown) {
-      console.log("[v0] OAuth error, using localStorage fallback", error)
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: Date.now().toString(),
-          email: "demo@gmail.com",
-          name: "Demo User",
-          provider: "google",
-          loggedIn: true,
-        }),
-      )
-      router.push("/dashboard")
-      router.refresh()
     } finally {
       setIsGoogleLoading(false)
     }
@@ -87,6 +94,12 @@ export default function SignUpPage() {
       return
     }
 
+    if (!isSupabaseConfigured()) {
+      signUpWithDemoFallback("email")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -100,32 +113,24 @@ export default function SignUpPage() {
       })
       if (error) throw error
       router.push("/auth/check-email")
-    } catch (error: unknown) {
-      console.log("[v0] Supabase sign-up failed, using localStorage fallback", error)
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: Date.now().toString(),
-          email: email,
-          name: fullName,
-          provider: "email",
-          loggedIn: true,
-        }),
-      )
-      router.push("/dashboard")
-      router.refresh()
+    } catch (e: any) {
+      if (isDemoAuthEnabled()) {
+        signUpWithDemoFallback("email")
+      } else {
+        setError(e?.message || "Sign-up failed")
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-blue-50 via-yellow-50 to-green-50 p-6">
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-6">
       <div className="w-full max-w-md">
-        <Card>
+        <Card className="bg-card border-border">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-2xl font-bold text-center text-foreground">Create Account</CardTitle>
+            <CardDescription className="text-center text-muted-foreground">
               Join thousands of Sierra Leone youth building their careers
             </CardDescription>
           </CardHeader>
@@ -133,7 +138,7 @@ export default function SignUpPage() {
             <Button
               type="button"
               variant="outline"
-              className="w-full mb-4 bg-transparent"
+              className="w-full mb-4 bg-transparent border-border hover:bg-muted/50"
               onClick={handleGoogleSignUp}
               disabled={isGoogleLoading}
             >
@@ -163,7 +168,7 @@ export default function SignUpPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">Or continue with email</span>
+                <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
               </div>
             </div>
 
@@ -212,16 +217,16 @@ export default function SignUpPage() {
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>
-              {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              {error && <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg text-sm">{error}</div>}
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 {isLoading ? "Creating account..." : "Sign up"}
               </Button>
             </form>
-            <div className="mt-4 text-center text-sm">
+            <div className="mt-4 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/auth/login" className="text-blue-600 hover:underline font-semibold">
-                Login
+              <Link href="/auth/sign-in" className="text-primary hover:underline font-medium">
+                Sign in
               </Link>
             </div>
           </CardContent>

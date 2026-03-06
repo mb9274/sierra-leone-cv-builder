@@ -128,10 +128,24 @@ export default function ServicesPage() {
                                 If you are in immediate danger or need urgent medical attention, call the national emergency line.
                             </p>
                             <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                                <Button size="lg" variant="destructive" className="bg-red-600 hover:bg-red-700 font-bold px-8 py-6 text-xl">
+                                <Button
+                                    size="lg"
+                                    variant="destructive"
+                                    className="bg-red-600 hover:bg-red-700 font-bold px-8 py-6 text-xl"
+                                    onClick={() => {
+                                        if (typeof window !== "undefined") {
+                                            window.location.href = "tel:999"
+                                        }
+                                    }}
+                                >
                                     Call 999
                                 </Button>
-                                <Button size="lg" variant="outline" className="border-red-600 text-red-600 hover:bg-red-50 font-bold px-8 py-6 text-xl">
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    className="border-red-600 text-red-600 hover:bg-red-50 font-bold px-8 py-6 text-xl"
+                                    onClick={() => router.push("/contact")}
+                                >
                                     Report Incident
                                 </Button>
                             </div>

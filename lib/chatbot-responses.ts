@@ -14,13 +14,6 @@ const analytics = {
 
 export function generateChatbotResponse(userMessage: string, conversationHistory: ChatMessage[]): string {
   const message = userMessage.toLowerCase().trim()
-  const lowerMessage = message // Alias for convenience
-
-  // Get the last user message to understand context
-  const lastUserMessages = conversationHistory
-    .filter((m) => m.role === "user")
-    .slice(-3)
-    .map((m) => m.content.toLowerCase())
 
   if (
     message.includes("teacher") ||

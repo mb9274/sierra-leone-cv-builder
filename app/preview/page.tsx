@@ -103,11 +103,19 @@ export default function PreviewPage() {
   const [saving, setSaving] = useState(false)
   /* Verification state removed */
 
+  const normalizeCvDates = (data: any): CVData => {
+    return {
+      ...data,
+      createdAt: data?.createdAt ? new Date(data.createdAt) : new Date(),
+      updatedAt: data?.updatedAt ? new Date(data.updatedAt) : new Date(),
+    } as CVData
+  }
+
   useEffect(() => {
     const savedCV = localStorage.getItem("cvbuilder_current")
     if (savedCV) {
       try {
-        const data = JSON.parse(savedCV)
+        const data = normalizeCvDates(JSON.parse(savedCV))
         setCvData(data)
         setEditedData(data)
       } catch (e) {
@@ -122,7 +130,9 @@ export default function PreviewPage() {
   const handleSaveChanges = () => {
     if (editedData) {
       setSaving(true)
-      localStorage.setItem("cvbuilder_current", JSON.stringify(editedData))
+      const now = new Date()
+      const nextCv: CVData = { ...editedData, updatedAt: now }
+      localStorage.setItem("cvbuilder_current", JSON.stringify(nextCv))
 
       let savedCVs = []
       try {
@@ -131,17 +141,16 @@ export default function PreviewPage() {
         console.error("[v0] Failed to parse saved CVs:", e)
       }
 
-      const index = savedCVs.findIndex((cv: CVData) => cv.id === editedData.id)
-      if (index !== -1) {
-        savedCVs[index] = editedData
-        try {
-          localStorage.setItem("cvbuilder_cvs", JSON.stringify(savedCVs))
-        } catch (e) {
-          console.error("[v0] Failed to save CVs to localStorage:", e)
-        }
+      const index = savedCVs.findIndex((cv: CVData) => cv.id === nextCv.id)
+      const nextList = index !== -1 ? savedCVs.map((cv: CVData) => (cv.id === nextCv.id ? nextCv : cv)) : [nextCv, ...savedCVs]
+      try {
+        localStorage.setItem("cvbuilder_cvs", JSON.stringify(nextList))
+      } catch (e) {
+        console.error("[v0] Failed to save CVs to localStorage:", e)
       }
 
-      setCvData(editedData)
+      setCvData(nextCv)
+      setEditedData(nextCv)
       setTimeout(() => {
         setSaving(false)
         setIsEditing(false)
@@ -161,6 +170,12 @@ export default function PreviewPage() {
     const filename = cvData?.personalInfo.fullName
       ? `${cvData.personalInfo.fullName.replace(/\s+/g, "_")}_CV.pdf`
       : "CV.pdf"
+
+    toast({
+      title: "Preparing Download",
+      description: `Your CV (${filename}) is ready. Use your browser print dialog to save as PDF.`,
+    })
+
     window.print()
   }
 

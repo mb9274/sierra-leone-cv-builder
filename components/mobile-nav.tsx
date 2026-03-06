@@ -1,121 +1,118 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
   Menu,
-  Home,
   FileText,
-  Briefcase,
-  Map,
-  BookOpen,
+  LogOut,
+  Home,
   LayoutDashboard,
+  Briefcase,
+  BookOpen,
   User,
   Settings,
-  Bell,
-  FileImage,
-  Sparkles,
-  HeartHandshake,
-  MessageSquare,
-  FileCheck,
 } from "lucide-react"
 
-export function MobileNav() {
-  const [open, setOpen] = useState(false)
-  const pathname = usePathname()
+const signedInNavItems = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/builder", label: "Build CV", icon: FileText },
+  { href: "/jobs", label: "Jobs", icon: Briefcase },
+  { href: "/learning-center", label: "Learning Center", icon: BookOpen },
+  { href: "/profile", label: "Profile", icon: User },
+  { href: "/settings", label: "Settings", icon: Settings },
+]
 
-  const navItems = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/builder", label: "Build CV", icon: FileText },
-    { href: "/jobs", label: "Jobs", icon: Briefcase },
-    { href: "/job-map", label: "Map", icon: Map },
-    { href: "/learning-center", label: "Learning Center", icon: BookOpen },
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/gemini-setup", label: "AI Setup", icon: Sparkles },
-    { href: "/profile", label: "Profile", icon: User },
-    { href: "/settings", label: "Settings", icon: Settings },
-  ]
+export function MobileNav() {
+  const pathname = usePathname()
+  const isAuthPage = pathname?.startsWith("/auth/")
+  const [isSignedIn, setIsSignedIn] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const userStr = localStorage.getItem("user")
+        const user = userStr ? JSON.parse(userStr) : null
+        setIsSignedIn(!!user?.loggedIn)
+      } catch {
+        setIsSignedIn(false)
+      }
+    }
+  }, [pathname])
+
+  const handleSignOut = () => {
+    localStorage.removeItem("user")
+    setIsSignedIn(false)
+    window.location.href = "/"
+  }
+
+  if (isAuthPage) return null
+
+  if (pathname === "/dashboard") return null
+
+  // When signed out, only show the auth buttons on the homepage.
+  // This prevents showing Sign In / Sign Up in the in-app dashboard UI.
+  if (!isSignedIn && pathname !== "/") return null
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center px-4">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="mr-2 md:hidden">
-              <Menu className="size-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            <div className="flex flex-col h-full">
-              <div className="p-4 border-b border-border">
-                <h2 className="text-lg font-bold text-foreground">AI CV Builder</h2>
-                <p className="text-xs text-muted-foreground">Build your future</p>
-              </div>
-              <nav className="flex-1 overflow-y-auto p-4">
-                <ul className="space-y-2">
-                  {navItems.map((item) => {
-                    const Icon = item.icon
-                    const isActive = pathname === item.href
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          onClick={() => setOpen(false)}
-                          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                            }`}
-                        >
-                          <Icon className="size-5" />
-                          {item.label}
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </nav>
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        <Link href="/" className="flex items-center gap-2 flex-1 md:flex-none">
-          <FileText className="size-6 text-primary" />
-          <span className="font-bold text-lg">AI CV Builder</span>
-        </Link>
-
-        <nav className="hidden md:flex flex-1 items-center gap-6 ml-8">
-          {navItems.slice(0, 6).map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-foreground/60 hover:text-foreground"
-                  }`}
-              >
-                <Icon className="size-4" />
-                {item.label}
-              </Link>
-            )
-          })}
-        </nav>
-
-        <div className="flex items-center gap-2 ml-auto">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="size-5" />
-            <span className="absolute top-1 right-1 size-2 bg-primary rounded-full" />
-          </Button>
-          <Link href="/profile">
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <User className="size-5" />
-            </Button>
-          </Link>
-        </div>
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-white/95 backdrop-blur">
+      <div className="container flex h-14 max-w-screen-2xl items-center justify-end px-4">
+        {isSignedIn && pathname !== "/" ? (
+          <>
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="mr-2">
+                  <Menu className="size-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72">
+                <nav className="flex flex-col gap-1 pt-4">
+                  {signedInNavItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === item.href ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                        }`}
+                    >
+                      <item.icon className="size-4" />
+                      {item.label}
+                    </Link>
+                  ))}
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-muted-foreground hover:text-destructive"
+                      onClick={handleSignOut}
+                    >
+                      <LogOut className="size-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </div>
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </>
+        ) : null}
+        {!isSignedIn ? (
+          <div className="flex items-center gap-2">
+            <Link href="/auth/sign-in">
+              <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/auth/sign-up">
+              <Button size="sm" className="bg-primary text-white hover:bg-primary/90">
+                Sign Up
+              </Button>
+            </Link>
+          </div>
+        ) : null}
       </div>
     </header>
   )

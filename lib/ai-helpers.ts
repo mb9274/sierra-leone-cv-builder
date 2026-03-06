@@ -1,8 +1,8 @@
 import type { CVData } from "./types"
 
 // Generate professional summary suggestions
-export function generateSummary(context: { name?: string; education?: any[]; experience?: any[] }): string {
-  const { name, education, experience } = context
+export function generateSummary(context: { name?: string; education?: unknown[]; experience?: unknown[] }): string {
+  const { education, experience } = context
   const degree = education?.[0]?.degree || "Bachelor's Degree"
   const field = education?.[0]?.fieldOfStudy || "your field"
   const yearsExp = experience?.length || 0
@@ -18,8 +18,6 @@ export function generateSummary(context: { name?: string; education?: any[]; exp
 
 // Generate experience bullet points
 export function generateExperienceSuggestions(context: { role?: string; company?: string }): string[] {
-  const { role, company } = context
-
   return [
     `Led cross-functional team initiatives that improved operational efficiency by 25%, resulting in significant cost savings and enhanced productivity.`,
     `Developed and implemented strategic solutions that increased customer satisfaction scores by 30% and reduced response times by 40%.`,
@@ -30,9 +28,7 @@ export function generateExperienceSuggestions(context: { role?: string; company?
 }
 
 // Generate skills suggestions
-export function generateSkills(context: { education?: any[]; experience?: any[] }): string[] {
-  const education = context.education?.[0]
-  const hasExperience = (context.experience?.length || 0) > 0
+export function generateSkills(context: { education?: unknown[]; experience?: unknown[] }): string[] {
 
   const skillSets = {
     technical: [

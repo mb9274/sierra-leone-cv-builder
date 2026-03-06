@@ -6,10 +6,35 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  if (process.env.NEXT_PUBLIC_DEMO_AUTH === "true") {
+    return supabaseResponse
+  }
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !key || url === "https://placeholder.supabase.co" || key === "placeholder-key") {
+    return supabaseResponse
+  }
+
+  const protectedPrefixes = [
+    "/dashboard",
+    "/builder",
+    "/preview",
+    "/profile",
+    "/applications",
+    "/settings",
+    "/payments",
+  ]
+
+  const isProtected = protectedPrefixes.some(
+    (p) => request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(`${p}/`),
+  )
+
   try {
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      url,
+      key,
       {
         cookies: {
           getAll() {
@@ -30,8 +55,13 @@ export async function updateSession(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // Allow access to builder, dashboard, and other routes without authentication
-    // Users can work with localStorage until they're ready to sign up
+    if (!user && isProtected) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/auth/sign-in"
+      url.searchParams.set("next", request.nextUrl.pathname)
+      return NextResponse.redirect(url)
+    }
+
     if (request.nextUrl.pathname.startsWith("/employer") && !user) {
       const url = request.nextUrl.clone()
       url.pathname = "/auth/login"
@@ -40,8 +70,12 @@ export async function updateSession(request: NextRequest) {
 
     return supabaseResponse
   } catch (error) {
-    // This ensures the app works even if Supabase isn't fully configured
-    console.log("[v0] Auth check failed, allowing request:", error)
+    if (isProtected) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/auth/sign-in"
+      url.searchParams.set("next", request.nextUrl.pathname)
+      return NextResponse.redirect(url)
+    }
     return supabaseResponse
   }
 }
