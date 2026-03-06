@@ -10,6 +10,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
 
   const hideSidebar =
     !pathname ||
+    pathname === "/" ||
     pathname.startsWith("/auth/") ||
     pathname.startsWith("/builder") ||
     pathname.startsWith("/preview")
