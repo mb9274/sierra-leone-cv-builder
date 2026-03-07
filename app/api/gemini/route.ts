@@ -1,16 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { ApiResponse, handleApiError } from "@/lib/api-utils"
 
-export async function POST(request: NextRequest) {
-  try {
-    const { prompt, context, type, action, cvData, apiKey: providedApiKey } = await request.json()
-
-    const apiKey = process.env.GEMINI_API_KEY || providedApiKey
-
-    if (!apiKey) {
-      console.log("[v0] Gemini API key not found, using template fallback")
-
-      if (action === "generate_cover_letter") {
-        const fallbackLetter = `Dear Hiring Manager,
+function handleFallbackActions(action: string, prompt: string, cvData: any) {
+  if (action === "generate_cover_letter") {
+    const fallbackLetter = `Dear Hiring Manager,
 
 I am writing to express my strong interest in the ${prompt.split('\n')[0] || 'position'} at your company. With my background in ${cvData.experience?.[0]?.position || 'the field'}, I am confident that I would be a valuable asset to your team.
 
@@ -21,35 +14,48 @@ Thank you for your time and consideration. I look forward to hearing from you.
 Sincerely,
 ${cvData.personalInfo?.fullName || "Your Name"}`
 
-        return NextResponse.json({ coverLetter: fallbackLetter, fallback: true })
-      }
+    return ApiResponse.success({ coverLetter: fallbackLetter, fallback: true })
+  }
 
-      if (action === "mock_interview") {
-        if (prompt === "start") {
-          return NextResponse.json({
-            questions: [
-              "Could you tell me about your background and experience?",
-              "What are your greatest professional strengths?",
-              "Why are you interested in this position?",
-              "Where do you see yourself in five years?",
-              "Do you have any questions for us?"
-            ],
-            fallback: true
-          })
-        }
-        return NextResponse.json({
-          message: "That's a great answer. Can you tell me more about a specific challenge you faced in your previous role?",
-          fallback: true
-        })
-      }
+  if (action === "mock_interview") {
+    if (prompt === "start") {
+      return ApiResponse.success({
+        questions: [
+          "Could you tell me about your background and experience?",
+          "What are your greatest professional strengths?",
+          "Why are you interested in this position?",
+          "Where do you see yourself in five years?",
+          "Do you have any questions for us?"
+        ],
+        fallback: true
+      })
+    }
+    return ApiResponse.success({
+      message: "That's a great answer. Can you tell me more about a specific challenge you faced in your previous role?",
+      fallback: true
+    })
+  }
 
-      return NextResponse.json(
-        {
-          error: "Using smart templates instead of AI",
-          fallback: true,
-        },
-        { status: 200 },
-      )
+  return ApiResponse.success({
+    error: "Using smart templates instead of AI",
+    fallback: true,
+  })
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { prompt, context, type, action, cvData, apiKey: providedApiKey } = await request.json()
+
+    // Validate required fields
+    if (!action) {
+      return ApiResponse.error("Action is required", 400, "VALIDATION_ERROR")
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY || providedApiKey
+
+    if (!apiKey && action !== "generate_cover_letter" && action !== "mock_interview") {
+      console.log("[v0] Gemini API key not found, using template fallback")
+      return handleFallbackActions(action, prompt, cvData)
     }
 
     if (action === "enhance_cv") {
@@ -163,12 +169,12 @@ RETURN ONLY VALID JSON:
       // Try to parse JSON response
       try {
         const enhancedData = JSON.parse(jsonString)
-        return NextResponse.json(enhancedData)
+        return ApiResponse.success(enhancedData)
       } catch (e) {
         console.error("[v0] JSON parsing error:", e, jsonString)
         // If not valid JSON, but has something that looks like a summary, try to extract it
         const summaryMatch = generatedText.match(/"summary":\s*"([^"]*)"/)
-        return NextResponse.json({
+        return ApiResponse.success({
           summary: summaryMatch ? summaryMatch[1] : generatedText.split("\n")[0].substring(0, 200),
           experience: cvData.experience || [],
           skills: cvData.skills || [],
@@ -215,7 +221,7 @@ RETURN ONLY THE COVER LETTER TEXT.`
       if (!response.ok) throw new Error(`Gemini API error: ${response.statusText}`)
       const data = await response.json()
       const coverLetter = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
-      return NextResponse.json({ coverLetter })
+      return ApiResponse.success({ coverLetter })
 
     } else if (action === "mock_interview") {
       const cvText = `
@@ -270,13 +276,13 @@ RETURN THE FEEDBACK AND NEXT QUESTION AS PLAIN TEXT.`
           let jsonStr = text
           if (jsonStr.includes("```json")) jsonStr = jsonStr.split("```json")[1].split("```")[0]
           else if (jsonStr.includes("```")) jsonStr = jsonStr.split("```")[1].split("```")[0]
-          return NextResponse.json(JSON.parse(jsonStr.trim()))
+          return ApiResponse.success(JSON.parse(jsonStr.trim()))
         } catch (e) {
-          return NextResponse.json({ questions: ["Tell me about yourself.", "Why should we hire you?"] })
+          return ApiResponse.success({ questions: ["Tell me about yourself.", "Why should we hire you?"] })
         }
       }
 
-      return NextResponse.json({ message: text })
+      return ApiResponse.success({ message: text })
     }
 
     // Build context-aware prompt
@@ -344,15 +350,9 @@ Return only skill names, one per line.`
     const data = await response.json()
     const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
-    return NextResponse.json({ text: generatedText, success: true })
+    return ApiResponse.success({ text: generatedText, success: true })
   } catch (error) {
     console.error("[v0] Gemini API error:", error)
-    return NextResponse.json(
-      {
-        error: "Failed to generate AI content. Using fallback suggestions.",
-        fallback: true,
-      },
-      { status: 200 },
-    )
+    return ApiResponse.error("Failed to generate AI content. Using fallback suggestions.", 500, "AI_SERVICE_ERROR", { fallback: true })
   }
 }

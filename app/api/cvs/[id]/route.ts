@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
+import { ApiResponse, handleApiError, withAuth, parseJsonBody } from "@/lib/api-utils"
 
 const idSchema = z.string().min(1)
 
@@ -145,110 +146,101 @@ const cvSchema = z
   .passthrough()
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const parsedId = idSchema.safeParse(id)
-  if (!parsedId.success) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 })
+  try {
+    const { id } = await params
+    const parsedId = idSchema.safeParse(id)
+    if (!parsedId.success) {
+      return ApiResponse.error("Invalid CV ID", 400, "VALIDATION_ERROR")
+    }
+
+    return withAuth(async (user) => {
+      const supabase = await createClient()
+
+      const { data, error } = await supabase
+        .from("cvs")
+        .select("id, data, created_at, updated_at")
+        .eq("id", parsedId.data)
+        .eq("user_id", user.id)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return ApiResponse.notFound("CV not found")
+        }
+        return ApiResponse.error("Failed to fetch CV", 500, "DATABASE_ERROR", error.message)
+      }
+
+      return ApiResponse.success({ cv: data })
+    }, createClient)
+  } catch (error) {
+    return handleApiError(error)
   }
-
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { data, error } = await supabase
-    .from("cvs")
-    .select("id, data, created_at, updated_at")
-    .eq("id", parsedId.data)
-    .eq("user_id", user.id)
-    .single()
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 })
-  }
-
-  return NextResponse.json({ cv: data })
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const parsedId = idSchema.safeParse(id)
-  if (!parsedId.success) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 })
-  }
-
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  let body: unknown
   try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+    const { id } = await params
+    const parsedId = idSchema.safeParse(id)
+    if (!parsedId.success) {
+      return ApiResponse.error("Invalid CV ID", 400, "VALIDATION_ERROR")
+    }
+
+    return withAuth(async (user) => {
+      const bodyParse = await parseJsonBody(request, cvSchema)
+      if (!bodyParse.success) return bodyParse.response
+
+      const cv = bodyParse.data
+      const supabase = await createClient()
+
+      const { data, error } = await supabase
+        .from("cvs")
+        .update({
+          data: cv,
+          updated_at: new Date(cv.updatedAt).toISOString(),
+        })
+        .eq("id", parsedId.data)
+        .eq("user_id", user.id)
+        .select("id, data, created_at, updated_at")
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return ApiResponse.notFound("CV not found")
+        }
+        return ApiResponse.error("Failed to update CV", 500, "DATABASE_ERROR", error.message)
+      }
+
+      return ApiResponse.success({ cv: data })
+    }, createClient)
+  } catch (error) {
+    return handleApiError(error)
   }
-
-  const parsed = cvSchema.safeParse(body)
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid CV payload", issues: parsed.error.issues }, { status: 400 })
-  }
-
-  const cv = parsed.data
-
-  const { data, error } = await supabase
-    .from("cvs")
-    .update({
-      data: cv,
-      updated_at: new Date(cv.updatedAt).toISOString(),
-    })
-    .eq("id", parsedId.data)
-    .eq("user_id", user.id)
-    .select("id, data, created_at, updated_at")
-    .single()
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ cv: data })
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const parsedId = idSchema.safeParse(id)
-  if (!parsedId.success) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 })
+  try {
+    const { id } = await params
+    const parsedId = idSchema.safeParse(id)
+    if (!parsedId.success) {
+      return ApiResponse.error("Invalid CV ID", 400, "VALIDATION_ERROR")
+    }
+
+    return withAuth(async (user) => {
+      const supabase = await createClient()
+
+      const { error } = await supabase
+        .from("cvs")
+        .delete()
+        .eq("id", parsedId.data)
+        .eq("user_id", user.id)
+
+      if (error) {
+        return ApiResponse.error("Failed to delete CV", 500, "DATABASE_ERROR", error.message)
+      }
+
+      return ApiResponse.success({ ok: true })
+    }, createClient)
+  } catch (error) {
+    return handleApiError(error)
   }
-
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { error } = await supabase.from("cvs").delete().eq("id", parsedId.data).eq("user_id", user.id)
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ ok: true })
 }

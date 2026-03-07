@@ -1,13 +1,19 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import { NextResponse } from "next/server"
+import { ApiResponse, handleApiError } from "@/lib/api-utils"
 
 export async function POST(request: Request) {
   try {
     const { email, fullName, verificationId } = await request.json()
 
     if (!email || !verificationId) {
-      return NextResponse.json({ error: "Email and verification ID are required" }, { status: 400 })
+      return ApiResponse.error("Email and verification ID are required", 400, "VALIDATION_ERROR")
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return ApiResponse.error("Invalid email format", 400, "VALIDATION_ERROR")
     }
 
     const cookieStore = await cookies()
@@ -40,15 +46,14 @@ export async function POST(request: Request) {
     console.log("[v0] Email verification data:", emailData)
 
     // Return success with verification details
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.success({
       message: "Verification ID generated successfully",
       verificationId,
       verificationUrl,
-      email: email,
+      email,
+      status: "pending"
     })
   } catch (error) {
-    console.error("[v0] Error sending verification email:", error)
-    return NextResponse.json({ error: "Failed to send verification email" }, { status: 500 })
+    return handleApiError(error)
   }
 }

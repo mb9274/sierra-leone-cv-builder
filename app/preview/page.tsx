@@ -13,6 +13,9 @@ import { Toaster } from "@/components/ui/toaster"
 import { StandardLayout } from "@/components/cv-layouts/standard-layout"
 import { SidebarLayout } from "@/components/cv-layouts/sidebar-layout"
 import { MinimalLayout } from "@/components/cv-layouts/minimal-layout"
+import { BoldRedLayout } from "@/components/cv-layouts/bold-red-layout"
+import { TealSidebarLayout } from "@/components/cv-layouts/teal-sidebar-layout"
+import { BlueWaveLayout } from "@/components/cv-layouts/blue-wave-layout"
 
 const templateThemes: Record<string, any> = {
   "sierra-leone-professional": {
@@ -91,6 +94,39 @@ const templateThemes: Record<string, any> = {
     icon_text: "text-teal-700",
     header_bg: "bg-gradient-to-r from-teal-50 to-emerald-50",
     header_border: "border-teal-300",
+  },
+  "bold-red-designer": {
+    layout: "bold-red",
+    primary: "text-red-800",
+    border: "border-red-600",
+    bg: "bg-red-50",
+    accent: "bg-red-600",
+    icon_bg: "bg-red-100",
+    icon_text: "text-red-600",
+    header_bg: "bg-gradient-to-r from-red-50 to-rose-50",
+    header_border: "border-red-300",
+  },
+  "teal-professional": {
+    layout: "teal-sidebar",
+    primary: "text-teal-900",
+    border: "border-teal-700",
+    bg: "bg-teal-50",
+    accent: "bg-teal-800",
+    icon_bg: "bg-teal-100",
+    icon_text: "text-teal-700",
+    header_bg: "bg-gradient-to-r from-teal-50 to-emerald-50",
+    header_border: "border-teal-400",
+  },
+  "blue-wave-modern": {
+    layout: "blue-wave",
+    primary: "text-blue-900",
+    border: "border-blue-600",
+    bg: "bg-blue-50",
+    accent: "bg-blue-700",
+    icon_bg: "bg-blue-100",
+    icon_text: "text-blue-700",
+    header_bg: "bg-gradient-to-r from-blue-50 to-cyan-50",
+    header_border: "border-blue-300",
   },
 }
 
@@ -267,7 +303,31 @@ export default function PreviewPage() {
         <Card className="max-w-4xl mx-auto bg-white shadow-2xl print:shadow-none print:border-0 transition-all overflow-hidden">
           <div className="bg-white shadow-2xl print:shadow-none print:border-0 transition-all overflow-hidden">
             {/* Render Layout based on theme */}
-            {theme.layout === "sidebar" ? (
+            {theme.layout === "bold-red" ? (
+              <BoldRedLayout
+                cvData={cvData}
+                theme={theme}
+                isEditing={isEditing}
+                editedData={editedData}
+                onEdit={setEditedData}
+              />
+            ) : theme.layout === "teal-sidebar" ? (
+              <TealSidebarLayout
+                cvData={cvData}
+                theme={theme}
+                isEditing={isEditing}
+                editedData={editedData}
+                onEdit={setEditedData}
+              />
+            ) : theme.layout === "blue-wave" ? (
+              <BlueWaveLayout
+                cvData={cvData}
+                theme={theme}
+                isEditing={isEditing}
+                editedData={editedData}
+                onEdit={setEditedData}
+              />
+            ) : theme.layout === "sidebar" ? (
               <SidebarLayout
                 cvData={cvData}
                 theme={theme}

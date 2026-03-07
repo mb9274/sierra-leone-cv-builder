@@ -50,7 +50,7 @@ export default function HomePage() {
       {/* Hero - Resumate style */}
       <section className="container mx-auto px-4 py-16 md:py-24 max-w-6xl" id="hero">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div className="space-y-8 order-1">
+          <div className="space-y-8 order-2 lg:order-1">
             <div className="flex flex-wrap gap-3">
               {["Beginner Friendly", "Fully Customizable", "Interactive components", "Style Guide", "Fully Responsive"].map(
                 (feature) => (
@@ -90,7 +90,7 @@ export default function HomePage() {
           </div>
 
           {/* Desktop: browser + phone mockup layout */}
-          <div className="order-2 flex justify-center lg:justify-end">
+          <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
             <div className="relative">
               <PhoneMockup />
             </div>
@@ -127,7 +127,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">What You Will Get</h2>
           <p className="text-white/90 text-center max-w-2xl mx-auto mb-16">
-            We provide simple, clean and beginner friendly (any-one can edit or manage the elements or contents easily) as
+            We provide simple, clean and beginner friendly (anyone can edit or manage the elements or contents easily) as
             all contents are made with components.
           </p>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -171,14 +171,14 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-foreground mb-12">Success Stories</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { name: "Aminata K.", location: "Freetown", img: "/success_face_1.png", quote: "Got my first job at Orange SL thanks to this CV builder! The AI suggestions made my experience sound so professional." },
-              { name: "Mohamed S.", location: "Bo", img: "/success_face_2.png", quote: "Built my CV in 15 minutes and applied to 5 jobs the same day. Now I'm working at Rokel Bank!" },
-              { name: "Fatima B.", location: "Makeni", img: "/success_face_3.png", quote: "The templates made my CV look so professional. I got interview calls within a week!" },
+              { name: "Clare K.", location: "Freetown", img: "/happy-african-young-woman-professional.jpg", quote: "Got my first job at Orange SL thanks to this CV builder! The AI suggestions made my experience sound so professional." },
+              { name: "Mohamed S.", location: "Bo", img: "/happy-african-young-man-professional-smile.jpg", quote: "Built my CV in 15 minutes and applied to 5 jobs the same day. Now I'm working at Rokel Bank!" },
+              { name: "Fatima B.", location: "Makeni", img: "/happy-african-young-woman-celebrating-success.jpg", quote: "The templates made my CV look so professional. I got interview calls within a week!" },
             ].map((t) => (
               <div key={t.name} className="bg-background rounded-xl p-6 border border-border">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="relative size-12 rounded-full overflow-hidden border border-border">
-                    <Image src={t.img} alt={t.name} fill className="object-cover object-center" />
+                    <Image src={t.img} alt={t.name} fill className="object-cover" />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">{t.name}</p>

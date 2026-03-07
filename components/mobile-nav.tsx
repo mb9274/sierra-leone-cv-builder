@@ -12,7 +12,9 @@ import {
   Home,
   LayoutDashboard,
   Briefcase,
+  Map,
   BookOpen,
+  Sparkles,
   User,
   Settings,
 } from "lucide-react"
@@ -22,7 +24,9 @@ const signedInNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/builder", label: "Build CV", icon: FileText },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
+  { href: "/job-map", label: "Job Map", icon: Map },
   { href: "/learning-center", label: "Learning Center", icon: BookOpen },
+  { href: "/gemini-setup", label: "AI Setup", icon: Sparkles },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },
 ]
@@ -53,16 +57,10 @@ export function MobileNav() {
 
   if (isAuthPage) return null
 
-  if (pathname === "/dashboard") return null
-
-  // When signed out, only show the auth buttons on the homepage.
-  // This prevents showing Sign In / Sign Up in the in-app dashboard UI.
-  if (!isSignedIn && pathname !== "/") return null
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-white/95 backdrop-blur">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-end px-4">
-        {isSignedIn && pathname !== "/" ? (
+        {isSignedIn ? (
           <>
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
@@ -77,8 +75,9 @@ export function MobileNav() {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMenuOpen(false)}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === item.href ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
-                        }`}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        pathname === item.href ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                      }`}
                     >
                       <item.icon className="size-4" />
                       {item.label}
@@ -99,20 +98,11 @@ export function MobileNav() {
             </Sheet>
           </>
         ) : null}
-        {!isSignedIn ? (
-          <div className="flex items-center gap-2">
-            <Link href="/auth/sign-in">
-              <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/auth/sign-up">
-              <Button size="sm" className="bg-primary text-white hover:bg-primary/90">
-                Sign Up
-              </Button>
-            </Link>
-          </div>
-        ) : null}
+        <Link href="/auth/sign-up">
+          <Button size="sm" className="bg-primary text-white hover:bg-primary/90">
+            Sign Up
+          </Button>
+        </Link>
       </div>
     </header>
   )

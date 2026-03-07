@@ -4,9 +4,11 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 
 const cvImages = [
-  "/cv_new_1.png",
-  "/cv_new_2.png",
-  "/cv_new_3.png",
+  "/clare-cv.png",
+  "/classic-cv-template.png",
+  "/simple-cv-template.jpg",
+  "/modern-cv-template.png",
+  "/creative-colorful-cv-template-with-modern-design.jpg",
 ]
 
 export function PhoneMockup() {

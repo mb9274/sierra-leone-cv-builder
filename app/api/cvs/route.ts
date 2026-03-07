@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
+import { ApiResponse, handleApiError, withAuth, parseJsonBody } from "@/lib/api-utils"
 
 const isoDateSchema = z.union([
   z.string().datetime(),
@@ -143,69 +144,45 @@ const cvSchema = z
   .passthrough()
 
 export async function GET() {
-  const supabase = await createClient()
+  return withAuth(async (user) => {
+    const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
+    const { data, error } = await supabase
+      .from("cvs")
+      .select("id, data, created_at, updated_at")
+      .order("updated_at", { ascending: false })
 
-  if (userError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+    if (error) {
+      return ApiResponse.error("Failed to fetch CVs", 500, "DATABASE_ERROR", error.message)
+    }
 
-  const { data, error } = await supabase
-    .from("cvs")
-    .select("id, data, created_at, updated_at")
-    .order("updated_at", { ascending: false })
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ cvs: data ?? [] })
+    return ApiResponse.success({ cvs: data ?? [] })
+  }, createClient)
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
+  return withAuth(async (user) => {
+    const bodyParse = await parseJsonBody(request, cvSchema)
+    if (!bodyParse.success) return bodyParse.response
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
+    const cv = bodyParse.data
 
-  if (userError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from("cvs")
+      .insert({
+        user_id: user.id,
+        data: cv,
+        created_at: new Date(cv.createdAt).toISOString(),
+        updated_at: new Date(cv.updatedAt).toISOString(),
+      })
+      .select("id, data, created_at, updated_at")
+      .single()
 
-  let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
-  }
+    if (error) {
+      return ApiResponse.error("Failed to create CV", 500, "DATABASE_ERROR", error.message)
+    }
 
-  const parsed = cvSchema.safeParse(body)
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid CV payload", issues: parsed.error.issues }, { status: 400 })
-  }
-
-  const cv = parsed.data
-
-  const { data, error } = await supabase
-    .from("cvs")
-    .insert({
-      user_id: user.id,
-      data: cv,
-      created_at: new Date(cv.createdAt).toISOString(),
-      updated_at: new Date(cv.updatedAt).toISOString(),
-    })
-    .select("id, data, created_at, updated_at")
-    .single()
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ cv: data }, { status: 201 })
+    return ApiResponse.success({ cv: data }, 201)
+  }, createClient)
 }
