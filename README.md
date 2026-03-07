@@ -118,6 +118,9 @@ A comprehensive citizens services platform built for Sierra Leone youth (ages 18
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+   # App URL (Recommended for production links)
+   NEXT_PUBLIC_APP_URL=https://your-project.vercel.app
    
    # Gemini AI (Optional - enables AI enhancement)
    GEMINI_API_KEY=your_gemini_api_key

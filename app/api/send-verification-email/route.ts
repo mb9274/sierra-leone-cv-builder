@@ -28,8 +28,13 @@ export async function POST(request: Request) {
       },
     })
 
-    // Note: This requires configuring email templates in Supabase dashboard
-    const verificationUrl = `${process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || "http://localhost:3000"}/verify?id=${verificationId}`
+    // Build a deploy-safe base URL: explicit env wins, then Vercel URL, then localhost for local dev.
+    const appBaseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+
+    const verificationUrl = `${appBaseUrl}/verify?id=${verificationId}`
 
     // For now, we'll store the notification in a database table
     // You can set up Supabase email templates or use a service like Resend
