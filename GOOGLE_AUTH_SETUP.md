@@ -56,6 +56,17 @@ To enable real Google OAuth (instead of demo mode), follow these steps:
 4. You should see a Google sign-in popup
 5. After signing in, you'll be redirected to the dashboard
 
+## Required Supabase Auth URLs
+
+In Supabase Dashboard -> Authentication -> URL Configuration, set:
+
+- **Site URL**: `https://YOUR-VERCEL-DOMAIN`
+- **Additional Redirect URLs**:
+  - `https://YOUR-VERCEL-DOMAIN/auth/callback`
+  - `http://localhost:3000/auth/callback`
+
+If these URLs are missing or mismatched, Google sign-in will fail with a redirect error.
+
 ## Current Behavior
 
 **Without Google OAuth configured:** The app uses a localStorage fallback for demo purposes. Users can still click "Continue with Google" and it will create a demo account.

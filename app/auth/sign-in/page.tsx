@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,11 +10,14 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { LogIn, FileText, ArrowRight } from "lucide-react"
 
+const supabase = createClient()
+
 export default function SignInPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -21,50 +25,49 @@ export default function SignInPage() {
     setIsLoading(true)
     setError(null)
 
-    if (!email) {
-      setError("Please enter your email address.")
-      setIsLoading(false)
-      return
-    }
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    // Save user to localStorage directly — no Supabase needed
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        id: Date.now().toString(),
-        email: email,
-        name: email.split("@")[0],
-        provider: "email",
-        loggedIn: true,
-      }),
-    )
+      if (error) {
+        setError(error.message)
+        return
+      }
 
-    setTimeout(() => {
-      setIsLoading(false)
       router.push("/dashboard")
       router.refresh()
-    }, 400)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign in failed")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleGoogleLogin = () => {
-    // Simulate Google login with localStorage
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        id: Date.now().toString(),
-        email: "user@gmail.com",
-        name: "User",
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true)
+    setError(null)
+
+    try {
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        loggedIn: true,
-      }),
-    )
-    router.push("/dashboard")
-    router.refresh()
+        options: { redirectTo },
+      })
+
+      if (error) {
+        setError(error.message)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign in failed")
+    } finally {
+      setIsGoogleLoading(false)
+    }
   }
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Left: Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-muted/30 border-r border-border p-16 flex-col justify-between">
         <Link href="/" className="flex items-center gap-2">
           <div className="size-10 rounded-lg bg-primary/20 flex items-center justify-center border border-primary/30">
@@ -73,19 +76,14 @@ export default function SignInPage() {
           <span className="text-xl font-semibold text-foreground">AI CV Builder</span>
         </Link>
         <div>
-          <h2 className="text-4xl font-bold text-foreground leading-tight mb-4">
-            Build Your Future
-          </h2>
+          <h2 className="text-4xl font-bold text-foreground leading-tight mb-4">Build Your Future</h2>
           <p className="text-muted-foreground text-lg max-w-md">
             Sign in to access your CV, job matches, and career resources. Your path to professional success starts here.
           </p>
         </div>
-        <div className="text-sm text-muted-foreground">
-          © {new Date().getFullYear()} AI CV Builder
-        </div>
+        <div className="text-sm text-muted-foreground">© {new Date().getFullYear()} AI CV Builder</div>
       </div>
 
-      {/* Right: Sign-in form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-8">
@@ -105,6 +103,7 @@ export default function SignInPage() {
             variant="outline"
             className="w-full h-12 mb-6 bg-transparent border-border hover:bg-muted/50"
             onClick={handleGoogleLogin}
+            disabled={isGoogleLoading}
           >
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -112,7 +111,7 @@ export default function SignInPage() {
               <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
               <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-            Continue with Google
+            {isGoogleLoading ? "Signing in with Google..." : "Continue with Google"}
           </Button>
 
           <div className="relative mb-6">
@@ -142,6 +141,7 @@ export default function SignInPage() {
               <Input
                 id="password"
                 type="password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-muted/30 border-border h-12"

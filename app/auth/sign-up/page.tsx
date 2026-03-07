@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,6 +11,8 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { UserPlus } from "lucide-react"
 
+const supabase = createClient()
+
 export default function SignUpPage() {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
@@ -17,21 +20,28 @@ export default function SignUpPage() {
   const [repeatPassword, setRepeatPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
 
-  const handleGoogleSignUp = () => {
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        id: Date.now().toString(),
-        email: "user@gmail.com",
-        name: "User",
+  const handleGoogleSignUp = async () => {
+    setIsGoogleLoading(true)
+    setError(null)
+
+    try {
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        loggedIn: true,
-      }),
-    )
-    router.push("/dashboard")
-    router.refresh()
+        options: { redirectTo },
+      })
+
+      if (error) {
+        setError(error.message)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign in failed")
+    } finally {
+      setIsGoogleLoading(false)
+    }
   }
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -51,23 +61,33 @@ export default function SignUpPage() {
       return
     }
 
-    // Save user to localStorage directly
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        id: Date.now().toString(),
-        email: email,
-        name: fullName,
-        provider: "email",
-        loggedIn: true,
-      }),
-    )
+    try {
+      const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName },
+          emailRedirectTo,
+        },
+      })
 
-    setTimeout(() => {
+      if (error) {
+        setError(error.message)
+        return
+      }
+
+      if (data.session) {
+        router.push("/dashboard")
+        router.refresh()
+      } else {
+        router.push("/auth/check-email")
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign up failed")
+    } finally {
       setIsLoading(false)
-      router.push("/dashboard")
-      router.refresh()
-    }, 400)
+    }
   }
 
   return (
@@ -86,6 +106,7 @@ export default function SignUpPage() {
               variant="outline"
               className="w-full mb-4 bg-transparent border-border hover:bg-muted/50"
               onClick={handleGoogleSignUp}
+              disabled={isGoogleLoading}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -93,7 +114,7 @@ export default function SignUpPage() {
                 <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                 <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
-              Continue with Google
+              {isGoogleLoading ? "Signing in with Google..." : "Continue with Google"}
             </Button>
 
             <div className="relative mb-4">

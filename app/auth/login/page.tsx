@@ -27,44 +27,19 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          redirectTo,
         },
       })
 
       if (error) {
-        // If Supabase OAuth fails, use localStorage fallback
-        console.log("[v0] Supabase OAuth not configured, using localStorage")
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: Date.now().toString(),
-            email: "demo@gmail.com",
-            name: "Demo User",
-            provider: "google",
-            loggedIn: true,
-          }),
-        )
-        router.push("/dashboard")
-        router.refresh()
+        setError(error.message)
       }
     } catch (error: unknown) {
-      console.log("[v0] OAuth error, using localStorage fallback", error)
-      // Fallback to localStorage if Supabase not configured
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: Date.now().toString(),
-          email: "demo@gmail.com",
-          name: "Demo User",
-          provider: "google",
-          loggedIn: true,
-        }),
-      )
-      router.push("/dashboard")
-      router.refresh()
+      setError(error instanceof Error ? error.message : "Google sign in failed")
     } finally {
       setIsGoogleLoading(false)
     }
@@ -81,25 +56,15 @@ export default function LoginPage() {
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        setError(error.message)
+        return
+      }
 
       router.push("/dashboard")
       router.refresh()
     } catch (error: unknown) {
-      console.log("[v0] Supabase login failed, using localStorage fallback", error)
-      // Fallback: Use localStorage for demo purposes
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: Date.now().toString(),
-          email: email,
-          name: email.split("@")[0],
-          provider: "email",
-          loggedIn: true,
-        }),
-      )
-      router.push("/dashboard")
-      router.refresh()
+      setError(error instanceof Error ? error.message : "Login failed")
     } finally {
       setIsLoading(false)
     }
