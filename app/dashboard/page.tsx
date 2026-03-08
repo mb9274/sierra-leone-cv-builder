@@ -18,6 +18,7 @@ import {
 import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { createClient } from "@/lib/supabase/client"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -26,20 +27,18 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const userStr = localStorage.getItem("user")
-        const user = userStr ? JSON.parse(userStr) : null
-        if (!user?.loggedIn) {
+    const checkAuth = async () => {
+      if (typeof window !== "undefined") {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
           router.replace("/auth/sign-in")
           return
         }
-      } catch {
-        router.replace("/auth/sign-in")
-        return
       }
+      loadCVs()
     }
-    loadCVs()
+    checkAuth()
   }, [router])
 
   const loadCVs = () => {
