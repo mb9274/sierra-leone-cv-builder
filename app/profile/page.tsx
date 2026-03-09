@@ -25,24 +25,17 @@ export default function ProfilePage() {
         setAvatarDataUrl(savedAvatar)
       }
 
-      // Get user from Supabase auth
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        // Prioritize auth data for logged-in users
+      // Direct access without authentication
+      if (savedCvs.length > 0) {
         setUserInfo({
-          name: user.user_metadata?.full_name || savedCvs[0]?.personalInfo.fullName || "User",
-          email: user.email || savedCvs[0]?.personalInfo.email || "",
+          name: savedCvs[0].personalInfo.fullName,
+          email: savedCvs[0].personalInfo.email,
         })
       } else {
-        // Fallback to CV data if no auth user
-        if (savedCvs.length > 0) {
-          setUserInfo({
-            name: savedCvs[0].personalInfo.fullName,
-            email: savedCvs[0].personalInfo.email,
-          })
-        }
+        setUserInfo({
+          name: "User",
+          email: "",
+        })
       }
     }
 
