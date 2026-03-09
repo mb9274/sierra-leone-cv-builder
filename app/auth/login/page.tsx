@@ -79,6 +79,7 @@ export default function LoginPage() {
             <CardDescription className="text-center text-muted-foreground">Login to continue building your CV</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* TODO: Enable Google Auth later
             <Button
               type="button"
               variant="outline"
@@ -115,6 +116,7 @@ export default function LoginPage() {
                 <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
               </div>
             </div>
+            */}
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
