@@ -250,8 +250,7 @@ export default function HomePage() {
                 <li><Link href="/ats-checker" className="text-muted-foreground hover:text-primary transition-colors">ATS Checker</Link></li>
                 <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
                 <li><Link href="/job-map" className="text-muted-foreground hover:text-primary transition-colors">Job Map</Link></li>
-                <li><Link href="/auth/sign-in" className="text-muted-foreground hover:text-primary transition-colors">Sign In</Link></li>
-              </ul>
+                </ul>
             </div>
             <div>
               <h3 className="font-semibold text-foreground mb-4">Contact</h3>
