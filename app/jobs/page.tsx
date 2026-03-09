@@ -65,17 +65,17 @@ export default function JobsPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard")}>
               <ArrowLeft className="size-5" />
             </Button>
             <div className="flex items-center gap-2">
               <Briefcase className="size-6 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">Job Opportunities</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Job Opportunities</h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button variant={viewMode === "list" ? "default" : "outline"} size="sm" onClick={() => setViewMode("list")}>
               <Briefcase className="size-4 mr-2" />
               List View

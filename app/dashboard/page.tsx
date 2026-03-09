@@ -69,15 +69,15 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <main className="p-6 sm:p-10 max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+      <main className="p-4 sm:p-6 md:p-10 max-w-6xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-500 mt-1">Welcome back! Access all your tools and applications.</p>
           </div>
           <Button
             onClick={handleCreateNew}
-            className="h-11 px-6 bg-[#4CAF50] hover:bg-[#45a049] active:bg-[#3f9143] text-white rounded-lg gap-2 shadow-lg shadow-green-200"
+            className="h-12 px-6 bg-[#4CAF50] hover:bg-[#45a049] active:bg-[#3f9143] text-white rounded-lg gap-2 shadow-lg shadow-green-200 w-full sm:w-auto"
           >
             <Plus className="size-5" />
             Create New

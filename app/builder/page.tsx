@@ -9,6 +9,7 @@ import { ResumeCanvas } from "@/components/builder/resume-canvas"
 import { StylePanel } from "@/components/builder/style-panel"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { ChevronLeft, ChevronRight, Menu } from "lucide-react"
 
 const DEFAULT_DATA = {
   personalInfo: {
@@ -163,7 +164,7 @@ export default function CVBuilderPage() {
       <div className="flex flex-1 overflow-hidden print:block relative">
         {/* Left: Form Sidebar - Hidden on mobile/tablet by default */}
         {showLeftSidebar && (
-          <div className="fixed bottom-0 left-0 right-0 h-[90vh] z-50 bg-white border-t animate-in slide-in-from-bottom duration-300 md:fixed md:left-0 md:top-0 md:h-full md:w-80 md:border-r md:animate-in md:slide-in-from-left lg:relative lg:inset-auto lg:w-[340px] lg:min-w-[340px] lg:max-w-[400px] lg:border-r overflow-y-auto print:hidden">
+          <div className="fixed bottom-0 left-0 right-0 h-[85vh] z-50 bg-white border-t shadow-2xl animate-in slide-in-from-bottom duration-300 ease-out md:relative md:w-[300px] lg:relative lg:inset-auto lg:w-[260px] lg:min-w-[260px] lg:max-w-[300px] border-r overflow-y-auto print:hidden">
             <FormSidebar
               data={cvData}
               onChange={handleChange}
@@ -177,49 +178,41 @@ export default function CVBuilderPage() {
         {/* Center: Resume Canvas */}
         <div className="flex-1 bg-gray-100 overflow-auto print:bg-white print:overflow-visible relative">
           {/* Toggles - Show on mobile and tablet */}
-          <div className={`absolute top-4 left-4 z-10 flex gap-2 print:hidden lg:hidden ${showLeftSidebar ? 'hidden' : ''}`}>
-            {showLeftSidebar ? (
-              <Button
-                variant="outline"
-                className="h-11 md:h-9 px-3 bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
-                onClick={() => setShowLeftSidebar(false)}
-              >
-                <span className="hidden xs:inline">Hide Editor</span>
-                <span className="xs:hidden">✕</span>
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                className="h-11 md:h-9 px-3 bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
-                onClick={() => setShowLeftSidebar(true)}
-              >
-                <span className="hidden xs:inline">Show Editor</span>
-                <span className="xs:hidden">📝</span>
-              </Button>
-            )}
+          <div className={`absolute top-3 left-3 z-10 flex gap-2 print:hidden lg:hidden ${showLeftSidebar ? 'hidden' : ''}`}>
+            <Button
+              variant="outline"
+              className="h-12 w-12 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-lg"
+              onClick={() => setShowLeftSidebar(true)}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
           </div>
-          <div className={`absolute top-4 right-4 z-10 flex gap-2 print:hidden lg:hidden ${showRightSidebar ? 'hidden' : ''}`}>
-            {showRightSidebar ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
-                onClick={() => setShowRightSidebar(false)}
-              >
-                <span className="hidden xs:inline">Hide Style</span>
-                <span className="xs:hidden">🎨</span>
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
-                onClick={() => setShowRightSidebar(true)}
-              >
-                <span className="hidden xs:inline">Show Style</span>
-                <span className="xs:hidden">🎨</span>
-              </Button>
-            )}
+          <div className={`absolute top-3 left-3 z-10 flex gap-2 print:hidden lg:hidden ${showLeftSidebar ? '' : 'hidden'}`}>
+            <Button
+              variant="outline"
+              className="h-12 w-12 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-lg"
+              onClick={() => setShowLeftSidebar(false)}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
+          </div>
+          <div className={`absolute top-3 right-3 z-10 flex gap-2 print:hidden lg:hidden ${showRightSidebar ? 'hidden' : ''}`}>
+            <Button
+              variant="outline"
+              className="h-12 w-12 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-lg"
+              onClick={() => setShowRightSidebar(true)}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
+          </div>
+          <div className={`absolute top-3 right-3 z-10 flex gap-2 print:hidden lg:hidden ${showRightSidebar ? '' : 'hidden'}`}>
+            <Button
+              variant="outline"
+              className="h-12 w-12 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-lg"
+              onClick={() => setShowRightSidebar(false)}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
           </div>
           <ResumeCanvas
             data={cvData}
@@ -232,7 +225,7 @@ export default function CVBuilderPage() {
 
         {/* Right: Style Panel - Hidden on mobile/tablet by default */}
         {showRightSidebar && (
-          <div className="fixed bottom-0 left-0 right-0 h-[90vh] z-50 bg-white border-t animate-in slide-in-from-bottom duration-300 md:fixed md:right-0 md:top-0 md:h-full md:w-80 md:border-l md:animate-in md:slide-in-from-right lg:relative lg:inset-auto lg:w-[300px] lg:min-w-[300px] lg:max-w-[350px] lg:border-l overflow-y-auto print:hidden">
+          <div className="fixed bottom-0 left-0 right-0 h-[85vh] z-50 bg-white border-t shadow-2xl animate-in slide-in-from-bottom duration-300 ease-out md:fixed md:right-0 md:top-0 md:h-full md:w-80 md:border-l md:animate-in md:slide-in-from-right lg:relative lg:inset-auto lg:w-[300px] lg:min-w-[300px] lg:max-w-[350px] lg:border-l overflow-y-auto print:hidden">
             <StylePanel
               data={cvData}
               onChange={handleChange}

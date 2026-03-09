@@ -67,13 +67,14 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
     }, [data])
 
     return (
-        <main className="flex-1 bg-gray-100 overflow-auto flex flex-col items-center py-6 md:py-12 relative custom-scrollbar">
+        <main className="flex-1 bg-gray-100 overflow-auto flex flex-col items-center py-4 md:py-12 relative custom-scrollbar">
             {/* Floating Canvas controls */}
             <div
-                className="bg-white shadow-2xl transition-all duration-300 origin-top mb-12"
+                className="bg-white shadow-2xl transition-all duration-300 origin-top mb-8 md:mb-12"
                 style={{
-                    width: "min(860px, 95vw)", // Responsive width
-                    minHeight: "1122px",
+                    width: "min(100%, 95vw)", // Full width on mobile, constrained on desktop
+                    maxWidth: "860px",
+                    minHeight: "auto",
                     transformOrigin: "top center",
                     transform: `scale(${zoomLevel / 100})`,
                 }}
