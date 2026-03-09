@@ -67,7 +67,7 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
     }, [data])
 
     return (
-        <main className="flex-1 bg-gray-100 overflow-auto flex flex-col items-center py-12 relative custom-scrollbar">
+        <main className="flex-1 bg-gray-100 overflow-auto flex flex-col items-center py-6 md:py-12 relative custom-scrollbar">
             {/* Floating Canvas controls */}
             <div
                 className="bg-white shadow-2xl transition-all duration-300 origin-top mb-12"
@@ -79,14 +79,14 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                 }}
             >
                 {/* Professional Resume Layout */}
-                <div className="p-12 h-full flex flex-col">
+                <div className="p-6 md:p-12 h-full flex flex-col">
                     <header
-                        className={`flex items-start justify-between mb-12 p-2 rounded transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 ${selectedElement === 'personalInfo' ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`}
+                        className={`flex items-start justify-between mb-6 md:mb-12 p-2 rounded transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 ${selectedElement === 'personalInfo' ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`}
                         onClick={() => onSelectElement?.('personalInfo')}
                         style={getStyle('personalInfo')}
                     >
-                        <div className="flex gap-8 items-center">
-                            <div className="size-24 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 flex-shrink-0">
+                        <div className="flex gap-4 md:gap-8 items-center">
+                            <div className="size-16 md:size-24 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 flex-shrink-0">
                                 <img
                                     src={resumeData.personalInfo.profilePhoto}
                                     alt="Profile"

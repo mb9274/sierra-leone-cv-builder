@@ -126,7 +126,7 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                                                 placeholder="e.g. David St. Peter"
                                                 value={data.personalInfo?.fullName || ""}
                                                 onChange={(e) => onChange("personalInfo.fullName", e.target.value)}
-                                                className="h-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                className="h-11 md:h-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                             />
                                         </div>
                                         <div className="grid gap-2">
@@ -191,7 +191,7 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                             {/* Employment History */}
                             <AccordionItem value="experience" className="border-b-0 py-2">
                                 <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
-                                    <div className="flex items-center gap-3 text-sm font-semibold whitespace-nowrap overflow-hidden">
+                                    <div className="flex items-center gap-3 text-base md:text-sm font-semibold whitespace-nowrap overflow-hidden">
                                         <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50 flex-shrink-0">
                                             <History className="size-4" />
                                         </div>

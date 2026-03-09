@@ -163,7 +163,7 @@ export default function CVBuilderPage() {
       <div className="flex flex-1 overflow-hidden print:block relative">
         {/* Left: Form Sidebar - Hidden on mobile/tablet by default */}
         {showLeftSidebar && (
-          <div className="fixed inset-0 z-50 lg:relative lg:inset-auto lg:w-[340px] lg:min-w-[340px] lg:max-w-[400px] border-r bg-white overflow-y-auto print:hidden animate-in slide-in-from-left duration-300">
+          <div className="fixed bottom-0 left-0 right-0 h-[90vh] z-50 bg-white border-t animate-in slide-in-from-bottom duration-300 md:fixed md:left-0 md:top-0 md:h-full md:w-80 md:border-r md:animate-in md:slide-in-from-left lg:relative lg:inset-auto lg:w-[340px] lg:min-w-[340px] lg:max-w-[400px] lg:border-r overflow-y-auto print:hidden">
             <FormSidebar
               data={cvData}
               onChange={handleChange}
@@ -181,8 +181,7 @@ export default function CVBuilderPage() {
             {showLeftSidebar ? (
               <Button
                 variant="outline"
-                size="sm"
-                className="bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
+                className="h-11 md:h-9 px-3 bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
                 onClick={() => setShowLeftSidebar(false)}
               >
                 <span className="hidden xs:inline">Hide Editor</span>
@@ -191,8 +190,7 @@ export default function CVBuilderPage() {
             ) : (
               <Button
                 variant="outline"
-                size="sm"
-                className="bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
+                className="h-11 md:h-9 px-3 bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
                 onClick={() => setShowLeftSidebar(true)}
               >
                 <span className="hidden xs:inline">Show Editor</span>
@@ -234,7 +232,7 @@ export default function CVBuilderPage() {
 
         {/* Right: Style Panel - Hidden on mobile/tablet by default */}
         {showRightSidebar && (
-          <div className="fixed inset-0 z-50 lg:relative lg:inset-auto lg:w-[320px] lg:min-w-[320px] lg:max-w-[400px] border-l bg-white overflow-y-auto print:hidden animate-in slide-in-from-right duration-300">
+          <div className="fixed bottom-0 left-0 right-0 h-[90vh] z-50 bg-white border-t animate-in slide-in-from-bottom duration-300 md:fixed md:right-0 md:top-0 md:h-full md:w-80 md:border-l md:animate-in md:slide-in-from-right lg:relative lg:inset-auto lg:w-[300px] lg:min-w-[300px] lg:max-w-[350px] lg:border-l overflow-y-auto print:hidden">
             <StylePanel
               data={cvData}
               onChange={handleChange}
