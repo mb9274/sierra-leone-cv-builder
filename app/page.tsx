@@ -205,7 +205,7 @@ export default function HomePage() {
           <div className="inline-flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-primary bg-white">
             <div className="text-4xl font-bold text-primary">Free</div>
             <p className="text-muted-foreground">Build unlimited CVs, get job matches, and access all features</p>
-            <Button onClick={() => router.push("/auth/sign-in")} size="lg" className="bg-primary text-white hover:bg-primary/90">
+            <Button onClick={() => router.push("/dashboard")} size="lg" className="bg-primary text-white hover:bg-primary/90">
               Get started for free
             </Button>
           </div>
@@ -221,7 +221,7 @@ export default function HomePage() {
               Join thousands of Sierra Leone youth who have successfully created professional CVs and found employment.
             </p>
             <Button
-              onClick={() => router.push("/auth/sign-in")}
+              onClick={() => router.push("/dashboard")}
               size="lg"
               className="h-12 px-8 bg-white text-primary hover:bg-white/90"
             >

@@ -27,19 +27,8 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
-    const checkAuth = async () => {
-      if (typeof window !== "undefined") {
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-          router.replace("/auth/sign-in")
-          return
-        }
-      }
-      loadCVs()
-    }
-    checkAuth()
-  }, [router])
+    loadCVs()
+  }, [])
 
   const loadCVs = () => {
     const savedCVs = localStorage.getItem("cvbuilder_cvs")

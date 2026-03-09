@@ -38,7 +38,7 @@ export function AppSidebar() {
 
   const handleSignOut = () => {
     localStorage.removeItem("user")
-    router.replace("/auth/sign-in")
+    router.replace("/")
   }
 
   const isActive = (href: string) => pathname === href

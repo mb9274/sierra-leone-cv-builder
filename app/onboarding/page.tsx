@@ -15,17 +15,7 @@ export default function OnboardingPage() {
   const [experienceLevel, setExperienceLevel] = useState("")
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const userStr = localStorage.getItem("user")
-        const user = userStr ? JSON.parse(userStr) : null
-        if (!user?.loggedIn) {
-          router.replace("/auth/sign-in")
-        }
-      } catch {
-        router.replace("/auth/sign-in")
-      }
-    }
+    // Direct access without authentication
   }, [router])
 
   const handleStart = () => {
