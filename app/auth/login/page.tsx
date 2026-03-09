@@ -19,31 +19,31 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  // const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
 
-  const handleGoogleLogin = async () => {
-    setIsGoogleLoading(true)
-    setError(null)
+  // const handleGoogleLogin = async () => {
+  //   setIsGoogleLoading(true)
+  //   setError(null)
 
-    try {
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-        },
-      })
+  //   try {
+  //     const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`
+  //     const { error } = await supabase.auth.signInWithOAuth({
+  //       provider: "google",
+  //       options: {
+  //         redirectTo,
+  //       },
+  //     })
 
-      if (error) {
-        setError(error.message)
-      }
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Google sign in failed")
-    } finally {
-      setIsGoogleLoading(false)
-    }
-  }
+  //     if (error) {
+  //       setError(error.message)
+  //     }
+  //   } catch (error: unknown) {
+  //     setError(error instanceof Error ? error.message : "Google sign in failed")
+  //   } finally {
+  //     setIsGoogleLoading(false)
+  //   }
+  // }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
