@@ -1,11 +1,10 @@
-"use client"
-
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Eye, Edit, User } from "lucide-react"
 import type { CVData } from "@/lib/types"
+import { createClient } from '@/lib/supabase/client'
 import { useToast } from "@/hooks/use-toast"
 
 export default function ProfilePage() {
@@ -17,20 +16,37 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
-    const savedCvs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-    setCvs(savedCvs)
+    const loadData = async () => {
+      const savedCvs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
+      setCvs(savedCvs)
 
-    const savedAvatar = localStorage.getItem("profile_avatar")
-    if (savedAvatar) {
-      setAvatarDataUrl(savedAvatar)
+      const savedAvatar = localStorage.getItem("profile_avatar")
+      if (savedAvatar) {
+        setAvatarDataUrl(savedAvatar)
+      }
+
+      // Get user from Supabase auth
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        // Prioritize auth data for logged-in users
+        setUserInfo({
+          name: user.user_metadata?.full_name || savedCvs[0]?.personalInfo.fullName || "User",
+          email: user.email || savedCvs[0]?.personalInfo.email || "",
+        })
+      } else {
+        // Fallback to CV data if no auth user
+        if (savedCvs.length > 0) {
+          setUserInfo({
+            name: savedCvs[0].personalInfo.fullName,
+            email: savedCvs[0].personalInfo.email,
+          })
+        }
+      }
     }
 
-    if (savedCvs.length > 0) {
-      setUserInfo({
-        name: savedCvs[0].personalInfo.fullName,
-        email: savedCvs[0].personalInfo.email,
-      })
-    }
+    loadData()
   }, [])
 
   const handlePickAvatar = () => {
