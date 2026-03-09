@@ -56,7 +56,8 @@ export function StylePanel({ data, onChange, selectedElement, onClose }: StylePa
     }
 
     return (
-        <aside className="w-[300px] border-l bg-white flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+        <aside className="w-[300px] border-l bg-white flex flex-col h-[calc(100vh-64px)] overflow-hidden relative">
+            {onClose && <Button variant="ghost" size="icon" className="absolute top-2 right-2 z-10 lg:hidden" onClick={onClose}><X className="size-4"/></Button>}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
 
 

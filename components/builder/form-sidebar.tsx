@@ -25,7 +25,8 @@ import {
     List,
     Link2,
     Trash2,
-    Upload
+    Upload,
+    X
 } from "lucide-react"
 import {
     Accordion,
@@ -40,9 +41,10 @@ interface FormSidebarProps {
     onChange: (path: string, value: any) => void
     selectedElement?: string | null
     onSelectElement?: (id: string | null) => void
+    onClose?: () => void
 }
 
-export function FormSidebar({ data, onChange, selectedElement, onSelectElement }: FormSidebarProps) {
+export function FormSidebar({ data, onChange, selectedElement, onSelectElement, onClose }: FormSidebarProps) {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
@@ -55,7 +57,8 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
     }
 
     return (
-        <aside className="w-[350px] max-w-[90vw] border-r bg-white flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+        <aside className="w-[350px] max-w-[90vw] border-r bg-white flex flex-col h-[calc(100vh-64px)] overflow-hidden relative">
+            {onClose && <Button variant="ghost" size="icon" className="absolute top-2 right-2 z-10 lg:hidden" onClick={onClose}><X className="size-4"/></Button>}
             <Tabs defaultValue="create" className="w-full flex flex-col flex-1 overflow-hidden">
                 {/* Sidebar Header */}
                 <div className="p-3 md:p-4 border-b">

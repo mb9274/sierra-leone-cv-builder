@@ -163,12 +163,13 @@ export default function CVBuilderPage() {
       <div className="flex flex-1 overflow-hidden print:block relative">
         {/* Left: Form Sidebar - Hidden on mobile/tablet by default */}
         {showLeftSidebar && (
-          <div className="w-[340px] min-w-[340px] max-w-[400px] border-r bg-white overflow-y-auto print:hidden animate-in slide-in-from-left duration-300 lg:block">
+          <div className="fixed inset-0 z-50 lg:relative lg:inset-auto lg:w-[340px] lg:min-w-[340px] lg:max-w-[400px] border-r bg-white overflow-y-auto print:hidden animate-in slide-in-from-left duration-300">
             <FormSidebar
               data={cvData}
               onChange={handleChange}
               selectedElement={selectedElement}
               onSelectElement={setSelectedElement}
+              onClose={() => setShowLeftSidebar(false)}
             />
           </div>
         )}
@@ -176,7 +177,7 @@ export default function CVBuilderPage() {
         {/* Center: Resume Canvas */}
         <div className="flex-1 bg-gray-100 overflow-auto print:bg-white print:overflow-visible relative">
           {/* Toggles - Show on mobile and tablet */}
-          <div className="absolute top-4 left-4 z-10 flex gap-2 print:hidden lg:hidden">
+          <div className={`absolute top-4 left-4 z-10 flex gap-2 print:hidden lg:hidden ${showLeftSidebar ? 'hidden' : ''}`}>
             {showLeftSidebar ? (
               <Button
                 variant="outline"
@@ -199,7 +200,7 @@ export default function CVBuilderPage() {
               </Button>
             )}
           </div>
-          <div className="absolute top-4 right-4 z-10 flex gap-2 print:hidden">
+          <div className={`absolute top-4 right-4 z-10 flex gap-2 print:hidden lg:hidden ${showRightSidebar ? 'hidden' : ''}`}>
             {showRightSidebar ? (
               <Button
                 variant="outline"
@@ -233,12 +234,12 @@ export default function CVBuilderPage() {
 
         {/* Right: Style Panel - Hidden on mobile/tablet by default */}
         {showRightSidebar && (
-          <div className="w-[320px] min-w-[320px] max-w-[400px] border-l bg-white overflow-y-auto print:hidden animate-in slide-in-from-right duration-300 lg:block">
+          <div className="fixed inset-0 z-50 lg:relative lg:inset-auto lg:w-[320px] lg:min-w-[320px] lg:max-w-[400px] border-l bg-white overflow-y-auto print:hidden animate-in slide-in-from-right duration-300">
             <StylePanel
               data={cvData}
               onChange={handleChange}
               selectedElement={selectedElement}
-              onClose={() => setSelectedElement(null)}
+              onClose={() => setShowRightSidebar(false)}
             />
           </div>
         )}
