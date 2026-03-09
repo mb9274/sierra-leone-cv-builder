@@ -55,15 +55,15 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
     }
 
     return (
-        <aside className="w-[350px] border-r bg-white flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+        <aside className="w-[350px] max-w-[90vw] border-r bg-white flex flex-col h-[calc(100vh-64px)] overflow-hidden">
             <Tabs defaultValue="create" className="w-full flex flex-col flex-1 overflow-hidden">
                 {/* Sidebar Header */}
-                <div className="p-4 border-b">
-                    <TabsList className="grid w-full grid-cols-2 bg-gray-100/50 p-1 h-10">
-                        <TabsTrigger value="create" className="text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <div className="p-3 md:p-4 border-b">
+                    <TabsList className="grid w-full grid-cols-2 bg-gray-100/50 p-1 h-10 md:h-10">
+                        <TabsTrigger value="create" className="text-xs md:text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
                             Create
                         </TabsTrigger>
-                        <TabsTrigger value="templates" className="text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <TabsTrigger value="templates" className="text-xs md:text-sm rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
                             Templates
                         </TabsTrigger>
                     </TabsList>
@@ -76,12 +76,12 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
                             collapsible
                             value={selectedElement || ""}
                             onValueChange={(value) => onSelectElement?.(value || null)}
-                            className="px-4"
+                            className="px-3 md:px-4"
                         >
 
                             {/* Personal Information */}
                             <AccordionItem value="personalInfo" className="border-b-0 py-2">
-                                <AccordionTrigger className="hover:no-underline py-3 group">
+                                <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
                                     <div className="flex items-center gap-3 text-sm font-semibold">
                                         <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50">
                                             <User className="size-4" />
@@ -89,7 +89,7 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
                                         Personal Information
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent className="space-y-4 pt-1">
+                                <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
                                     <div className="grid gap-4" onClick={() => onSelectElement?.('personalInfo')}>
                                         <div className="flex items-center gap-4">
                                             <div className="size-16 rounded-full bg-gray-100 border-2 flex items-center justify-center overflow-hidden shrink-0">
@@ -136,7 +136,7 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
                                                 className="h-10 border-gray-200"
                                             />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="grid gap-2">
                                                 <Label htmlFor="email" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Email</Label>
                                                 <Input
@@ -165,7 +165,7 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
 
                             {/* Professional Summary */}
                             <AccordionItem value="summary" className="border-b-0 py-2">
-                                <AccordionTrigger className="hover:no-underline py-3 group">
+                                <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
                                     <div className="flex items-center gap-3 text-sm font-semibold">
                                         <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50">
                                             <Type className="size-4" />
@@ -173,13 +173,13 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
                                         Professional Summary
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent className="space-y-4 pt-1">
+                                <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
                                     <div className="grid gap-2" onClick={() => onSelectElement?.('summary')}>
                                         <Textarea
                                             placeholder="Write a brief professional summary..."
                                             value={data.personalInfo?.summary || ""}
                                             onChange={(e) => onChange("personalInfo.summary", e.target.value)}
-                                            className="min-h-[120px] resize-none border-gray-200"
+                                            className="min-h-[100px] md:min-h-[120px] resize-none border-gray-200"
                                         />
                                     </div>
                                 </AccordionContent>
@@ -187,7 +187,7 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
 
                             {/* Employment History */}
                             <AccordionItem value="experience" className="border-b-0 py-2">
-                                <AccordionTrigger className="hover:no-underline py-3 group">
+                                <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
                                     <div className="flex items-center gap-3 text-sm font-semibold whitespace-nowrap overflow-hidden">
                                         <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50 flex-shrink-0">
                                             <History className="size-4" />
@@ -195,10 +195,10 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
                                         Employment History
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent className="space-y-4 pt-1">
+                                <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
                                     <div onClick={() => onSelectElement?.('experience')}>
                                         {data.experience?.map((exp: any, index: number) => (
-                                            <div key={index} className="p-4 border rounded-lg space-y-3 mb-4 last:mb-0">
+                                            <div key={index} className="p-3 md:p-4 border rounded-lg space-y-3 mb-4 last:mb-0">
                                                 <div className="flex items-center justify-between">
                                                     <div className="font-medium text-sm">{exp.position || "Untitled Position"}</div>
                                                     <Button
@@ -214,7 +214,7 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
                                                         <Trash2 className="size-4" />
                                                     </Button>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
                                                     <div className="grid gap-1">
                                                         <Label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Location</Label>
                                                         <Input
@@ -224,13 +224,22 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement }
                                                             className="h-8 text-sm border-gray-200"
                                                         />
                                                     </div>
+                                                    <div className="grid gap-1">
+                                                        <Label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Company</Label>
+                                                        <Input
+                                                            placeholder="Company Name"
+                                                            value={exp.company || ""}
+                                                            onChange={(e) => onChange(`experience.${index}.company`, e.target.value)}
+                                                            className="h-8 text-sm border-gray-200"
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 <Textarea
                                                     placeholder="Describe your responsibilities and achievements..."
                                                     value={exp.description || ""}
                                                     onChange={(e) => onChange(`experience.${index}.description`, e.target.value)}
-                                                    className="min-h-[100px] resize-none border-gray-200 text-sm"
+                                                    className="min-h-[80px] md:min-h-[100px] resize-none border-gray-200 text-sm"
                                                 />
                                             </div>
                                         ))}

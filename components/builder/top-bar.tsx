@@ -49,8 +49,8 @@ export function TopBar({
     canRedo = false
 }: TopBarProps) {
     return (
-        <header className="h-16 border-b bg-white flex items-center justify-between px-4 md:px-6 sticky top-0 z-50">
-            {/* Left: Breadcrumbs - Hidden on mobile */}
+        <header className="h-16 border-b bg-white flex items-center justify-between px-2 sm:px-4 md:px-6 sticky top-0 z-50">
+            {/* Left: Breadcrumbs - Hidden on mobile, shown on tablet+ */}
             <div className="hidden md:flex items-center gap-4">
                 <div className="size-8 rounded bg-black flex items-center justify-center">
                     <div className="size-4 bg-white rounded-full translate-x-1" />

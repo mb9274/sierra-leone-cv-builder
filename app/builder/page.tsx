@@ -161,9 +161,9 @@ export default function CVBuilderPage() {
 
       {/* Three Panel Layout */}
       <div className="flex flex-1 overflow-hidden print:block relative">
-        {/* Left: Form Sidebar - Hidden on mobile by default */}
+        {/* Left: Form Sidebar - Hidden on mobile/tablet by default */}
         {showLeftSidebar && (
-          <div className="w-[340px] min-w-[340px] border-r bg-white overflow-y-auto print:hidden animate-in slide-in-from-left duration-300 md:block">
+          <div className="w-[340px] min-w-[340px] max-w-[400px] border-r bg-white overflow-y-auto print:hidden animate-in slide-in-from-left duration-300 lg:block">
             <FormSidebar
               data={cvData}
               onChange={handleChange}
@@ -175,25 +175,27 @@ export default function CVBuilderPage() {
 
         {/* Center: Resume Canvas */}
         <div className="flex-1 bg-gray-100 overflow-auto print:bg-white print:overflow-visible relative">
-          {/* Toggles - Show on mobile */}
-          <div className="absolute top-4 left-4 z-10 flex gap-2 print:hidden md:hidden">
+          {/* Toggles - Show on mobile and tablet */}
+          <div className="absolute top-4 left-4 z-10 flex gap-2 print:hidden lg:hidden">
             {showLeftSidebar ? (
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
+                className="bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
                 onClick={() => setShowLeftSidebar(false)}
               >
-                Hide Editor
+                <span className="hidden xs:inline">Hide Editor</span>
+                <span className="xs:hidden">✕</span>
               </Button>
             ) : (
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
+                className="bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
                 onClick={() => setShowLeftSidebar(true)}
               >
-                Show Editor
+                <span className="hidden xs:inline">Show Editor</span>
+                <span className="xs:hidden">📝</span>
               </Button>
             )}
           </div>
@@ -202,19 +204,21 @@ export default function CVBuilderPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
+                className="bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
                 onClick={() => setShowRightSidebar(false)}
               >
-                Hide Style
+                <span className="hidden xs:inline">Hide Style</span>
+                <span className="xs:hidden">🎨</span>
               </Button>
             ) : (
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
+                className="bg-white/90 backdrop-blur shadow-sm border-gray-200 hover:bg-white"
                 onClick={() => setShowRightSidebar(true)}
               >
-                Show Style
+                <span className="hidden xs:inline">Show Style</span>
+                <span className="xs:hidden">🎨</span>
               </Button>
             )}
           </div>
@@ -227,9 +231,9 @@ export default function CVBuilderPage() {
           />
         </div>
 
-        {/* Right: Style Panel - Hidden on mobile by default */}
+        {/* Right: Style Panel - Hidden on mobile/tablet by default */}
         {showRightSidebar && (
-          <div className="w-[320px] min-w-[320px] border-l bg-white overflow-y-auto print:hidden animate-in slide-in-from-right duration-300 md:block">
+          <div className="w-[320px] min-w-[320px] max-w-[400px] border-l bg-white overflow-y-auto print:hidden animate-in slide-in-from-right duration-300 lg:block">
             <StylePanel
               data={cvData}
               onChange={handleChange}
