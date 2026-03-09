@@ -49,9 +49,9 @@ export function TopBar({
     canRedo = false
 }: TopBarProps) {
     return (
-        <header className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-50">
-            {/* Left: Breadcrumbs */}
-            <div className="flex items-center gap-4">
+        <header className="h-16 border-b bg-white flex items-center justify-between px-4 md:px-6 sticky top-0 z-50">
+            {/* Left: Breadcrumbs - Hidden on mobile */}
+            <div className="hidden md:flex items-center gap-4">
                 <div className="size-8 rounded bg-black flex items-center justify-center">
                     <div className="size-4 bg-white rounded-full translate-x-1" />
                 </div>
@@ -75,6 +75,17 @@ export function TopBar({
                         <span>{isSaved ? "Saved" : "Saving..."}</span>
                     </div>
                 </nav>
+            </div>
+
+            {/* Mobile: Just logo and saved status */}
+            <div className="md:hidden flex items-center gap-4">
+                <div className="size-8 rounded bg-black flex items-center justify-center">
+                    <div className="size-4 bg-white rounded-full translate-x-1" />
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium">
+                    <ClipboardCheck className="size-3" />
+                    <span>{isSaved ? "Saved" : "Saving..."}</span>
+                </div>
             </div>
 
             {/* Center: Controls */}
@@ -117,30 +128,30 @@ export function TopBar({
                 </div>
             </div>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-3">
+            {/* Right: Actions - Stack on mobile */}
+            <div className="flex items-center gap-2 md:gap-3">
                 <Button
                     variant="outline"
                     size="icon"
-                    className="rounded-full size-10 border-gray-200 hover:bg-gray-50"
+                    className="rounded-full size-10 border-gray-200 hover:bg-gray-50 md:flex hidden"
                     onClick={onAIAssist}
                 >
                     <Lightbulb className="size-5" />
                 </Button>
                 <Button
                     variant="outline"
-                    className="h-10 px-4 gap-2 border-gray-200 hover:bg-gray-50"
+                    className="h-10 px-3 md:px-4 gap-2 border-gray-200 hover:bg-gray-50 text-sm"
                     onClick={onDownload}
                 >
                     <Download className="size-4" />
-                    Download
+                    <span className="hidden sm:inline">Download</span>
                 </Button>
                 <Button
-                    className="h-10 px-6 gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                    className="h-10 px-4 md:px-6 gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm"
                     onClick={onShare}
                 >
                     <Share2 className="size-4" />
-                    Share
+                    <span className="hidden sm:inline">Share</span>
                 </Button>
             </div>
         </header>

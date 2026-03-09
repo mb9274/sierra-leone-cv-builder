@@ -161,9 +161,9 @@ export default function CVBuilderPage() {
 
       {/* Three Panel Layout */}
       <div className="flex flex-1 overflow-hidden print:block relative">
-        {/* Left: Form Sidebar */}
+        {/* Left: Form Sidebar - Hidden on mobile by default */}
         {showLeftSidebar && (
-          <div className="w-[340px] min-w-[340px] border-r bg-white overflow-y-auto print:hidden animate-in slide-in-from-left duration-300">
+          <div className="w-[340px] min-w-[340px] border-r bg-white overflow-y-auto print:hidden animate-in slide-in-from-left duration-300 md:block">
             <FormSidebar
               data={cvData}
               onChange={handleChange}
@@ -175,26 +175,48 @@ export default function CVBuilderPage() {
 
         {/* Center: Resume Canvas */}
         <div className="flex-1 bg-gray-100 overflow-auto print:bg-white print:overflow-visible relative">
-          {/* Toggles */}
-          <div className="absolute top-4 left-4 z-10 flex gap-2 print:hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
-              onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-            >
-              {showLeftSidebar ? "Hide Editor" : "Show Editor"}
-            </Button>
+          {/* Toggles - Show on mobile */}
+          <div className="absolute top-4 left-4 z-10 flex gap-2 print:hidden md:hidden">
+            {showLeftSidebar ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
+                onClick={() => setShowLeftSidebar(false)}
+              >
+                Hide Editor
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
+                onClick={() => setShowLeftSidebar(true)}
+              >
+                Show Editor
+              </Button>
+            )}
           </div>
           <div className="absolute top-4 right-4 z-10 flex gap-2 print:hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
-              onClick={() => setShowRightSidebar(!showRightSidebar)}
-            >
-              {showRightSidebar ? "Hide Style" : "Show Style"}
-            </Button>
+            {showRightSidebar ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
+                onClick={() => setShowRightSidebar(false)}
+              >
+                Hide Style
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-white/80 backdrop-blur shadow-sm border-gray-200"
+                onClick={() => setShowRightSidebar(true)}
+              >
+                Show Style
+              </Button>
+            )}
           </div>
           <ResumeCanvas
             data={cvData}
@@ -205,9 +227,9 @@ export default function CVBuilderPage() {
           />
         </div>
 
-        {/* Right: Style Panel */}
+        {/* Right: Style Panel - Hidden on mobile by default */}
         {showRightSidebar && (
-          <div className="w-[320px] min-w-[320px] border-l bg-white overflow-y-auto print:hidden animate-in slide-in-from-right duration-300">
+          <div className="w-[320px] min-w-[320px] border-l bg-white overflow-y-auto print:hidden animate-in slide-in-from-right duration-300 md:block">
             <StylePanel
               data={cvData}
               onChange={handleChange}

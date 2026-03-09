@@ -72,7 +72,7 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
             <div
                 className="bg-white shadow-2xl transition-all duration-300 origin-top mb-12"
                 style={{
-                    width: "860px",
+                    width: "min(860px, 95vw)", // Responsive width
                     minHeight: "1122px",
                     transformOrigin: "top center",
                     transform: `scale(${zoomLevel / 100})`,
@@ -118,7 +118,7 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                         </div>
                     </header>
 
-                    <div className="grid grid-cols-[1fr_2fr] gap-16 flex-1">
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8 md:gap-16 flex-1">
                         {/* Left Column */}
                         <div className="space-y-12">
                             <section
