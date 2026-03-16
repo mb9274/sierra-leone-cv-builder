@@ -39,8 +39,7 @@ export async function POST(request: NextRequest) {
     const buffer = await file.arrayBuffer()
     
     // Simulate CV data extraction from file
-    const extractedCV: CVData = {
-      id: `cv-${Date.now()}`,
+    const extractedCV: Omit<CVData, 'id'> = {
       personalInfo: {
         fullName: "Uploaded from: " + file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
         email: user.email || "",
@@ -73,10 +72,16 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
+    // Return the CV with the database-generated UUID
+    const cvWithId = {
+      ...extractedCV,
+      id: data.id
+    }
+
     return NextResponse.json({ 
       success: true, 
       message: "CV uploaded successfully",
-      cv: extractedCV
+      cv: cvWithId
     })
 
   } catch (error) {

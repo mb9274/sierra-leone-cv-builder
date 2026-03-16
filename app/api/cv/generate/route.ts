@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import { CVData } from "@/lib/types"
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,8 +21,14 @@ export async function POST(request: NextRequest) {
 
     // Simulate AI CV generation
     // In a real implementation, you'd call an AI service like OpenAI or Gemini here
-    const generatedCV = {
-      summary: `Professional ${jobTitle || 'individual'} with expertise in ${skills}. ${careerGoals ? `Seeking to leverage skills in ${careerGoals.toLowerCase()}.` : ''}`,
+    const generatedCV: Omit<CVData, 'id'> = {
+      personalInfo: {
+        fullName: fullName,
+        email: email,
+        phone: phone,
+        location: location,
+        summary: `Professional ${jobTitle || 'individual'} with expertise in ${skills}. ${careerGoals ? `Seeking to leverage skills in ${careerGoals.toLowerCase()}.` : ''}`
+      },
       education: education ? [
         {
           id: "edu-1",
@@ -45,13 +52,40 @@ export async function POST(request: NextRequest) {
           description: `${experience}. Led key initiatives and delivered outstanding results.`,
           achievements: "Successfully completed multiple projects with positive impact."
         }
-      ] : []
+      ] : [],
+      skills: skills ? skills.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [],
+      languages: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    // Save to database
+    const { data, error } = await supabase
+      .from('cvs')
+      .insert({
+        user_id: user.id,
+        data: generatedCV
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error("Database error:", error)
+      return NextResponse.json({ 
+        error: `Database error: ${error.message}` 
+      }, { status: 500 })
+    }
+
+    // Return the CV with the database-generated UUID
+    const cvWithId = {
+      ...generatedCV,
+      id: data.id
     }
 
     return NextResponse.json({ 
       success: true, 
       message: "CV generated successfully",
-      data: generatedCV
+      data: cvWithId
     })
 
   } catch (error) {
