@@ -23,11 +23,15 @@ export async function POST(request: NextRequest) {
     const maxSize = 5 * 1024 * 1024 // 5MB
 
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Invalid file type. Only PDF, DOC, and DOCX files are allowed" }, { status: 400 })
+      return NextResponse.json({ 
+        error: `Invalid file type: ${file.type}. Only PDF, DOC, and DOCX files are allowed` 
+      }, { status: 400 })
     }
 
     if (file.size > maxSize) {
-      return NextResponse.json({ error: "File too large. Maximum size is 5MB" }, { status: 400 })
+      return NextResponse.json({ 
+        error: `File too large: ${Math.round(file.size / 1024 / 1024)}MB. Maximum size is 5MB` 
+      }, { status: 400 })
     }
 
     // For now, we'll simulate CV extraction
@@ -38,7 +42,7 @@ export async function POST(request: NextRequest) {
     const extractedCV: CVData = {
       id: `cv-${Date.now()}`,
       personalInfo: {
-        fullName: "Uploaded from: " + file.name,
+        fullName: "Uploaded from: " + file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
         email: user.email || "",
         phone: "",
         location: "",
@@ -53,16 +57,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Save to database
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('cvs')
       .insert({
         user_id: user.id,
         data: extractedCV
       })
+      .select()
+      .single()
 
     if (error) {
       console.error("Database error:", error)
-      return NextResponse.json({ error: "Failed to save CV" }, { status: 500 })
+      return NextResponse.json({ 
+        error: `Database error: ${error.message}` 
+      }, { status: 500 })
     }
 
     return NextResponse.json({ 
@@ -73,7 +81,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Upload error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ 
+      error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    }, { status: 500 })
   }
 }
 

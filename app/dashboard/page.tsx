@@ -87,25 +87,33 @@ export default function DashboardPage() {
   }
 
   const handleDeleteCV = async (cvId: string) => {
-    if (confirm("Are you sure you want to delete this CV?")) {
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
-      
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+    if (!confirm("Are you sure you want to delete this CV?")) return
 
-      const { error } = await supabase
-        .from('cvs')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('id', cvId)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) return
 
-      if (!error) {
-        const updatedCVs = cvs.filter((cv) => cv.id !== cvId)
-        setCvs(updatedCVs)
-        toast({ title: "CV Deleted" })
-      }
+    // Try to delete by matching the ID in the JSON data
+    const { error } = await supabase
+      .from('cvs')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('data->>id', cvId)
+
+    if (error) {
+      console.error("Delete error:", error)
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete CV. Please try again.",
+        variant: "destructive"
+      })
+      return
     }
+
+    const updatedCVs = cvs.filter((cv) => cv.id !== cvId)
+    setCvs(updatedCVs)
+    toast({ title: "CV Deleted" })
   }
 
   const [showCreateModal, setShowCreateModal] = useState(false)

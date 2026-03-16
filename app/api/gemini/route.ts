@@ -51,10 +51,16 @@ export async function POST(request: NextRequest) {
       return ApiResponse.error("Action is required", 400, "VALIDATION_ERROR")
     }
 
+    // Validate cvData if provided
+    if (cvData && (!cvData.personalInfo || !cvData.personalInfo.fullName)) {
+      return ApiResponse.error("Invalid CV data provided", 400, "VALIDATION_ERROR")
+    }
+
     const apiKey = process.env.GEMINI_API_KEY || providedApiKey
 
-    if (!apiKey && action !== "generate_cover_letter" && action !== "mock_interview") {
-      console.log("[v0] Gemini API key not found, using template fallback")
+    // Use fallback if no API key or for specific actions
+    if (!apiKey || (action !== "generate_cover_letter" && action !== "mock_interview")) {
+      console.log("[v0] Gemini API key not found or unsupported action, using template fallback")
       return handleFallbackActions(action, prompt, cvData)
     }
 
