@@ -11,7 +11,7 @@ const isoDateSchema = z.union([
 
 const cvSchema = z
   .object({
-    id: z.string().min(1),
+    id: z.string().min(1).optional(), // Make optional since database generates UUID
     verificationId: z.string().min(1).optional(),
     verifiedAt: z.string().min(1).optional(),
     templateId: z.string().min(1).optional(),
@@ -173,8 +173,6 @@ export async function POST(request: Request) {
       .insert({
         user_id: user.id,
         data: cv,
-        created_at: new Date(cv.createdAt).toISOString(),
-        updated_at: new Date(cv.updatedAt).toISOString(),
       })
       .select("id, data, created_at, updated_at")
       .single()

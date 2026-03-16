@@ -52,8 +52,7 @@ export default function OnboardingPage() {
       }
 
       // Create a new CV with basic structure
-      const newCV: CVData = {
-        id: `cv-${Date.now()}`,
+      const newCV: Omit<CVData, 'id'> = {
         personalInfo: {
           fullName: "",
           email: user.email || "",
@@ -71,17 +70,24 @@ export default function OnboardingPage() {
       }
 
       // Save to Supabase
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('cvs')
         .insert({
           user_id: user.id,
           data: newCV
         })
+        .select()
+        .single()
 
       if (error) throw error
 
-      // Store in sessionStorage for builder
-      sessionStorage.setItem("cvbuilder_current", JSON.stringify(newCV))
+      // Store the CV with database-generated UUID
+      const cvWithId = {
+        ...newCV,
+        id: data.id
+      }
+      
+      sessionStorage.setItem("cvbuilder_current", JSON.stringify(cvWithId))
       
       toast({
         title: "CV Created",

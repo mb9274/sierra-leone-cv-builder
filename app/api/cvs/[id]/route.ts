@@ -192,18 +192,28 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       const cv = bodyParse.data
       const supabase = await createClient()
 
+      // Validate that we have a valid ID
+      if (!parsedId.data) {
+        return ApiResponse.error("CV ID is required", 400, "VALIDATION_ERROR")
+      }
+
+      // Prepare update data - let trigger handle updated_at
+      const updateData: any = {
+        data: cv,
+      }
+
+      console.log("Updating CV with ID:", parsedId.data, "for user:", user.id)
+
       const { data, error } = await supabase
         .from("cvs")
-        .update({
-          data: cv,
-          updated_at: new Date(cv.updatedAt).toISOString(),
-        })
+        .update(updateData)
         .eq("id", parsedId.data)
         .eq("user_id", user.id)
         .select("id, data, created_at, updated_at")
         .single()
 
       if (error) {
+        console.error("Database update error:", error)
         if (error.code === 'PGRST116') {
           return ApiResponse.notFound("CV not found")
         }
@@ -228,6 +238,13 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return withAuth(async (user) => {
       const supabase = await createClient()
 
+      // Validate that we have a valid ID
+      if (!parsedId.data) {
+        return ApiResponse.error("CV ID is required", 400, "VALIDATION_ERROR")
+      }
+
+      console.log("Deleting CV with ID:", parsedId.data, "for user:", user.id)
+
       const { error } = await supabase
         .from("cvs")
         .delete()
@@ -235,6 +252,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
         .eq("user_id", user.id)
 
       if (error) {
+        console.error("Database delete error:", error)
         return ApiResponse.error("Failed to delete CV", 500, "DATABASE_ERROR", error.message)
       }
 
