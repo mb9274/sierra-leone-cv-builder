@@ -60,14 +60,14 @@ export default function DashboardPage() {
 
     const { data: cvs, error } = await supabase
       .from('cvs')
-      .select('data, created_at, updated_at')
+      .select('id, data, created_at, updated_at')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
 
     if (cvs) {
-      setCvs(cvs.map((cv: any, index: number) => ({
+      setCvs(cvs.map((cv: any) => ({
         ...cv.data,
-        id: cv.data.id || `cv-${index}`,
+        id: cv.id, // Use the database UUID
         createdAt: cv.created_at,
         updatedAt: cv.updated_at
       })))
@@ -94,12 +94,12 @@ export default function DashboardPage() {
     
     if (!user) return
 
-    // Try to delete by matching the ID in the JSON data
+    // Delete by database UUID directly
     const { error } = await supabase
       .from('cvs')
       .delete()
       .eq('user_id', user.id)
-      .eq('data->>id', cvId)
+      .eq('id', cvId) // Use the database UUID directly
 
     if (error) {
       console.error("Delete error:", error)
