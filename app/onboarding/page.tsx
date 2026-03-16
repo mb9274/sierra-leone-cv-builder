@@ -8,28 +8,146 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowRight, Briefcase, GraduationCap } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { useToast } from "@/hooks/use-toast"
+import type { CVData } from "@/lib/types"
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [jobRole, setJobRole] = useState("")
   const [experienceLevel, setExperienceLevel] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    // Direct access without authentication
+    // Check authentication
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push("/auth/sign-in")
+      }
+    }
+    checkAuth()
   }, [router])
 
-  const handleStart = () => {
-    if (jobRole && experienceLevel) {
-      // Save preferences for tailored suggestions
-      localStorage.setItem(
-        "cvbuilder_preferences",
-        JSON.stringify({
-          jobRole,
-          experienceLevel,
-        }),
-      )
-      router.push("/builder")
+  const handleStart = async () => {
+    if (!jobRole || !experienceLevel) {
+      toast({
+        title: "Missing Information",
+        description: "Please select both job role and experience level.",
+        variant: "destructive"
+      })
+      return
     }
+
+    setIsLoading(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        router.push("/auth/sign-in")
+        return
+      }
+
+      // Create a new CV with basic structure
+      const newCV: CVData = {
+        id: `cv-${Date.now()}`,
+        personalInfo: {
+          fullName: "",
+          email: user.email || "",
+          phone: "",
+          location: "",
+          age: "",
+          summary: getSummaryByRole(jobRole, experienceLevel)
+        },
+        education: [],
+        experience: [],
+        skills: getSkillsByRole(jobRole),
+        languages: [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      // Save to Supabase
+      const { error } = await supabase
+        .from('cvs')
+        .insert({
+          user_id: user.id,
+          data: newCV
+        })
+
+      if (error) throw error
+
+      // Store in sessionStorage for builder
+      sessionStorage.setItem("cvbuilder_current", JSON.stringify(newCV))
+      
+      toast({
+        title: "CV Created",
+        description: "Your CV has been created successfully!"
+      })
+
+      // Navigate to builder
+      router.push("/builder")
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create CV. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getSummaryByRole = (role: string, level: string): string => {
+    const summaries: Record<string, Record<string, string>> = {
+      banking: {
+        fresh: "Recent graduate with strong analytical skills and knowledge of financial principles, eager to contribute to a dynamic banking team.",
+        entry: "Banking professional with 1-2 years experience in customer service and financial operations, seeking to grow in the industry.",
+        experienced: "Experienced banking professional with expertise in financial analysis, risk management, and client relationship management."
+      },
+      ngo: {
+        fresh: "Passionate recent graduate committed to making positive social impact through dedicated community development work.",
+        entry: "Development professional with experience in project coordination and community engagement, seeking to drive meaningful change.",
+        experienced: "Seasoned NGO professional with proven track record in program management and sustainable development initiatives."
+      },
+      teaching: {
+        fresh: "Dedicated education graduate with strong pedagogical skills and passion for student development.",
+        entry: "Educator with classroom experience and commitment to fostering inclusive learning environments.",
+        experienced: "Experienced teacher with expertise in curriculum development and educational leadership."
+      },
+      marketing: {
+        fresh: "Creative marketing graduate with fresh perspectives and digital media skills ready to drive brand growth.",
+        entry: "Marketing professional with experience in campaign management and social media strategy.",
+        experienced: "Strategic marketing leader with proven track record in brand development and market expansion."
+      },
+      it: {
+        fresh: "Tech-savvy graduate with strong programming skills and passion for innovative solutions.",
+        entry: "IT professional with experience in system administration and technical support.",
+        experienced: "Seasoned IT expert with expertise in software development and infrastructure management."
+      }
+    }
+
+    return summaries[role]?.[level] || "Professional seeking opportunities to contribute skills and grow in a dynamic environment."
+  }
+
+  const getSkillsByRole = (role: string): string[] => {
+    const skills: Record<string, string[]> = {
+      banking: ["Customer Service", "Financial Analysis", "Risk Assessment", "Microsoft Office", "Communication"],
+      ngo: ["Project Management", "Community Development", "Report Writing", "Stakeholder Engagement", "Monitoring & Evaluation"],
+      teaching: ["Lesson Planning", "Classroom Management", "Curriculum Development", "Student Assessment", "Communication"],
+      marketing: ["Digital Marketing", "Content Creation", "Social Media Management", "Market Research", "Analytics"],
+      it: ["Programming", "Database Management", "Network Administration", "Problem Solving", "Technical Support"],
+      healthcare: ["Patient Care", "Medical Records", "Communication", "Empathy", "Attention to Detail"],
+      hospitality: ["Customer Service", "Multi-tasking", "Communication", "Problem Solving", "Team Work"],
+      agriculture: ["Crop Management", "Agricultural Planning", "Sustainability", "Project Management", "Research"],
+      administration: ["Office Management", "Microsoft Office", "Communication", "Organization", "Time Management"]
+    }
+
+    return skills[role] || ["Communication", "Team Work", "Problem Solving", "Time Management"]
   }
 
   return (
@@ -104,12 +222,21 @@ export default function OnboardingPage() {
 
           <Button
             onClick={handleStart}
-            disabled={!jobRole || !experienceLevel}
+            disabled={!jobRole || !experienceLevel || isLoading}
             size="lg"
             className="w-full h-14 text-lg"
           >
-            Start Building My CV
-            <ArrowRight className="ml-2 size-5" />
+            {isLoading ? (
+              <>
+                <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Creating Your CV...
+              </>
+            ) : (
+              <>
+                Start Building My CV
+                <ArrowRight className="ml-2 size-5" />
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>

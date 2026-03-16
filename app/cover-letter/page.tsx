@@ -25,11 +25,33 @@ export default function CoverLetterPage() {
     const [selectedJobId, setSelectedJobId] = useState<string>("")
 
     useEffect(() => {
-        const savedCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-        setCvs(savedCVs)
-        if (savedCVs.length > 0) {
-            setSelectedCvId(savedCVs[0].id)
+        const loadCVs = async () => {
+            const { createClient } = await import("@/lib/supabase/client")
+            const supabase = createClient()
+            
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
+            const { data: cvs, error } = await supabase
+                .from('cvs')
+                .select('data, created_at, updated_at')
+                .eq('user_id', user.id)
+                .order('updated_at', { ascending: false })
+
+            if (cvs) {
+                setCvs(cvs.map((cv: any, index: number) => ({
+                    ...cv.data,
+                    id: cv.data.id || `cv-${index}`,
+                    createdAt: cv.created_at,
+                    updatedAt: cv.updated_at
+                })))
+                if (cvs.length > 0) {
+                    setSelectedCvId(cvs[0].data.id || `cv-0`)
+                }
+            }
         }
+        
+        loadCVs()
     }, [])
 
     const handleJobSelect = (jobId: string) => {
@@ -77,10 +99,19 @@ export default function CoverLetterPage() {
         }
 
         const selectedCv = cvs.find((cv) => cv.id === selectedCvId)
-        if (!selectedCv) return
+        if (!selectedCv) {
+            toast({
+                title: "CV Not Found",
+                description: "Selected CV not found. Please try again.",
+                variant: "destructive",
+            })
+            return
+        }
 
         setIsGenerating(true)
         try {
+            console.log("Generating cover letter with:", { jobTitle, companyName, cvId: selectedCvId })
+            
             const response = await fetch("/api/gemini", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -91,18 +122,29 @@ export default function CoverLetterPage() {
                 }),
             })
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+
             const data = await response.json()
+            console.log("Cover letter response:", data)
+            
             if (data.coverLetter) {
                 setGeneratedLetter(data.coverLetter)
                 toast({
                     title: "Cover Letter Generated",
                     description: "Your cover letter is ready!",
                 })
+            } else if (data.error) {
+                throw new Error(data.error)
+            } else {
+                throw new Error("No cover letter generated")
             }
         } catch (error) {
+            console.error("Cover letter generation error:", error)
             toast({
                 title: "Error",
-                description: "Failed to generate cover letter. Please try again.",
+                description: `Failed to generate cover letter: ${error instanceof Error ? error.message : "Unknown error"}`,
                 variant: "destructive",
             })
         } finally {

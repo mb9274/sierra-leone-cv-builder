@@ -22,6 +22,7 @@ import {
 const signedInNavItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/cv", label: "Manage CVs", icon: FileText },
   { href: "/builder", label: "Build CV", icon: FileText },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
   { href: "/job-map", label: "Job Map", icon: Map },
@@ -35,7 +36,10 @@ export function MobileNav() {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    const { createClient } = await import("@/lib/supabase/client")
+    const supabase = createClient()
+    await supabase.auth.signOut()
     window.location.href = "/"
   }
 

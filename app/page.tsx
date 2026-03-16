@@ -70,7 +70,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <Button
-                onClick={() => router.push("/dashboard")}
+                onClick={() => router.push("/auth/sign-in")}
                 size="lg"
                 className="h-12 px-8 bg-primary text-white hover:bg-primary/90"
               >

@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   X,
+  FileText,
 } from "lucide-react"
 
 export function AppSidebar() {
@@ -36,8 +37,10 @@ export function AppSidebar() {
     }
   }, [pathname])
 
-  const handleSignOut = () => {
-    localStorage.removeItem("user")
+  const handleSignOut = async () => {
+    const { createClient } = await import("@/lib/supabase/client")
+    const supabase = createClient()
+    await supabase.auth.signOut()
     router.replace("/")
   }
 
@@ -89,6 +92,22 @@ export function AppSidebar() {
               >
                 <LayoutGrid className="size-4" />
                 All Resumes
+              </Button>
+
+              <Button
+                variant={isActive("/cv") ? "secondary" : "ghost"}
+                className={`w-full justify-start gap-3 h-11 border-none ${
+                  isActive("/cv")
+                    ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                    : "text-gray-500 hover:text-black"
+                }`}
+                onClick={() => {
+                  router.push("/cv")
+                  setIsMobileMenuOpen(false)
+                }}
+              >
+                <FileText className="size-4" />
+                Manage CVs
               </Button>
 
               <div className="pt-3">

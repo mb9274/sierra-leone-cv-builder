@@ -29,11 +29,33 @@ export default function MockInterviewPage() {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const savedCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-    setCvs(savedCVs)
-    if (savedCVs.length > 0) {
-      setSelectedCvId(savedCVs[0].id)
+    const loadCVs = async () => {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+      
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: cvs, error } = await supabase
+        .from('cvs')
+        .select('data, created_at, updated_at')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+
+      if (cvs) {
+        setCvs(cvs.map((cv: any, index: number) => ({
+          ...cv.data,
+          id: cv.data.id || `cv-${index}`,
+          createdAt: cv.created_at,
+          updatedAt: cv.updated_at
+        })))
+        if (cvs.length > 0) {
+          setSelectedCvId(cvs[0].data.id || `cv-0`)
+        }
+      }
     }
+    
+    loadCVs()
   }, [])
 
   useEffect(() => {
@@ -80,7 +102,14 @@ export default function MockInterviewPage() {
 
   const sendMessage = async (text: string) => {
     const selectedCv = cvs.find((cv) => cv.id === selectedCvId)
-    if (!selectedCv) return
+    if (!selectedCv) {
+      toast({
+        title: "No CV Selected",
+        description: "Please select a CV first.",
+        variant: "destructive",
+      })
+      return
+    }
 
     if (text !== "start") {
       setMessages((prev) => [...prev, { role: "user", content: text }])
@@ -88,6 +117,8 @@ export default function MockInterviewPage() {
 
     setIsLoading(true)
     try {
+      console.log("Sending interview message:", { text, cvId: selectedCvId })
+      
       const response = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -98,24 +129,36 @@ export default function MockInterviewPage() {
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log("Interview response:", data)
 
       let aiResponse = ""
       if (data.questions && data.questions.length > 0) {
         aiResponse = "Welcome! I've reviewed your CV. Here are 5 potential questions we could discuss. Which one would you like to start with?\n\n" +
           data.questions.map((q: string, i: number) => `${i + 1}. ${q}`).join("\n")
+      } else if (data.message) {
+        aiResponse = data.message
       } else {
-        aiResponse = data.message || "I didn't catch that. Could you say it again?"
+        aiResponse = "I didn't catch that. Could you say it again?"
       }
 
       setMessages((prev) => [...prev, { role: "assistant", content: aiResponse }])
       speak(aiResponse)
     } catch (error) {
+      console.error("Interview error:", error)
       toast({
         title: "Error",
-        description: "Failed to connect to AI interviewer.",
+        description: `Failed to connect to AI interviewer: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive",
       })
+      setMessages((prev) => [...prev, { 
+        role: "assistant", 
+        content: "Sorry, I'm having technical difficulties. Please try again." 
+      }])
     } finally {
       setIsLoading(false)
     }
