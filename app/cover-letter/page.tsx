@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import type { CVData } from "@/lib/types"
 import { mockJobs } from "@/lib/mock-jobs"
+import { loadAvailableCvs } from "@/lib/cv-collection"
 
 export default function CoverLetterPage() {
     const router = useRouter()
@@ -23,35 +24,26 @@ export default function CoverLetterPage() {
     const [cvs, setCvs] = useState<CVData[]>([])
     const [selectedCvId, setSelectedCvId] = useState<string>("")
     const [selectedJobId, setSelectedJobId] = useState<string>("")
+    const [isLoadingCvs, setIsLoadingCvs] = useState(true)
 
     useEffect(() => {
-        const loadCVs = async () => {
-            const { createClient } = await import("@/lib/supabase/client")
-            const supabase = createClient()
-            
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
+        let mounted = true
 
-            const { data: cvs, error } = await supabase
-                .from('cvs')
-                .select('id, data, created_at, updated_at')
-                .eq('user_id', user.id)
-                .order('updated_at', { ascending: false })
+        const loadCvs = async () => {
+            setIsLoadingCvs(true)
+            const availableCvs = await loadAvailableCvs()
+            if (!mounted) return
 
-            if (cvs) {
-                setCvs(cvs.map((cv: any) => ({
-                    ...cv.data,
-                    id: cv.id, // Use the database UUID
-                    createdAt: cv.created_at,
-                    updatedAt: cv.updated_at
-                })))
-                if (cvs.length > 0) {
-                    setSelectedCvId(cvs[0].id) // Use database UUID
-                }
-            }
+            setCvs(availableCvs)
+            setSelectedCvId((current) => current || availableCvs[0]?.id || "")
+            setIsLoadingCvs(false)
         }
-        
-        loadCVs()
+
+        loadCvs()
+
+        return () => {
+            mounted = false
+        }
     }, [])
 
     const handleJobSelect = (jobId: string) => {
@@ -102,7 +94,7 @@ export default function CoverLetterPage() {
         if (!selectedCv) {
             toast({
                 title: "CV Not Found",
-                description: "Selected CV not found. Please try again.",
+                description: "Selected CV not found or still loading. Please try again.",
                 variant: "destructive",
             })
             return
@@ -180,9 +172,9 @@ export default function CoverLetterPage() {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Select CV</label>
-                                <Select value={selectedCvId} onValueChange={setSelectedCvId}>
+                                <Select value={selectedCvId} onValueChange={setSelectedCvId} disabled={isLoadingCvs}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a CV" />
+                                        <SelectValue placeholder={isLoadingCvs ? "Loading CVs..." : "Select a CV"} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {cvs.map((cv) => (
@@ -196,7 +188,7 @@ export default function CoverLetterPage() {
 
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Select Job (Optional)</label>
-                                <Select value={selectedJobId} onValueChange={handleJobSelect}>
+                                <Select value={selectedJobId} onValueChange={handleJobSelect} disabled={isLoadingCvs}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pick a job to auto-fill" />
                                     </SelectTrigger>
@@ -250,7 +242,7 @@ export default function CoverLetterPage() {
                                 />
                             </div>
 
-                            <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
+                            <Button onClick={handleGenerate} disabled={isGenerating || isLoadingCvs} className="w-full">
                                 {isGenerating ? (
                                     <>
                                         <Loader2 className="mr-2 size-4 animate-spin" />

@@ -5,28 +5,76 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Upload, 
-  FileText, 
-  ArrowLeft,
-  Eye,
-  Trash2,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  Sparkles,
-  Bot,
-  User,
-  GraduationCap,
-  Briefcase
-} from "lucide-react"
+import { Upload, FileText, ArrowLeft, Eye, Trash2, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import type { CVData } from "@/lib/types"
-import { createClient } from "@/lib/supabase/client"
+import { normalizeCvRecord } from "@/lib/cv-storage"
+
+type UploadProgress = {
+  stage: string
+  message: string
+  currentPage?: number
+  totalPages?: number
+}
+
+function parseSseEvent(chunk: string) {
+  const lines = chunk
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  const eventLine = lines.find((line) => line.startsWith("event:"))
+  const dataLine = lines.find((line) => line.startsWith("data:"))
+  const event = eventLine ? eventLine.slice("event:".length).trim() : "message"
+
+  if (!dataLine) return { event, data: null }
+
+  try {
+    return {
+      event,
+      data: JSON.parse(dataLine.slice("data:".length).trim()),
+    }
+  } catch {
+    return { event, data: null }
+  }
+}
+
+async function readUploadStream(
+  response: Response,
+  onProgress: (progress: UploadProgress) => void,
+): Promise<any> {
+  const reader = response.body?.getReader()
+  if (!reader) {
+    throw new Error("Upload stream is unavailable")
+  }
+
+  const decoder = new TextDecoder()
+  let buffer = ""
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+    const events = buffer.split("\n\n")
+    buffer = events.pop() || ""
+
+    for (const rawEvent of events) {
+      const { event, data } = parseSseEvent(rawEvent)
+      if (event === "progress" && data) {
+        onProgress(data)
+      } else if (event === "done" && data) {
+        return data
+      } else if (event === "error") {
+        throw new Error(data?.message || "Upload failed")
+      }
+    }
+  }
+
+  throw new Error("Upload stream ended unexpectedly")
+}
 
 export default function CVManagementPage() {
   const router = useRouter()
@@ -35,58 +83,37 @@ export default function CVManagementPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [activeOption, setActiveOption] = useState<"upload" | "ai" | null>(null)
-  const [aiForm, setAiForm] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    location: "",
-    jobTitle: "",
-    experience: "",
-    education: "",
-    skills: "",
-    careerGoals: ""
-  })
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null)
 
   useEffect(() => {
-    // Check URL parameter for mode
-    const urlParams = new URLSearchParams(window.location.search)
-    const mode = urlParams.get('mode')
-    if (mode === 'ai') {
-      setActiveOption('ai')
-    }
-    
     loadCVs()
   }, [])
 
   const loadCVs = async () => {
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
+      const sessionResponse = await fetch("/api/auth/session")
+      if (!sessionResponse.ok) {
         router.push("/auth/sign-in")
         return
       }
 
-      const { data: cvs, error } = await supabase
-        .from('cvs')
-        .select('data, created_at, updated_at')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-
-      if (error) throw error
-
-      if (cvs) {
-        setCvs(cvs.map((cv: any, index: number) => ({
-          ...cv.data,
-          id: cv.data.id || `cv-${index}`,
-          createdAt: cv.created_at,
-          updatedAt: cv.updated_at
-        })))
+      const session = await sessionResponse.json()
+      if (!session.user) {
+        router.push("/auth/sign-in")
+        return
       }
-    } catch (err) {
+
+      const cvsResponse = await fetch("/api/cvs")
+      if (!cvsResponse.ok) {
+        throw new Error("Failed to load CVs")
+      }
+
+      const payload = await cvsResponse.json()
+      if (payload.cvs) {
+        setCvs(payload.cvs.map((cv: any) => normalizeCvRecord(cv)))
+      }
+    } catch (error) {
+      console.error("Failed to load CVs:", error)
       setError("Failed to load CVs")
     } finally {
       setLoading(false)
@@ -97,123 +124,101 @@ export default function CVManagementPage() {
     const file = event.target.files?.[0]
     if (!file) return
 
+    console.log("File selected:", file.name, file.type, file.size)
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp",
+      "image/tiff",
+    ]
+    const maxSize = 5 * 1024 * 1024
+
+    if (!allowedTypes.includes(file.type)) {
+      setError(`Invalid file type: ${file.type}. Only PDF, DOC, and DOCX files are allowed`)
+      return
+    }
+
+    if (file.size > maxSize) {
+      setError(`File too large: ${Math.round(file.size / 1024 / 1024)}MB. Maximum size is 5MB`)
+      return
+    }
+
     setIsUploading(true)
     setError("")
+    setUploadProgress({
+      stage: "starting",
+      message: "Preparing your CV upload...",
+    })
 
     try {
       const formData = new FormData()
       formData.append("file", file)
 
-      const response = await fetch("/api/cv/upload", {
+      const response = await fetch("/api/cv/upload?progress=1", {
         method: "POST",
-        body: formData
+        body: formData,
       })
-
-      const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || "Upload failed")
+        const result = await response.json().catch(() => null)
+        throw new Error(result?.error || "Upload failed")
       }
 
-      toast({ 
-        title: "CV Uploaded Successfully",
-        description: "Your CV has been uploaded and saved."
+      const contentType = response.headers.get("content-type") || ""
+      const result = contentType.includes("text/event-stream")
+        ? await readUploadStream(response, setUploadProgress)
+        : await response.json()
+
+      const debug = result.debug
+      const looksImageOnly =
+        (debug?.fallbackTextLength || 0) < 30 &&
+        (debug?.sourceTextLength || 0) < 30 &&
+        (debug?.coreFieldCount || 0) < 2 &&
+        (debug?.sectionCount || 0) < 1
+
+      if (looksImageOnly) {
+        toast({
+          title: "Image-only or scanned file detected",
+          description: "This file does not contain enough readable text, so we are opening the manual editor.",
+        })
+        handleManualFallback()
+        return
+      }
+
+      sessionStorage.setItem("cvbuilder_current", JSON.stringify(result.cv))
+      toast({
+        title: "CV uploaded successfully",
+        description: "Opening the editor with the extracted CV.",
       })
-      
-      await loadCVs()
-      setIsUploading(false)
-      setActiveOption(null)
-      
-      // Reset file input
-      event.target.value = ""
-      
+      router.push("/builder")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload CV file")
+      const message = err instanceof Error ? err.message : "Failed to upload CV"
+      setError(message)
+      toast({
+        title: "Upload failed",
+        description: message,
+        variant: "destructive",
+      })
+      handleManualFallback()
+    } finally {
       setIsUploading(false)
+      setUploadProgress(null)
     }
   }
 
-  const handleAIGenerate = async () => {
-    if (!aiForm.fullName || !aiForm.email) {
-      setError("Please fill in required fields")
-      return
-    }
-
-    setIsGenerating(true)
-    setError("")
-
-    try {
-      const response = await fetch("/api/cv/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(aiForm)
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || "AI generation failed")
-      }
-
-      const newCV: CVData = {
-        id: `cv-${Date.now()}`,
-        personalInfo: {
-          fullName: aiForm.fullName,
-          email: aiForm.email,
-          phone: aiForm.phone,
-          location: aiForm.location,
-          summary: result.data.summary || `Professional ${aiForm.jobTitle} with expertise in ${aiForm.skills}`
-        },
-        education: result.data.education || [],
-        experience: result.data.experience || [],
-        skills: aiForm.skills.split(",").map(s => s.trim()).filter(s => s),
-        languages: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) throw new Error("Not authenticated")
-
-      const { error } = await supabase
-        .from('cvs')
-        .insert({
-          user_id: user.id,
-          data: newCV
-        })
-
-      if (error) throw error
-
-      toast({ 
-        title: "CV Generated Successfully",
-        description: "Your AI-generated CV has been created."
-      })
-      
-      await loadCVs()
-      setIsGenerating(false)
-      setActiveOption(null)
-      
-      // Reset form
-      setAiForm({
-        fullName: "",
-        email: "",
-        phone: "",
-        location: "",
-        jobTitle: "",
-        experience: "",
-        education: "",
-        skills: "",
-        careerGoals: ""
-      })
-      
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate CV")
-      setIsGenerating(false)
-    }
+  const handleManualFallback = () => {
+    sessionStorage.removeItem("cvbuilder_current")
+    localStorage.removeItem("cvbuilder_current")
+    toast({
+      title: "Manual editor opened",
+      description: "You can enter the CV details by hand in the editor.",
+    })
+    router.push("/builder")
   }
 
   const handleViewCV = (cv: CVData) => {
@@ -230,22 +235,18 @@ export default function CVManagementPage() {
     if (!confirm("Are you sure you want to delete this CV?")) return
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) throw new Error("Not authenticated")
+      const response = await fetch(`/api/cvs/${cvId}`, {
+        method: "DELETE",
+      })
 
-      const { error } = await supabase
-        .from('cvs')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('id', cvId)
-
-      if (error) throw error
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        throw new Error(result?.error || "Failed to delete CV")
+      }
 
       await loadCVs()
       toast({ title: "CV Deleted Successfully" })
-    } catch (err) {
+    } catch {
       setError("Failed to delete CV")
     }
   }
@@ -261,21 +262,19 @@ export default function CVManagementPage() {
   return (
     <div className="min-h-screen bg-background">
       <Toaster />
-      
-      {/* Header */}
+
       <header className="border-b bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard")}>
               <ArrowLeft className="size-5" />
             </Button>
-            <h1 className="text-2xl font-bold">CV Management</h1>
+            <h1 className="text-2xl font-bold">Upload CV</h1>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Error Alert */}
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50">
             <AlertCircle className="h-4 w-4 text-red-600" />
@@ -283,360 +282,145 @@ export default function CVManagementPage() {
           </Alert>
         )}
 
-        {/* Main Options */}
-        {!activeOption ? (
-          <div className="space-y-8">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-4">Choose How to Create Your CV</h2>
-              <p className="text-gray-600 text-lg">Select the option that works best for you</p>
-            </div>
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="size-5" />
+                Upload and Edit Your CV
+              </CardTitle>
+              <CardDescription>
+                Upload your existing CV file and we will extract the text for editing. If the file is scanned or image-only, we will open the manual editor.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Alert className="border-amber-200 bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-700" />
+                <AlertDescription className="text-amber-900">
+                  Normal text-based PDFs and DOCX files will be extracted automatically. Scanned or image-only files do not contain readable text, so we will open the manual editor instead.
+                </AlertDescription>
+              </Alert>
 
-            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              {/* Upload and Edit Option */}
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 hover:border-blue-400" 
-                    onClick={() => setActiveOption("upload")}>
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <Upload className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <CardTitle className="text-xl mb-2">Upload and Edit My CV</CardTitle>
-                  <CardDescription className="text-base">
-                    Upload your existing CV in PDF or Word format and edit it directly in our platform
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Supports PDF, DOC, DOCX files</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Extract and edit all sections</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Download updated version</span>
-                    </div>
-                  </div>
-                  <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload and Edit My CV
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <div className="space-y-2">
+                  <p className="text-lg font-medium">Upload your CV file</p>
+                  <p className="text-sm text-gray-500">Supported formats: PDF, DOC, DOCX, PNG, JPG, WEBP, TIFF (Max 5MB)</p>
+                </div>
+                <Input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.tif,.tiff"
+                  onChange={handleFileUpload}
+                  className="mt-4"
+                  disabled={isUploading}
+                />
+              </div>
 
-              {/* AI Generate Option */}
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-purple-200 hover:border-purple-400" 
-                    onClick={() => setActiveOption("ai")}>
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                    <Sparkles className="h-8 w-8 text-purple-600" />
-                  </div>
-                  <CardTitle className="text-xl mb-2">Generate My CV with AI</CardTitle>
-                  <CardDescription className="text-base">
-                    Let AI create a professional CV for you with just a few details
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Professional wording and structure</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Optimized for job applications</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Simple form to fill out</span>
-                    </div>
-                  </div>
-                  <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700">
-                    <Bot className="mr-2 h-4 w-4" />
-                    Generate My CV with AI
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-4xl mx-auto">
-            {/* Back Button */}
-            <Button 
-              variant="outline" 
-              onClick={() => setActiveOption(null)}
-              className="mb-6"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Options
-            </Button>
-
-            {/* Upload Interface */}
-            {activeOption === "upload" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Upload className="size-5" />
-                    Upload and Edit Your CV
-                  </CardTitle>
-                  <CardDescription>
-                    Upload your existing CV file and we'll extract the information for you to edit
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <div className="space-y-2">
-                      <p className="text-lg font-medium">Upload your CV file</p>
-                      <p className="text-sm text-gray-500">
-                        Supported formats: PDF, DOC, DOCX (Max 5MB)
+              {isUploading && (
+                <div className="rounded-lg border bg-blue-50 p-4 text-center space-y-3">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-blue-900">
+                      {uploadProgress?.message || "Uploading and processing your CV..."}
+                    </p>
+                    {typeof uploadProgress?.currentPage === "number" && typeof uploadProgress?.totalPages === "number" && (
+                      <p className="text-xs text-blue-700">
+                        Page {uploadProgress.currentPage} of {uploadProgress.totalPages}
                       </p>
-                    </div>
-                    <Input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={handleFileUpload}
-                      className="mt-4"
-                      disabled={isUploading}
-                    />
+                    )}
                   </div>
-                  {isUploading && (
-                    <div className="text-center">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                      <p>Uploading and processing your CV...</p>
+                  {typeof uploadProgress?.currentPage === "number" && typeof uploadProgress?.totalPages === "number" && (
+                    <div className="h-2 w-full rounded-full bg-blue-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                        style={{
+                          width: `${Math.max(
+                            5,
+                            Math.min(
+                              100,
+                              Math.round((uploadProgress.currentPage / uploadProgress.totalPages) * 100),
+                            ),
+                          )}%`,
+                        }}
+                      />
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              )}
 
-            {/* AI Generation Interface */}
-            {activeOption === "ai" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bot className="size-5" />
-                    Generate CV with AI
-                  </CardTitle>
-                  <CardDescription>
-                    Fill in your information below and AI will create a professional CV for you
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Personal Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <User className="h-5 w-5" />
-                        Personal Information
-                      </h3>
-                      <div className="space-y-3">
-                        <div>
-                          <Label htmlFor="ai-fullName">Full Name *</Label>
-                          <Input
-                            id="ai-fullName"
-                            value={aiForm.fullName}
-                            onChange={(e) => setAiForm(prev => ({ ...prev, fullName: e.target.value }))}
-                            placeholder="Enter your full name"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ai-email">Email Address *</Label>
-                          <Input
-                            id="ai-email"
-                            type="email"
-                            value={aiForm.email}
-                            onChange={(e) => setAiForm(prev => ({ ...prev, email: e.target.value }))}
-                            placeholder="your.email@example.com"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ai-phone">Phone Number</Label>
-                          <Input
-                            id="ai-phone"
-                            value={aiForm.phone}
-                            onChange={(e) => setAiForm(prev => ({ ...prev, phone: e.target.value }))}
-                            placeholder="+232 76 123 456"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ai-location">Location</Label>
-                          <Input
-                            id="ai-location"
-                            value={aiForm.location}
-                            onChange={(e) => setAiForm(prev => ({ ...prev, location: e.target.value }))}
-                            placeholder="Freetown, Sierra Leone"
-                          />
-                        </div>
-                      </div>
-                    </div>
+              <div className="flex flex-wrap gap-3 justify-center">
+                <Button variant="outline" onClick={handleManualFallback}>
+                  Open manual editor
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-                    {/* Professional Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <Briefcase className="h-5 w-5" />
-                        Professional Information
-                      </h3>
-                      <div className="space-y-3">
-                        <div>
-                          <Label htmlFor="ai-jobTitle">Current/Target Job Title</Label>
-                          <Input
-                            id="ai-jobTitle"
-                            value={aiForm.jobTitle}
-                            onChange={(e) => setAiForm(prev => ({ ...prev, jobTitle: e.target.value }))}
-                            placeholder="e.g., Software Developer, Marketing Manager"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ai-experience">Work Experience</Label>
-                          <Textarea
-                            id="ai-experience"
-                            value={aiForm.experience}
-                            onChange={(e) => setAiForm(prev => ({ ...prev, experience: e.target.value }))}
-                            placeholder="Describe your work experience, companies, and achievements..."
-                            rows={3}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ai-education">Education</Label>
-                          <Textarea
-                            id="ai-education"
-                            value={aiForm.education}
-                            onChange={(e) => setAiForm(prev => ({ ...prev, education: e.target.value }))}
-                            placeholder="Your degrees, certifications, and educational background..."
-                            rows={3}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ai-skills">Skills *</Label>
-                          <Textarea
-                            id="ai-skills"
-                            value={aiForm.skills}
-                            onChange={(e) => setAiForm(prev => ({ ...prev, skills: e.target.value }))}
-                            placeholder="JavaScript, Project Management, Communication, Leadership..."
-                            rows={2}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ai-careerGoals">Career Goals</Label>
-                          <Textarea
-                            id="ai-careerGoals"
-                            value={aiForm.careerGoals}
-                            onChange={(e) => setAiForm(prev => ({ ...prev, careerGoals: e.target.value }))}
-                            placeholder="What are your career aspirations and target roles?"
-                            rows={2}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+          {cvs.length > 0 && (
+            <div className="mt-12 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold">Your Existing CVs ({cvs.length})</h2>
+              </div>
 
-                  <Button
-                    onClick={handleAIGenerate}
-                    disabled={isGenerating || !aiForm.fullName || !aiForm.email || !aiForm.skills}
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating CV...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Generate My CV with AI
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Existing CVs List */}
-        {cvs.length > 0 && (
-          <div className="mt-12 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Your Existing CVs ({cvs.length})</h2>
-            </div>
-
-            <div className="grid gap-4">
-              {cvs.map((cv) => (
-                <Card key={cv.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold">{cv.personalInfo.fullName}</h3>
-                          {cv.verifiedAt && (
-                            <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                              <CheckCircle className="mr-1 h-3 w-3 inline" />
-                              Verified
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-gray-600 mb-2">{cv.personalInfo.email}</p>
-                        {cv.personalInfo.phone && (
-                          <p className="text-gray-600 mb-2">{cv.personalInfo.phone}</p>
-                        )}
-                        {cv.personalInfo.summary && (
-                          <p className="text-sm text-gray-500 line-clamp-2 mb-3">
-                            {cv.personalInfo.summary}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span>Created: {new Date(cv.createdAt).toLocaleDateString()}</span>
-                          <span>Updated: {new Date(cv.updatedAt).toLocaleDateString()}</span>
-                        </div>
-                        {cv.skills.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-3">
-                            {cv.skills.slice(0, 5).map((skill, index) => (
-                              <div key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                                {skill}
-                              </div>
-                            ))}
-                            {cv.skills.length > 5 && (
-                              <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                                +{cv.skills.length - 5} more
+              <div className="grid gap-4">
+                {cvs.map((cv) => (
+                  <Card key={cv.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold">{cv.personalInfo.fullName}</h3>
+                            {cv.verifiedAt && (
+                              <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                <CheckCircle className="mr-1 h-3 w-3 inline" />
+                                Verified
                               </div>
                             )}
                           </div>
-                        )}
+                          <p className="text-gray-600 mb-2">{cv.personalInfo.email}</p>
+                          {cv.personalInfo.phone && <p className="text-gray-600 mb-2">{cv.personalInfo.phone}</p>}
+                          {cv.personalInfo.summary && (
+                            <p className="text-sm text-gray-500 line-clamp-2 mb-3">{cv.personalInfo.summary}</p>
+                          )}
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span>Created: {new Date(cv.createdAt).toLocaleDateString()}</span>
+                            <span>Updated: {new Date(cv.updatedAt).toLocaleDateString()}</span>
+                          </div>
+                          {cv.skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-3">
+                              {cv.skills.slice(0, 5).map((skill, index) => (
+                                <div key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                                  {skill}
+                                </div>
+                              ))}
+                              {cv.skills.length > 5 && (
+                                <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                                  +{cv.skills.length - 5} more
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2 ml-4">
+                          <Button variant="outline" size="sm" onClick={() => handleViewCV(cv)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleEditInBuilder(cv)}>
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDeleteCV(cv.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewCV(cv)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditInBuilder(cv)}
-                        >
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteCV(cv.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

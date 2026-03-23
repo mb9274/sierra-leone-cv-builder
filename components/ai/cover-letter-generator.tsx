@@ -9,6 +9,7 @@ import { Loader2, Sparkles, Copy } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { CVData } from "@/lib/types"
 import { mockJobs } from "@/lib/mock-jobs"
+import { loadAvailableCvs } from "@/lib/cv-collection"
 
 export default function CoverLetterGenerator() {
     const { toast } = useToast()
@@ -18,12 +19,25 @@ export default function CoverLetterGenerator() {
     const [cvs, setCvs] = useState<CVData[]>([])
     const [selectedCvId, setSelectedCvId] = useState<string>("")
     const [selectedJobId, setSelectedJobId] = useState<string>("")
+    const [isLoadingCvs, setIsLoadingCvs] = useState(true)
 
     useEffect(() => {
-        const savedCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-        setCvs(savedCVs)
-        if (savedCVs.length > 0) {
-            setSelectedCvId(savedCVs[0].id)
+        let mounted = true
+
+        const loadCvs = async () => {
+            setIsLoadingCvs(true)
+            const availableCvs = await loadAvailableCvs()
+            if (!mounted) return
+
+            setCvs(availableCvs)
+            setSelectedCvId((current) => current || availableCvs[0]?.id || "")
+            setIsLoadingCvs(false)
+        }
+
+        loadCvs()
+
+        return () => {
+            mounted = false
         }
     }, [])
 
@@ -61,7 +75,14 @@ export default function CoverLetterGenerator() {
         }
 
         const selectedCv = cvs.find((cv) => cv.id === selectedCvId)
-        if (!selectedCv) return
+        if (!selectedCv) {
+            toast({
+                title: "CV Not Loaded",
+                description: "Please wait for your saved CVs to finish loading.",
+                variant: "destructive",
+            })
+            return
+        }
 
         setIsGenerating(true)
         try {
@@ -112,9 +133,9 @@ export default function CoverLetterGenerator() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Select CV</label>
-                        <Select value={selectedCvId} onValueChange={setSelectedCvId}>
+                        <Select value={selectedCvId} onValueChange={setSelectedCvId} disabled={isLoadingCvs}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a CV" />
+                                <SelectValue placeholder={isLoadingCvs ? "Loading CVs..." : "Select a CV"} />
                             </SelectTrigger>
                             <SelectContent>
                                 {cvs.map((cv) => (
@@ -128,7 +149,7 @@ export default function CoverLetterGenerator() {
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Select Job (Optional)</label>
-                        <Select value={selectedJobId} onValueChange={handleJobSelect}>
+                        <Select value={selectedJobId} onValueChange={handleJobSelect} disabled={isLoadingCvs}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Pick a job to auto-fill" />
                             </SelectTrigger>
@@ -164,7 +185,7 @@ export default function CoverLetterGenerator() {
                         />
                     </div>
 
-                    <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
+                    <Button onClick={handleGenerate} disabled={isGenerating || isLoadingCvs} className="w-full">
                         {isGenerating ? (
                             <>
                                 <Loader2 className="mr-2 size-4 animate-spin" />

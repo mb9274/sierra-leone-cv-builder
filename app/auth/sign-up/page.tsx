@@ -25,7 +25,7 @@ export default function SignUpPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`,
       },
     })
 
@@ -41,26 +41,50 @@ export default function SignUpPage() {
     setMessage("")
 
     const supabase = createClient()
-    const { error, data } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    
+    try {
+      console.log("Attempting sign up with email:", email)
+      
+      const { error, data } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+          // Remove any email restrictions - allow all emails
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth/sign-in")}`,
         },
-      },
-    })
+      })
 
-    if (error) {
-      setError(error.message)
-    } else {
-      setMessage("Check your email to confirm your account!")
-      setTimeout(() => {
-        router.push("/auth/sign-in")
-      }, 3000)
+      console.log("Sign up response:", { error, data })
+
+      if (error) {
+        console.error("Sign up error details:", error)
+        
+        // Check for specific error types and provide helpful messages
+        if (error.message?.includes('User already registered')) {
+          setError("This email is already registered. Try signing in instead.")
+        } else if (error.message?.includes('Invalid email')) {
+          setError("This email format is not valid. Please check and try again.")
+        } else if (error.message?.includes('Password')) {
+          setError("Password must be at least 6 characters long.")
+        } else {
+          setError(`Registration failed: ${error.message || 'Please try again later.'}`)
+        }
+      } else {
+        console.log("Sign up successful, user:", data)
+        setMessage("Account created successfully. Check your email if confirmation is required.")
+        setTimeout(() => {
+          router.push("/auth/sign-in")
+        }, 2000)
+      }
+    } catch (err) {
+      console.error("Unexpected sign up error:", err)
+      setError("An unexpected error occurred. Please try again.")
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (

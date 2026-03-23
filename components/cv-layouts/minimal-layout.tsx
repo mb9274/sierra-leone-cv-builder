@@ -1,9 +1,11 @@
 import { CVLayoutProps } from "./types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { getCvLocation } from "@/lib/cv-location"
 
 export function MinimalLayout({ cvData, theme, isEditing, editedData, onEdit }: CVLayoutProps) {
     const data = isEditing && editedData ? editedData : cvData
+    const location = getCvLocation(data.personalInfo)
 
     return (
         <div className="p-16 print:p-12 max-w-3xl mx-auto text-slate-900">
@@ -29,8 +31,7 @@ export function MinimalLayout({ cvData, theme, isEditing, editedData, onEdit }: 
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-slate-600 font-medium">
                     <span>{data.personalInfo.email || "Email: Not provided"}</span>
                     <span>{data.personalInfo.phone ? `+232 ${data.personalInfo.phone}` : "Phone: Not provided"}</span>
-                    <span>{data.personalInfo.location || "Location: Not provided"}</span>
-                    {data.personalInfo.addressCity && <span>{data.personalInfo.addressCity}, {data.personalInfo.addressCountry}</span>}
+                    <span>{location || "Location: Not provided"}</span>
                     {data.personalInfo.linkedin && <span className="text-primary underline">{data.personalInfo.linkedin}</span>}
                     {data.personalInfo.portfolio && <span className="text-primary underline">{data.personalInfo.portfolio}</span>}
                     {data.availability && <span className="text-primary font-bold uppercase text-[10px] tracking-tighter border border-primary/20 px-2 rounded">Available: {data.availability}</span>}

@@ -26,7 +26,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}${next}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     })
 
@@ -49,7 +49,8 @@ export default function SignInPage() {
     if (error) {
       setError(error.message)
     } else {
-      router.push(next)
+      router.replace(next)
+      router.refresh()
     }
 
     setLoading(false)

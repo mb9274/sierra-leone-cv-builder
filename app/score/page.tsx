@@ -9,6 +9,7 @@ import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { analyzeCVScore } from "@/lib/ai-helpers"
+import { loadCurrentCv } from "@/lib/cv-collection"
 
 interface CVScores {
   atsScore: number
@@ -31,27 +32,29 @@ export default function CVScorePage() {
   const [showImprovements, setShowImprovements] = useState(false)
 
   useEffect(() => {
-    const savedCV = localStorage.getItem("cvbuilder_current")
-    if (savedCV) {
-      try {
-        const cvData = JSON.parse(savedCV)
-        setCv(cvData)
-      } catch (e) {
-        console.error("[v0] Failed to parse current CV:", e)
+    let mounted = true
+
+    const loadCv = async () => {
+      const cvData = await loadCurrentCv()
+      if (!mounted) return
+
+      if (!cvData) {
         toast({
-          title: "Error Loading CV",
-          description: "The saved CV data is invalid. Returning to dashboard.",
+          title: "No CV Found",
+          description: "Please select a CV from your dashboard.",
           variant: "destructive",
         })
         router.push("/dashboard")
+        return
       }
-    } else {
-      toast({
-        title: "No CV Found",
-        description: "Please select a CV from your dashboard.",
-        variant: "destructive",
-      })
-      router.push("/dashboard")
+
+      setCv(cvData)
+    }
+
+    loadCv()
+
+    return () => {
+      mounted = false
     }
   }, [])
 

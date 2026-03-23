@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowRight, Briefcase, GraduationCap } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import type { CVData } from "@/lib/types"
 
@@ -22,9 +21,13 @@ export default function OnboardingPage() {
   useEffect(() => {
     // Check authentication
     const checkAuth = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      const response = await fetch("/api/auth/session")
+      if (!response.ok) {
+        router.push("/auth/sign-in")
+        return
+      }
+      const session = await response.json()
+      if (!session.user) {
         router.push("/auth/sign-in")
       }
     }
@@ -43,16 +46,20 @@ export default function OnboardingPage() {
 
     setIsLoading(true)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
+      const sessionResponse = await fetch("/api/auth/session")
+      if (!sessionResponse.ok) {
+        router.push("/auth/sign-in")
+        return
+      }
+      const session = await sessionResponse.json()
+      const user = session.user
       if (!user) {
         router.push("/auth/sign-in")
         return
       }
 
       // Create a new CV with basic structure
-      const newCV: Omit<CVData, 'id'> = {
+      const newCV: Omit<CVData, 'id' | 'createdAt' | 'updatedAt'> = {
         personalInfo: {
           fullName: "",
           email: user.email || "",
@@ -64,27 +71,31 @@ export default function OnboardingPage() {
         education: [],
         experience: [],
         skills: getSkillsByRole(jobRole),
-        languages: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
+        languages: []
       }
 
-      // Save to Supabase
-      const { data, error } = await supabase
-        .from('cvs')
-        .insert({
-          user_id: user.id,
-          data: newCV
-        })
-        .select()
-        .single()
+      // Save to Supabase via server route
+      const response = await fetch("/api/cvs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newCV),
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        throw new Error(result?.error || "Failed to create CV")
+      }
 
-      // Store the CV with database-generated UUID
+      const { cv: data } = await response.json()
+
+      // Store the CV with database-generated UUID and timestamps
       const cvWithId = {
         ...newCV,
-        id: data.id
+        id: data.id,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt
       }
       
       sessionStorage.setItem("cvbuilder_current", JSON.stringify(cvWithId))

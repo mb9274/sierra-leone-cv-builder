@@ -1,7 +1,9 @@
 import { CVLayoutProps } from "./types"
+import { getCvLocation } from "@/lib/cv-location"
 
 export function TealSidebarLayout({ cvData, theme, isEditing, editedData, onEdit }: CVLayoutProps) {
     const data = isEditing && editedData ? editedData : cvData
+    const location = getCvLocation(data.personalInfo)
 
     return (
         <div className="flex min-h-[1100px]">
@@ -45,10 +47,10 @@ export function TealSidebarLayout({ cvData, theme, isEditing, editedData, onEdit
                                     <span className="truncate text-xs">{data.personalInfo.linkedin}</span>
                                 </div>
                             )}
-                            {data.personalInfo.location && (
+                            {location && (
                                 <div className="flex items-center gap-3">
                                     <span className="size-6 bg-teal-700 rounded-full flex items-center justify-center text-[10px]">📍</span>
-                                    <span>{data.personalInfo.location}</span>
+                                    <span>{location}</span>
                                 </div>
                             )}
                         </div>

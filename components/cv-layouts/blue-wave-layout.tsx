@@ -1,7 +1,9 @@
 import { CVLayoutProps } from "./types"
+import { getCvLocation } from "@/lib/cv-location"
 
 export function BlueWaveLayout({ cvData, theme, isEditing, editedData, onEdit }: CVLayoutProps) {
     const data = isEditing && editedData ? editedData : cvData
+    const location = getCvLocation(data.personalInfo)
 
     return (
         <div className="min-h-[1100px] relative bg-white overflow-hidden">
@@ -50,10 +52,10 @@ export function BlueWaveLayout({ cvData, theme, isEditing, editedData, onEdit }:
                                         <span className="truncate text-xs">{data.personalInfo.linkedin}</span>
                                     </div>
                                 )}
-                                {data.personalInfo.location && (
+                                {location && (
                                     <div className="flex items-center gap-2">
                                         <span className="size-5 bg-blue-100 rounded-full flex items-center justify-center text-[9px]">📍</span>
-                                        <span>{data.personalInfo.location}</span>
+                                        <span>{location}</span>
                                     </div>
                                 )}
                             </div>

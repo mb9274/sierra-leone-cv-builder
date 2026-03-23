@@ -10,6 +10,7 @@ import { Loader2, MessageSquare, Mic, Send, User, Bot, ArrowLeft, Volume2, Volum
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import type { CVData } from "@/lib/types"
+import { loadAvailableCvs } from "@/lib/cv-collection"
 
 interface Message {
   role: "user" | "assistant"
@@ -26,36 +27,27 @@ export default function MockInterviewPage() {
   const [selectedCvId, setSelectedCvId] = useState<string>("")
   const [isStarted, setIsStarted] = useState(false)
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false)
+  const [isLoadingCvs, setIsLoadingCvs] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const loadCVs = async () => {
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
-      
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+    let mounted = true
 
-      const { data: cvs, error } = await supabase
-        .from('cvs')
-        .select('id, data, created_at, updated_at')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
+    const loadCvs = async () => {
+      setIsLoadingCvs(true)
+      const availableCvs = await loadAvailableCvs()
+      if (!mounted) return
 
-      if (cvs) {
-        setCvs(cvs.map((cv: any) => ({
-          ...cv.data,
-          id: cv.id, // Use the database UUID
-          createdAt: cv.created_at,
-          updatedAt: cv.updated_at
-        })))
-        if (cvs.length > 0) {
-          setSelectedCvId(cvs[0].id) // Use database UUID
-        }
-      }
+      setCvs(availableCvs)
+      setSelectedCvId((current) => current || availableCvs[0]?.id || "")
+      setIsLoadingCvs(false)
     }
-    
-    loadCVs()
+
+    loadCvs()
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
   useEffect(() => {
@@ -92,7 +84,14 @@ export default function MockInterviewPage() {
   }
 
   const handleStart = async () => {
-    if (!selectedCvId) return
+    if (!selectedCvId) {
+      toast({
+        title: "No CV Selected",
+        description: "Please create or upload a CV first.",
+        variant: "destructive",
+      })
+      return
+    }
     setIsStarted(true)
     setIsLoading(true)
 
@@ -105,9 +104,10 @@ export default function MockInterviewPage() {
     if (!selectedCv) {
       toast({
         title: "No CV Selected",
-        description: "Please select a CV first.",
+        description: "Please select a CV first or wait for your saved CVs to finish loading.",
         variant: "destructive",
       })
+      setIsLoading(false)
       return
     }
 
@@ -182,9 +182,9 @@ export default function MockInterviewPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Select CV for Context</label>
-              <Select value={selectedCvId} onValueChange={setSelectedCvId}>
+              <Select value={selectedCvId} onValueChange={setSelectedCvId} disabled={isLoadingCvs}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a CV" />
+                  <SelectValue placeholder={isLoadingCvs ? "Loading CVs..." : "Select a CV"} />
                 </SelectTrigger>
                 <SelectContent>
                   {cvs.map((cv) => (
@@ -226,7 +226,7 @@ export default function MockInterviewPage() {
 
           </CardContent>
           <CardFooter>
-            <Button onClick={handleStart} className="w-full" size="lg">
+              <Button onClick={handleStart} className="w-full" size="lg" disabled={isLoadingCvs}>
               Start Interview
             </Button>
           </CardFooter>

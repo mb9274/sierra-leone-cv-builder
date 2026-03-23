@@ -21,11 +21,12 @@ import {
   Sparkles,
   Eye,
   AlertCircle,
+  UserCircle2,
 } from "lucide-react"
 import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { createClient } from "@/lib/supabase/client"
+import { normalizeCvRecord } from "@/lib/cv-storage"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -35,6 +36,8 @@ export default function DashboardPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState("")
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [aiForm, setAiForm] = useState({
     fullName: "",
     email: "",
@@ -48,39 +51,48 @@ export default function DashboardPage() {
   })
 
   useEffect(() => {
-    loadCVs()
+    loadSessionAndCVs()
   }, [])
 
-  const loadCVs = async () => {
-    const { createClient } = await import("@/lib/supabase/client")
-    const supabase = createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+  const loadSessionAndCVs = async () => {
+    try {
+      const sessionResponse = await fetch("/api/auth/session")
+      if (!sessionResponse.ok) {
+        setAuthLoading(false)
+        router.push("/auth/sign-in?next=/dashboard")
+        return
+      }
 
-    const { data: cvs, error } = await supabase
-      .from('cvs')
-      .select('id, data, created_at, updated_at')
-      .eq('user_id', user.id)
-      .order('updated_at', { ascending: false })
+      const session = await sessionResponse.json()
+      const user = session.user
+      if (!user) {
+        setAuthLoading(false)
+        router.push("/auth/sign-in?next=/dashboard")
+        return
+      }
 
-    if (cvs) {
-      setCvs(cvs.map((cv: any) => ({
-        ...cv.data,
-        id: cv.id, // Use the database UUID
-        createdAt: cv.created_at,
-        updatedAt: cv.updated_at
-      })))
+      setCurrentUser({
+        name: user.name || user.email || "Signed in user",
+        email: user.email || "",
+      })
+
+      const cvsResponse = await fetch("/api/cvs")
+      if (!cvsResponse.ok) {
+        throw new Error("Failed to load CVs")
+      }
+
+      const cvsPayload = await cvsResponse.json()
+      const cvs = cvsPayload.cvs || []
+      setCvs(cvs.map((cv: any) => normalizeCvRecord(cv)))
+    } catch (error) {
+      console.error("Dashboard load error:", error)
+      setError("Failed to load dashboard data")
+    } finally {
+      setAuthLoading(false)
     }
   }
 
   const handleEditCV = async (cv: CVData) => {
-    const { createClient } = await import("@/lib/supabase/client")
-    const supabase = createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
     // Store current CV in Supabase or session
     sessionStorage.setItem("cvbuilder_current", JSON.stringify(cv))
     router.push("/builder")
@@ -89,20 +101,13 @@ export default function DashboardPage() {
   const handleDeleteCV = async (cvId: string) => {
     if (!confirm("Are you sure you want to delete this CV?")) return
 
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) return
+    const response = await fetch(`/api/cvs/${cvId}`, {
+      method: "DELETE",
+    })
 
-    // Delete by database UUID directly
-    const { error } = await supabase
-      .from('cvs')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('id', cvId) // Use the database UUID directly
-
-    if (error) {
-      console.error("Delete error:", error)
+    if (!response.ok) {
+      const result = await response.json().catch(() => null)
+      console.error("Delete error:", result)
       toast({ 
         title: "Error", 
         description: "Failed to delete CV. Please try again.",
@@ -160,7 +165,7 @@ export default function DashboardPage() {
         description: "Your CV has been uploaded and saved."
       })
       
-      await loadCVs()
+      await loadSessionAndCVs()
       setIsUploading(false)
       
       // Navigate to builder with uploaded CV
@@ -198,44 +203,14 @@ export default function DashboardPage() {
         throw new Error(result.error || "AI generation failed")
       }
 
-      const newCV: CVData = {
-        id: `cv-${Date.now()}`,
-        personalInfo: {
-          fullName: aiForm.fullName,
-          email: aiForm.email,
-          phone: aiForm.phone,
-          location: aiForm.location,
-          summary: result.data.summary || `Professional ${aiForm.jobTitle} with expertise in ${aiForm.skills}`
-        },
-        education: result.data.education || [],
-        experience: result.data.experience || [],
-        skills: aiForm.skills.split(",").map(s => s.trim()).filter(s => s),
-        languages: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) throw new Error("Not authenticated")
-
-      const { error } = await supabase
-        .from('cvs')
-        .insert({
-          user_id: user.id,
-          data: newCV
-        })
-
-      if (error) throw error
+      const newCV: CVData = result.data
 
       toast({ 
         title: "CV Generated Successfully",
         description: "Your AI-generated CV has been created."
       })
       
-      await loadCVs()
+      await loadSessionAndCVs()
       setIsGenerating(false)
       
       // Navigate to builder with generated CV
@@ -255,6 +230,13 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-500 mt-1">Welcome back! Access all your tools and applications.</p>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm">
+              <UserCircle2 className="size-4 text-slate-500" />
+              {authLoading ? "Checking session..." : currentUser ? `Signed in as ${currentUser.name}` : "Not signed in"}
+            </div>
+            {currentUser?.email && (
+              <p className="mt-2 text-xs text-slate-500">Session email: {currentUser.email}</p>
+            )}
           </div>
           <Button
             onClick={handleCreateNew}
@@ -414,7 +396,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {cvs.filter(cv => cv.personalInfo.fullName.toLowerCase().includes(searchTerm.toLowerCase())).map((cv) => (
+            {cvs.filter(cv => cv.personalInfo?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())).map((cv) => (
               <Card key={cv.id} className="group overflow-hidden border-none shadow-sm hover:shadow-md transition-all duration-300 rounded-xl bg-white">
                 <div className="h-48 bg-gray-50 relative flex items-center justify-center overflow-hidden border-b border-gray-100">
                   <div className="w-32 h-44 bg-white shadow-xl rounded-sm transform group-hover:scale-105 transition-transform duration-300 p-3 flex flex-col gap-2">
@@ -425,7 +407,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <CardContent className="p-5">
-                  <h3 className="font-bold text-gray-900 truncate">{cv.personalInfo.fullName || "Untitled Resume"}</h3>
+                  <h3 className="font-bold text-gray-900 truncate">{cv.personalInfo?.fullName || "Untitled Resume"}</h3>
                   <div className="flex items-center gap-2 text-xs text-gray-400 mt-2">
                     <Clock className="size-3" />
                     <span>Last updated 2 days ago</span>

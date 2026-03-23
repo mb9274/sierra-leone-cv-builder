@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { ApiResponse, handleApiError, withAuth, parseJsonBody } from "@/lib/api-utils"
+import { normalizeCvRecord } from "@/lib/cv-storage"
+import { CVData } from "@/lib/types"
 
 const isoDateSchema = z.union([
   z.string().datetime(),
@@ -138,18 +141,19 @@ const cvSchema = z
       )
       .optional(),
     availability: z.string().optional(),
-    createdAt: isoDateSchema,
-    updatedAt: isoDateSchema,
+    createdAt: isoDateSchema.optional(),
+    updatedAt: isoDateSchema.optional(),
   })
   .passthrough()
 
 export async function GET() {
   return withAuth(async (user) => {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { data, error } = await supabase
       .from("cvs")
-      .select("id, data, created_at, updated_at")
+      .select("*")
+      .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
 
     if (error) {
@@ -165,22 +169,51 @@ export async function POST(request: Request) {
     const bodyParse = await parseJsonBody(request, cvSchema)
     if (!bodyParse.success) return bodyParse.response
 
-    const cv = bodyParse.data
+    const cv: CVData = bodyParse.data as CVData
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("cvs")
       .insert({
         user_id: user.id,
         data: cv,
       })
-      .select("id, data, created_at, updated_at")
+      .select("*")
       .single()
+
+    if (error && error.message?.toLowerCase().includes("column") && error.message.toLowerCase().includes("data")) {
+      const legacyInsert = {
+        user_id: user.id,
+        full_name: cv.personalInfo?.fullName || "",
+        email: cv.personalInfo?.email || "",
+        phone: cv.personalInfo?.phone || "",
+        age: cv.personalInfo?.age ? Number.parseInt(cv.personalInfo.age, 10) : null,
+        summary: cv.personalInfo?.summary || "",
+        education: cv.education || [],
+        experience: cv.experience || [],
+        skills: cv.skills || [],
+        languages: cv.languages || [],
+        photo_url: cv.personalInfo?.profilePhoto || "",
+        template: cv.templateId || "professional",
+      }
+
+      const fallback = await supabase
+        .from("cvs")
+        .insert(legacyInsert)
+        .select("*")
+        .single()
+
+      if (fallback.error) {
+        return ApiResponse.error("Failed to create CV", 500, "DATABASE_ERROR", fallback.error.message)
+      }
+
+      return ApiResponse.success({ cv: normalizeCvRecord(fallback.data) }, 201)
+    }
 
     if (error) {
       return ApiResponse.error("Failed to create CV", 500, "DATABASE_ERROR", error.message)
     }
 
-    return ApiResponse.success({ cv: data }, 201)
+    return ApiResponse.success({ cv: normalizeCvRecord(data) }, 201)
   }, createClient)
 }

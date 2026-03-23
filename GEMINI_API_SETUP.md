@@ -1,158 +1,73 @@
-# Gemini API Setup Guide
+# Gemini API Setup for AI CV Generation
 
-## For App Owners/Administrators
+## Step 1: Get Gemini API Key
 
-This guide will help you set up the Gemini API key so all users can benefit from AI-powered CV enhancements automatically.
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the generated API key
 
-## Why Gemini API?
+## Step 2: Add API Key to Environment
 
-- **Free Tier**: Google provides generous free quotas for Gemini API
-- **Powerful AI**: Creates professional, context-aware CV content
-- **Sierra Leone Focused**: Optimized for local job market
-- **Automatic**: Once configured, works for all users without individual setup
+Create or update your `.env.local` file in the project root:
 
-## Setup Steps
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-### Step 1: Get Your Gemini API Key
+**Important**: Replace `your_gemini_api_key_here` with your actual API key.
 
-1. **Visit Google AI Studio**
-   - Go to [https://ai.google.dev](https://ai.google.dev)
-   - Sign in with your Gmail account
+## Step 3: Restart Development Server
 
-2. **Create API Key**
-   - Click "Get API Key" button
-   - Select "Create API key in new project" (or use existing project)
-   - Copy the generated API key (starts with `AIzaSy...`)
-   - **Important**: Save this key securely!
+After adding the API key, restart your development server:
 
-### Step 2: Add to Environment Variables
+```bash
+npm run dev
+```
 
-#### If Deploying on Vercel:
+## How AI Generation Works
 
-1. Go to your Vercel project dashboard
-2. Navigate to **Settings** → **Environment Variables**
-3. Add new variable:
-   - **Name**: `GEMINI_API_KEY`
-   - **Value**: Your API key (paste the key you copied)
-   - **Environment**: Select all (Production, Preview, Development)
-4. Click **Save**
-5. Redeploy your app for changes to take effect
+With the Gemini API key configured, the CV generation will:
 
-#### If Running Locally:
+1. **Use Real AI**: Generate comprehensive CVs using Google's Gemini AI
+2. **Context-Aware**: Creates content specific to Sierra Leone job market
+3. **Complete CVs**: Fills all sections with realistic, professional content
+4. **Fallback**: If AI fails, falls back to enhanced templates
 
-1. Create or edit `.env.local` file in your project root:
-   ```bash
-   GEMINI_API_KEY=AIzaSy...your-key-here
-   ```
+## Features Enabled with AI
 
-2. Restart your development server:
-   ```bash
-   npm run dev
-   ```
+- **Smart Summary**: Professional summary tailored to skills and experience
+- **Realistic Experience**: Work experience based on provided skills
+- **Relevant Education**: Appropriate degrees from Sierra Leonean universities
+- **Complete Sections**: Projects, certifications, volunteering, awards, hobbies, referees
+- **Local Context**: Uses Sierra Leonean companies, organizations, and formats
 
-#### If Using v0:
+## Testing
 
-1. Click on **Vars** in the left sidebar
-2. Add new environment variable:
-   - **Key**: `GEMINI_API_KEY`
-   - **Value**: Your API key
-3. Save changes
+Test the AI generation:
 
-### Step 3: Verify It Works
+1. Navigate to CV generation page
+2. Enter minimal information:
+   - Name: "Mariama Bangura"
+   - Email: "kamarafatmatabintal2@gmail.com"
+   - Skills: "javascript, react, communication, project management"
+3. Click "Generate My CV with AI"
 
-1. Go to the CV Builder in your app
-2. Complete steps 1-6 (enter all information)
-3. On Step 7 (AI Enhancement), click "Enhance & Save CV"
-4. You should see:
-   - "Enhancing..." loading message
-   - "CV Enhanced Successfully!" success message
-   - Improved professional summary
-   - Enhanced experience descriptions
-
-## Usage Limits
-
-**Free Tier Includes:**
-- 60 requests per minute
-- 1,500 requests per day
-- More than enough for most applications!
-
-**Monitor Usage:**
-- Visit Google AI Studio dashboard
-- View API usage statistics
-- Set up alerts if needed
+You should see a complete, professional CV with all sections filled!
 
 ## Troubleshooting
 
-### Error: "Using smart templates instead of AI"
-- API key not configured properly
-- Check environment variable spelling: `GEMINI_API_KEY`
-- Ensure you've redeployed after adding the key
+If AI generation doesn't work:
 
-### Error: "Failed to generate AI content"
-- API quota exceeded (wait until next day)
-- Invalid API key (regenerate new key)
-- Network connectivity issues
+1. **Check API Key**: Ensure `GEMINI_API_KEY` is correctly set in `.env.local`
+2. **Check Network**: Verify internet connection
+3. **Check Console**: Look for error messages in browser console
+4. **Fallback**: System will use enhanced templates if AI fails
 
-### AI Enhancement Not Working
-- Check browser console for detailed error messages
-- Verify API key is active in Google AI Studio
-- Ensure environment variable is set correctly
+## API Usage
 
-## For Users
+Gemini API has free tier limits:
+- **Free**: 60 requests per minute
+- **Paid**: Higher limits available
 
-Once the administrator has set up the Gemini API key:
-
-✅ **No setup required for individual users**
-✅ **AI enhancement works automatically**
-✅ **Just complete your CV and click "Enhance & Save CV"**
-
-## Security Best Practices
-
-1. **Never commit API keys to version control**
-   - Add `.env.local` to `.gitignore`
-   - Use environment variables only
-
-2. **Regenerate keys if exposed**
-   - Go to Google AI Studio
-   - Delete compromised key
-   - Generate new key
-
-3. **Monitor usage regularly**
-   - Check for unusual activity
-   - Set up alerts for high usage
-
-## Cost Considerations
-
-- **Current Status**: Gemini API is FREE for moderate usage
-- **Future**: If Google changes pricing, consider:
-  - Setting usage limits per user
-  - Premium tier for unlimited AI enhancements
-  - Alternative: Template-based fallbacks already built-in
-
-## Alternative: User-Provided API Keys
-
-If you prefer users to provide their own API keys:
-
-1. Users go to **Settings** → **Gemini AI Setup**
-2. Follow wizard to get their own free API key
-3. Enter key in the app
-4. AI features work with their personal key
-
-This approach:
-- ✅ No cost to app owner
-- ✅ Users control their own quotas
-- ❌ More friction (users must set up)
-- ❌ Some users may skip AI features
-
-## Support
-
-For questions or issues:
-- Check chatbot in the app (ask "how to set up gemini ai")
-- Review error messages in browser console
-- Contact technical support team
-
----
-
-**Last Updated**: December 2024  
-**Gemini API Version**: v1beta  
-**Documentation**: https://ai.google.dev/docs
+Each CV generation uses 1 API request.

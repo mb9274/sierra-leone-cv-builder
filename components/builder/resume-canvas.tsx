@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { getCvLocation } from "@/lib/cv-location"
 
 interface ResumeCanvasProps {
     data: any
@@ -54,13 +55,20 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                 jobTitle: data.personalInfo?.jobTitle || "Professional",
                 email: data.personalInfo?.email || "yourname@gmail.com",
                 phone: data.personalInfo?.phone || "+000 123 456 789",
-                location: data.personalInfo?.location || "Your Location",
+                location: getCvLocation(data.personalInfo) || "Your Location",
                 summary: data.personalInfo?.summary || "Write a professional summary that highlights your key skills and achievements...",
                 profilePhoto: data.personalInfo?.profilePhoto || "/placeholder-user.jpg",
             },
             experience: data.experience || [],
             education: data.education || [],
             skills: data.skills || [],
+            languages: data.languages || [],
+            projects: data.projects || [],
+            certifications: data.certifications || [],
+            volunteering: data.volunteering || [],
+            awards: data.awards || [],
+            hobbies: data.hobbies || [],
+            referees: data.referees || [],
             links: data.links || [],
             ...data
         }
@@ -113,7 +121,7 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                                         color: 'var(--cv-color, #6b7280)'
                                     }}>
                                     {resumeData.personalInfo.jobTitle}
-                                    {resumeData.personalInfo.location ? ` | ${resumeData.personalInfo.location}` : ''}
+                                    {getCvLocation(resumeData.personalInfo) ? ` | ${getCvLocation(resumeData.personalInfo)}` : ''}
                                 </p>
                             </div>
                         </div>
@@ -204,6 +212,31 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                                     </div>
                                 </section>
                             )}
+
+                            {(resumeData.languages && resumeData.languages.length > 0) && (
+                                <section
+                                    className={`space-y-4 p-2 rounded transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 ${selectedElement === 'languages' ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`}
+                                    onClick={() => onSelectElement?.('languages')}
+                                    style={getStyle('languages')}
+                                >
+                                    <h2 className="uppercase tracking-widest border-b-2 pb-1 inline-block mb-4"
+                                        style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #000000)', borderColor: 'var(--cv-color, #000000)' }}>
+                                        Languages
+                                    </h2>
+                                    <div className="space-y-2">
+                                        {resumeData.languages.map((lang: any, i: number) => (
+                                            <div key={i} className="flex items-center justify-between gap-3">
+                                                <p style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>
+                                                    {lang.language}
+                                                </p>
+                                                <p className="opacity-70" style={{ fontSize: '0.75em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #9ca3af)' }}>
+                                                    {lang.proficiency}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
                         </div>
 
                         {/* Right Column */}
@@ -244,6 +277,127 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                                     </div>
                                 ))}
                             </section>
+
+                            {(resumeData.projects && resumeData.projects.length > 0) && (
+                                <section
+                                    className={`space-y-4 p-2 rounded transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 ${selectedElement === 'projects' ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`}
+                                    onClick={() => onSelectElement?.('projects')}
+                                    style={getStyle('projects')}
+                                >
+                                    <h2 className="uppercase tracking-widest border-b-2 pb-1 inline-block mb-4"
+                                        style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #000000)', borderColor: 'var(--cv-color, #000000)' }}>
+                                        Featured Projects
+                                    </h2>
+                                    <div className="space-y-4">
+                                        {resumeData.projects.map((project: any, i: number) => (
+                                            <div key={i} className="space-y-1">
+                                                <p style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>{project.name}</p>
+                                                <p className="leading-relaxed opacity-90" style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, 500)', color: 'var(--cv-color, #6b7280)' }}>
+                                                    {project.description}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {(resumeData.certifications && resumeData.certifications.length > 0) && (
+                                <section
+                                    className={`space-y-4 p-2 rounded transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 ${selectedElement === 'certifications' ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`}
+                                    onClick={() => onSelectElement?.('certifications')}
+                                    style={getStyle('certifications')}
+                                >
+                                    <h2 className="uppercase tracking-widest border-b-2 pb-1 inline-block mb-4"
+                                        style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #000000)', borderColor: 'var(--cv-color, #000000)' }}>
+                                        Certifications
+                                    </h2>
+                                    <div className="space-y-3">
+                                        {resumeData.certifications.map((cert: any, i: number) => (
+                                            <div key={i} className="space-y-1">
+                                                <p style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>{cert.name}</p>
+                                                <p className="opacity-80" style={{ fontSize: '0.75em', fontWeight: 'var(--cv-font-weight, normal)', color: 'var(--cv-color, #6b7280)' }}>{cert.organization} {cert.year ? `(${cert.year})` : ""}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {(resumeData.volunteering && resumeData.volunteering.length > 0) && (
+                                <section
+                                    className={`space-y-4 p-2 rounded transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 ${selectedElement === 'volunteering' ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`}
+                                    onClick={() => onSelectElement?.('volunteering')}
+                                    style={getStyle('volunteering')}
+                                >
+                                    <h2 className="uppercase tracking-widest border-b-2 pb-1 inline-block mb-4"
+                                        style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #000000)', borderColor: 'var(--cv-color, #000000)' }}>
+                                        Volunteering
+                                    </h2>
+                                    <div className="space-y-3">
+                                        {resumeData.volunteering.map((vol: any, i: number) => (
+                                            <div key={i} className="space-y-1">
+                                                <p style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>{vol.organization}</p>
+                                                <p className="opacity-80" style={{ fontSize: '0.75em', fontWeight: 'var(--cv-font-weight, normal)', color: 'var(--cv-color, #6b7280)' }}>{vol.role}</p>
+                                                <p className="leading-relaxed opacity-90" style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, 500)', color: 'var(--cv-color, #6b7280)' }}>{vol.description}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {(resumeData.awards && resumeData.awards.length > 0) && (
+                                <section
+                                    className={`space-y-4 p-2 rounded transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 ${selectedElement === 'awards' ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`}
+                                    onClick={() => onSelectElement?.('awards')}
+                                    style={getStyle('awards')}
+                                >
+                                    <h2 className="uppercase tracking-widest border-b-2 pb-1 inline-block mb-4"
+                                        style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #000000)', borderColor: 'var(--cv-color, #000000)' }}>
+                                        Awards & Hobbies
+                                    </h2>
+                                    <div className="space-y-3">
+                                        {resumeData.awards.map((award: any, i: number) => (
+                                            <div key={i} className="space-y-1">
+                                                <p style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>{award.name}</p>
+                                                <p className="opacity-80" style={{ fontSize: '0.75em', fontWeight: 'var(--cv-font-weight, normal)', color: 'var(--cv-color, #6b7280)' }}>{award.organization} {award.year ? `(${award.year})` : ""}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {resumeData.hobbies?.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 pt-2">
+                                            {resumeData.hobbies.map((hobby: string, i: number) => (
+                                                <span key={i} className="px-2 py-1 rounded-full border text-xs" style={{ borderColor: 'var(--cv-color, #d1d5db)', color: 'var(--cv-color, #6b7280)' }}>
+                                                    {hobby}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+                            )}
+
+                            {(resumeData.referees && resumeData.referees.length > 0) && (
+                                <section
+                                    className={`space-y-4 p-2 rounded transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 ${selectedElement === 'referees' ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`}
+                                    onClick={() => onSelectElement?.('referees')}
+                                    style={getStyle('referees')}
+                                >
+                                    <h2 className="uppercase tracking-widest border-b-2 pb-1 inline-block mb-4"
+                                        style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #000000)', borderColor: 'var(--cv-color, #000000)' }}>
+                                        Referees
+                                    </h2>
+                                    <div className="space-y-3">
+                                        {resumeData.referees.map((ref: any, i: number) => (
+                                            <div key={i} className="space-y-1">
+                                                <p style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>{ref.name || "References available on request"}</p>
+                                                {(ref.title || ref.organization) && (
+                                                    <p className="opacity-80" style={{ fontSize: '0.75em', fontWeight: 'var(--cv-font-weight, normal)', color: 'var(--cv-color, #6b7280)' }}>
+                                                        {ref.title} {ref.organization ? `• ${ref.organization}` : ""}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
                         </div>
                     </div>
                 </div>

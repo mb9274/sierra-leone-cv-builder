@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { TopBar } from "@/components/builder/top-bar"
@@ -10,6 +10,7 @@ import { StylePanel } from "@/components/builder/style-panel"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { ChevronLeft, ChevronRight, Menu } from "lucide-react"
+import { loadAvailableCvs } from "@/lib/cv-collection"
 
 const DEFAULT_DATA = {
   personalInfo: {
@@ -40,9 +41,42 @@ const DEFAULT_DATA = {
   templateId: "sierra-leone-professional",
 }
 
+const ROLE_TEMPLATES: Record<string, string> = {
+  software: "freetown-modern",
+  business: "bo-business",
+  finance: "classic-salone",
+  education: "sierra-leone-professional",
+  healthcare: "makeni-minimal",
+  communications: "freetown-modern",
+  general: "sierra-leone-professional",
+}
+
+function detectRoleFamily(data: any) {
+  const text = [
+    data.personalInfo?.jobTitle,
+    data.personalInfo?.summary,
+    data.personalInfo?.location,
+    data.skills?.join(" "),
+    data.careerGoals,
+    data.experience?.map((item: any) => `${item.position || ""} ${item.company || ""} ${item.description || ""}`).join(" "),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+
+  if (/(software|developer|engineer|frontend|backend|full stack|web dev|react|typescript|javascript|node)/.test(text)) return "software"
+  if (/(business|operations|sales|marketing|management|administration|customer service)/.test(text)) return "business"
+  if (/(finance|accounting|bank|audit|budget|reconciliation|bookkeeping)/.test(text)) return "finance"
+  if (/(teach|education|school|lecturer|curriculum|training)/.test(text)) return "education"
+  if (/(health|nurse|medical|clinic|hospital|public health|pharmacy)/.test(text)) return "healthcare"
+  if (/(communication|media|writing|public relations|content|journalism)/.test(text)) return "communications"
+  return "general"
+}
+
 export default function CVBuilderPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const manualTemplateSelection = useRef(false)
   const [cvData, setCvData] = useState<any>(DEFAULT_DATA)
   const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [zoomLevel, setZoomLevel] = useState(50)
@@ -54,14 +88,58 @@ export default function CVBuilderPage() {
 
   // Load saved data on mount
   useEffect(() => {
-    const saved = localStorage.getItem("cvbuilder_current")
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        setCvData({ ...DEFAULT_DATA, ...parsed })
-      } catch (e) {
-        console.error("Failed to load saved CV:", e)
+    let mounted = true
+
+    const loadSavedCv = async () => {
+      // Check sessionStorage first (from dashboard), then localStorage.
+      const sessionSaved = sessionStorage.getItem("cvbuilder_current")
+      const localSaved = localStorage.getItem("cvbuilder_current")
+      const saved = sessionSaved || localSaved
+
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          const merged = { ...DEFAULT_DATA, ...parsed }
+          const role = detectRoleFamily(merged)
+          const autoTemplate = ROLE_TEMPLATES[role] || DEFAULT_DATA.templateId
+          const effectiveTemplate =
+            manualTemplateSelection.current || (merged.templateId && merged.templateId !== DEFAULT_DATA.templateId)
+              ? merged.templateId || DEFAULT_DATA.templateId
+              : autoTemplate
+
+          if (!mounted) return
+
+          setCvData({
+            ...merged,
+            templateId: effectiveTemplate,
+          })
+          localStorage.setItem("cvbuilder_current", saved)
+          return
+        } catch (e) {
+          console.error("Failed to load saved CV:", e)
+        }
       }
+
+      const availableCvs = await loadAvailableCvs()
+      if (!mounted || availableCvs.length === 0) return
+
+      const latest = availableCvs[0]
+      const merged = { ...DEFAULT_DATA, ...latest }
+      const role = detectRoleFamily(merged)
+      const autoTemplate = ROLE_TEMPLATES[role] || DEFAULT_DATA.templateId
+      const initialCv = {
+        ...merged,
+        templateId: merged.templateId || autoTemplate,
+      }
+
+      setCvData(initialCv)
+      localStorage.setItem("cvbuilder_current", JSON.stringify(initialCv))
+    }
+
+    loadSavedCv()
+
+    return () => {
+      mounted = false
     }
   }, [])
 
@@ -95,9 +173,23 @@ export default function CVBuilderPage() {
         obj = obj[keys[i]]
       }
       obj[keys[keys.length - 1]] = value
+      if (path === "templateId") {
+        manualTemplateSelection.current = true
+      }
       return updated
     })
   }, [])
+
+  useEffect(() => {
+    if (manualTemplateSelection.current) return
+
+    const role = detectRoleFamily(cvData)
+    const desiredTemplate = ROLE_TEMPLATES[role] || DEFAULT_DATA.templateId
+
+    if (cvData.templateId !== desiredTemplate) {
+      setCvData((prev: any) => ({ ...prev, templateId: desiredTemplate }))
+    }
+  }, [cvData.personalInfo?.jobTitle, cvData.personalInfo?.summary, cvData.skills, cvData.experience, cvData.careerGoals])
 
   const handleUndo = useCallback(() => {
     if (undoStack.length > 0) {

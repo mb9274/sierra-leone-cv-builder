@@ -3,6 +3,7 @@ export interface CVData {
   verificationId?: string
   verifiedAt?: string
   templateId?: string // Added template selection support
+  sourceText?: string
   personalInfo: {
     fullName: string
     email: string

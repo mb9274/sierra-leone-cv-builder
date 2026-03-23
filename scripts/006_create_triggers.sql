@@ -17,7 +17,8 @@ begin
   -- Update platform stats
   update public.platform_stats
   set total_users = total_users + 1,
-      updated_at = now();
+      updated_at = now()
+  where id = (select id from public.platform_stats limit 1);
 
   return new;
 end;
@@ -40,7 +41,8 @@ as $$
 begin
   update public.platform_stats
   set total_cvs = total_cvs + 1,
-      updated_at = now();
+      updated_at = now()
+  where id = (select id from public.platform_stats limit 1);
   return new;
 end;
 $$;
@@ -62,7 +64,8 @@ as $$
 begin
   update public.platform_stats
   set total_applications = total_applications + 1,
-      updated_at = now();
+      updated_at = now()
+  where id = (select id from public.platform_stats limit 1);
   return new;
 end;
 $$;

@@ -1,7 +1,9 @@
 import { CVLayoutProps } from "./types"
+import { getCvLocation } from "@/lib/cv-location"
 
 export function BoldRedLayout({ cvData, theme, isEditing, editedData, onEdit }: CVLayoutProps) {
     const data = isEditing && editedData ? editedData : cvData
+    const location = getCvLocation(data.personalInfo)
 
     return (
         <div className="min-h-[1100px] relative bg-white overflow-hidden">
@@ -33,7 +35,7 @@ export function BoldRedLayout({ cvData, theme, isEditing, editedData, onEdit }: 
                             {data.personalInfo.phone && <p>{data.personalInfo.phone}</p>}
                             {data.personalInfo.email && <p className="break-all">{data.personalInfo.email}</p>}
                             {data.personalInfo.linkedin && <p className="truncate">{data.personalInfo.linkedin}</p>}
-                            {data.personalInfo.location && <p>{data.personalInfo.location}</p>}
+                            {location && <p>{location}</p>}
                         </div>
                     </div>
 

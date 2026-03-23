@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { ApiResponse, handleApiError, withAuth, parseJsonBody } from "@/lib/api-utils"
 
 const idSchema = z.string().min(1)
@@ -154,7 +155,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     }
 
     return withAuth(async (user) => {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
 
       const { data, error } = await supabase
         .from("cvs")
@@ -190,7 +191,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       if (!bodyParse.success) return bodyParse.response
 
       const cv = bodyParse.data
-      const supabase = await createClient()
+      const supabase = createAdminClient()
 
       // Validate that we have a valid ID
       if (!parsedId.data) {
@@ -236,7 +237,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     }
 
     return withAuth(async (user) => {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
 
       // Validate that we have a valid ID
       if (!parsedId.data) {

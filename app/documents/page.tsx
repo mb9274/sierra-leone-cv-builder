@@ -6,17 +6,39 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Download, Printer, FileText, Mail, Phone, MapPin, Award } from "lucide-react"
 import type { CVData } from "@/lib/types"
+import { getCvLocation } from "@/lib/cv-location"
+import { loadAvailableCvs } from "@/lib/cv-collection"
 
 export default function DocumentsPage() {
   const router = useRouter()
   const [cvData, setCvData] = useState<CVData | null>(null)
 
   useEffect(() => {
-    const savedCV = localStorage.getItem("cvbuilder_current")
-    if (savedCV) {
-      setCvData(JSON.parse(savedCV))
-    } else {
-      router.push("/dashboard")
+    let mounted = true
+
+    const loadCurrentCv = async () => {
+      const savedCV = localStorage.getItem("cvbuilder_current")
+      if (savedCV) {
+        if (!mounted) return
+        setCvData(JSON.parse(savedCV))
+        return
+      }
+
+      const availableCvs = await loadAvailableCvs()
+      if (!mounted || availableCvs.length === 0) {
+        router.push("/dashboard")
+        return
+      }
+
+      const data = availableCvs[0]
+      setCvData(data)
+      localStorage.setItem("cvbuilder_current", JSON.stringify(data))
+    }
+
+    loadCurrentCv()
+
+    return () => {
+      mounted = false
     }
   }, [router])
 
@@ -31,6 +53,8 @@ export default function DocumentsPage() {
   if (!cvData) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>
   }
+
+  const location = getCvLocation(cvData.personalInfo)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
@@ -88,12 +112,12 @@ export default function DocumentsPage() {
                     {cvData.personalInfo.phone}
                   </p>
                 </div>
-                {cvData.personalInfo.location && (
+                {location && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Location</p>
                     <p className="text-lg font-medium text-foreground flex items-center gap-2">
                       <MapPin className="size-4 text-[#4CAF50]" />
-                      {cvData.personalInfo.location}
+                      {location}
                     </p>
                   </div>
                 )}

@@ -16,6 +16,7 @@ import { MinimalLayout } from "@/components/cv-layouts/minimal-layout"
 import { BoldRedLayout } from "@/components/cv-layouts/bold-red-layout"
 import { TealSidebarLayout } from "@/components/cv-layouts/teal-sidebar-layout"
 import { BlueWaveLayout } from "@/components/cv-layouts/blue-wave-layout"
+import { loadAvailableCvs } from "@/lib/cv-collection"
 
 const templateThemes: Record<string, any> = {
   "sierra-leone-professional": {
@@ -148,18 +149,38 @@ export default function PreviewPage() {
   }
 
   useEffect(() => {
-    const savedCV = localStorage.getItem("cvbuilder_current")
-    if (savedCV) {
-      try {
-        const data = normalizeCvDates(JSON.parse(savedCV))
-        setCvData(data)
-        setEditedData(data)
-      } catch (e) {
-        console.error("[v0] Failed to parse current CV:", e)
-        router.push("/builder")
+    let mounted = true
+
+    const loadCurrentCv = async () => {
+      const savedCV = localStorage.getItem("cvbuilder_current")
+      if (savedCV) {
+        try {
+          const data = normalizeCvDates(JSON.parse(savedCV))
+          if (!mounted) return
+          setCvData(data)
+          setEditedData(data)
+          return
+        } catch (e) {
+          console.error("[v0] Failed to parse current CV:", e)
+        }
       }
-    } else {
-      router.push("/builder")
+
+      const availableCvs = await loadAvailableCvs()
+      if (!mounted || availableCvs.length === 0) {
+        router.push("/builder")
+        return
+      }
+
+      const data = normalizeCvDates(availableCvs[0])
+      setCvData(data)
+      setEditedData(data)
+      localStorage.setItem("cvbuilder_current", JSON.stringify(data))
+    }
+
+    loadCurrentCv()
+
+    return () => {
+      mounted = false
     }
   }, [router])
 

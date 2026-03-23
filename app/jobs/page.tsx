@@ -11,6 +11,7 @@ import type { CVData, Job } from "@/lib/types"
 import { mockJobs } from "@/lib/mock-jobs"
 import { scanCVForJobs } from "@/lib/ai-suggestions"
 import { JobApplicationModal } from "@/components/job-application-modal"
+import { loadCurrentCv } from "@/lib/cv-collection"
 
 export default function JobsPage() {
   const router = useRouter()
@@ -29,16 +30,25 @@ export default function JobsPage() {
   )
 
   useEffect(() => {
-    const savedCV = localStorage.getItem("cvbuilder_current")
+    let mounted = true
 
-    if (savedCV) {
-      const cvData: CVData = JSON.parse(savedCV)
-      setHasCV(true)
-      const matchedJobs = scanCVForJobs(cvData, mockJobs)
-      setJobs(matchedJobs)
-    } else {
-      setJobs(mockJobs)
-      setHasCV(false)
+    const loadJobs = async () => {
+      const cvData = await loadCurrentCv()
+      if (!mounted) return
+
+      if (cvData) {
+        setHasCV(true)
+        setJobs(scanCVForJobs(cvData, mockJobs))
+      } else {
+        setJobs(mockJobs)
+        setHasCV(false)
+      }
+    }
+
+    loadJobs()
+
+    return () => {
+      mounted = false
     }
   }, [])
 

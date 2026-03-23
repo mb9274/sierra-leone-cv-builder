@@ -1,9 +1,11 @@
 import { CVLayoutProps } from "./types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { getCvLocation } from "@/lib/cv-location"
 
 export function StandardLayout({ cvData, theme, isEditing, editedData, onEdit }: CVLayoutProps) {
     const data = isEditing && editedData ? editedData : cvData
+    const location = getCvLocation(data.personalInfo)
 
     return (
         <div className="p-12 print:p-8">
@@ -42,19 +44,11 @@ export function StandardLayout({ cvData, theme, isEditing, editedData, onEdit }:
                         <span className="flex items-center gap-1">
                             <span className="font-semibold">Phone:</span> {data.personalInfo.phone ? `+232 ${data.personalInfo.phone}` : "Not provided"}
                         </span>
-                        {data.personalInfo.location && (
+                        {location && (
                             <>
                                 <span>•</span>
                                 <span className="flex items-center gap-1">
-                                    <span className="font-semibold">Location:</span> {data.personalInfo.location}
-                                </span>
-                            </>
-                        )}
-                        {data.personalInfo.addressCity && (
-                            <>
-                                <span>•</span>
-                                <span className="flex items-center gap-1">
-                                    <span className="font-semibold text-[10px] uppercase">City/Country:</span> {data.personalInfo.addressCity}, {data.personalInfo.addressCountry}
+                                    <span className="font-semibold">Location:</span> {location}
                                 </span>
                             </>
                         )}

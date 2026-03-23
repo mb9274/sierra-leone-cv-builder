@@ -2,9 +2,11 @@ import { CVLayoutProps } from "./types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { MapPin, Mail, Phone, Calendar } from "lucide-react"
+import { getCvLocation } from "@/lib/cv-location"
 
 export function SidebarLayout({ cvData, theme, isEditing, editedData, onEdit }: CVLayoutProps) {
     const data = isEditing && editedData ? editedData : cvData
+    const location = getCvLocation(data.personalInfo)
 
     // Extract background color from theme.bg class name safely
     const bgColorClass = theme.bg.includes('bg-') ? theme.bg : 'bg-slate-100';
@@ -46,14 +48,8 @@ export function SidebarLayout({ cvData, theme, isEditing, editedData, onEdit }: 
 
                         <div className="flex items-center gap-3 text-sm">
                             <MapPin className="size-4 shrink-0 opacity-70" />
-                            <span>{data.personalInfo.location || "Location not provided"}</span>
+                            <span>{location || "Location not provided"}</span>
                         </div>
-
-                        {(data.personalInfo.addressCity || data.personalInfo.addressCountry) && (
-                            <div className="flex items-center gap-3 text-sm pl-7 text-xs opacity-80">
-                                <span>{data.personalInfo.addressCity}, {data.personalInfo.addressCountry}</span>
-                            </div>
-                        )}
 
                         {data.personalInfo.linkedin && (
                             <div className="flex items-center gap-3 text-sm">

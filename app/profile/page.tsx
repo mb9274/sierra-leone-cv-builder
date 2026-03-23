@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Eye, Edit, User } from "lucide-react"
 import type { CVData } from "@/lib/types"
-import { createClient } from '@/lib/supabase/client'
 import { useToast } from "@/hooks/use-toast"
+import { normalizeCvRecord } from "@/lib/cv-storage"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -15,29 +16,44 @@ export default function ProfilePage() {
   const [cvs, setCvs] = useState<CVData[]>([])
   const [userInfo, setUserInfo] = useState({ name: "", email: "" })
   const [avatarDataUrl, setAvatarDataUrl] = useState<string>("")
+  const [loading, setLoading] = useState(true)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     const loadData = async () => {
-      const savedCvs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-      setCvs(savedCvs)
+      try {
+        const sessionResponse = await fetch("/api/auth/session")
+        if (!sessionResponse.ok) {
+          router.push("/auth/sign-in?next=/profile")
+          return
+        }
+
+        const session = await sessionResponse.json()
+        if (!session.user) {
+          router.push("/auth/sign-in?next=/profile")
+          return
+        }
+
+        setUserInfo({
+          name: session.user.name || "User",
+          email: session.user.email || "",
+        })
+
+        const cvsResponse = await fetch("/api/cvs")
+        if (cvsResponse.ok) {
+          const payload = await cvsResponse.json()
+          setCvs((payload.cvs || []).map((cv: any) => normalizeCvRecord(cv)))
+        }
+      } catch (error) {
+        console.error("Profile load error:", error)
+        router.push("/auth/sign-in?next=/profile")
+      } finally {
+        setLoading(false)
+      }
 
       const savedAvatar = localStorage.getItem("profile_avatar")
       if (savedAvatar) {
         setAvatarDataUrl(savedAvatar)
-      }
-
-      // Direct access without authentication
-      if (savedCvs.length > 0) {
-        setUserInfo({
-          name: savedCvs[0].personalInfo.fullName,
-          email: savedCvs[0].personalInfo.email,
-        })
-      } else {
-        setUserInfo({
-          name: "User",
-          email: "",
-        })
       }
     }
 
@@ -89,12 +105,24 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {loading && (
+          <div className="mb-6 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+            Loading your profile...
+          </div>
+        )}
         <Card className="mb-8">
           <CardHeader>
             <div className="flex items-center gap-4">
               <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
                 {avatarDataUrl ? (
-                  <img src={avatarDataUrl} alt="Profile" className="size-full object-cover" />
+                  <Image
+                    src={avatarDataUrl}
+                    alt="Profile"
+                    width={64}
+                    height={64}
+                    className="size-full object-cover"
+                    unoptimized
+                  />
                 ) : (
                   <User className="size-8 text-primary" />
                 )}

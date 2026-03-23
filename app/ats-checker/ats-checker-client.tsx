@@ -32,6 +32,8 @@ import {
 import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { getCvLocation } from "@/lib/cv-location"
+import { loadAvailableCvs } from "@/lib/cv-collection"
 
 interface ATSCheckResult {
   score: number
@@ -60,25 +62,26 @@ export default function ATSCheckerClient() {
   const [testResult, setTestResult] = useState<any>(null)
 
   useEffect(() => {
-    // Load current CV from preview
-    const currentCV = localStorage.getItem("cvbuilder_current")
-    if (currentCV) {
-      try {
-        setCvData(JSON.parse(currentCV))
-      } catch (e) {
-        console.error("[v0] Failed to parse current CV:", e)
+    const loadCvs = async () => {
+      // Load current CV from preview
+      const currentCV = localStorage.getItem("cvbuilder_current")
+      if (currentCV) {
+        try {
+          setCvData(JSON.parse(currentCV))
+        } catch (e) {
+          console.error("[v0] Failed to parse current CV:", e)
+        }
+      }
+
+      const availableCvs = await loadAvailableCvs()
+      setSavedCVs(availableCvs)
+
+      if (!currentCV && availableCvs.length > 0) {
+        setCvData(availableCvs[0])
       }
     }
 
-    // Load all saved CVs
-    const allCVs = localStorage.getItem("cvbuilder_cvs")
-    if (allCVs) {
-      try {
-        setSavedCVs(JSON.parse(allCVs))
-      } catch (e) {
-        console.error("[v0] Failed to parse saved CVs:", e)
-      }
-    }
+    loadCvs()
   }, [])
 
   const analyzeCVForATS = (cv: CVData): ATSCheckResult => {
@@ -254,7 +257,7 @@ export default function ATSCheckerClient() {
     }
 
     // Check formatting (ATS-friendly indicators)
-    if (!cv.personalInfo.location) {
+    if (!getCvLocation(cv.personalInfo)) {
       issues.push({
         type: "warning",
         category: "Location",

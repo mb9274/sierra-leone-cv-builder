@@ -162,6 +162,38 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                                                 />
                                             </div>
                                         </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="location" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Location</Label>
+                                            <Input
+                                                id="location"
+                                                placeholder="Freetown, Sierra Leone"
+                                                value={data.personalInfo?.location || ""}
+                                                onChange={(e) => onChange("personalInfo.location", e.target.value)}
+                                                className="h-10 border-gray-200"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="addressCity" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">City</Label>
+                                                <Input
+                                                    id="addressCity"
+                                                    placeholder="Freetown"
+                                                    value={data.personalInfo?.addressCity || ""}
+                                                    onChange={(e) => onChange("personalInfo.addressCity", e.target.value)}
+                                                    className="h-10 border-gray-200"
+                                                />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="addressCountry" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Country</Label>
+                                                <Input
+                                                    id="addressCountry"
+                                                    placeholder="Sierra Leone"
+                                                    value={data.personalInfo?.addressCountry || ""}
+                                                    onChange={(e) => onChange("personalInfo.addressCountry", e.target.value)}
+                                                    className="h-10 border-gray-200"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
@@ -238,11 +270,39 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                                                     </div>
                                                 </div>
 
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="grid gap-1">
+                                                        <Label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Start</Label>
+                                                        <Input
+                                                            placeholder="2022"
+                                                            value={exp.startDate || ""}
+                                                            onChange={(e) => onChange(`experience.${index}.startDate`, e.target.value)}
+                                                            className="h-8 text-sm border-gray-200"
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-1">
+                                                        <Label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">End</Label>
+                                                        <Input
+                                                            placeholder="Present"
+                                                            value={exp.endDate || ""}
+                                                            onChange={(e) => onChange(`experience.${index}.endDate`, e.target.value)}
+                                                            className="h-8 text-sm border-gray-200"
+                                                        />
+                                                    </div>
+                                                </div>
+
                                                 <Textarea
                                                     placeholder="Describe your responsibilities and achievements..."
                                                     value={exp.description || ""}
                                                     onChange={(e) => onChange(`experience.${index}.description`, e.target.value)}
                                                     className="min-h-[80px] md:min-h-[100px] resize-none border-gray-200 text-sm"
+                                                />
+
+                                                <Textarea
+                                                    placeholder="Key achievements..."
+                                                    value={exp.achievements || ""}
+                                                    onChange={(e) => onChange(`experience.${index}.achievements`, e.target.value)}
+                                                    className="min-h-[70px] resize-none border-gray-200 text-sm"
                                                 />
                                             </div>
                                         ))}
@@ -311,6 +371,28 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                                                         placeholder="Institution"
                                                         value={edu.institution || ""}
                                                         onChange={(e) => onChange(`education.${index}.institution`, e.target.value)}
+                                                        className="h-8 text-sm border-gray-200"
+                                                    />
+                                                </div>
+
+                                                <Input
+                                                    placeholder="Field of study"
+                                                    value={edu.fieldOfStudy || ""}
+                                                    onChange={(e) => onChange(`education.${index}.fieldOfStudy`, e.target.value)}
+                                                    className="h-8 text-sm border-gray-200"
+                                                />
+
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <Input
+                                                        placeholder="Start year"
+                                                        value={edu.startDate || ""}
+                                                        onChange={(e) => onChange(`education.${index}.startDate`, e.target.value)}
+                                                        className="h-8 text-sm border-gray-200"
+                                                    />
+                                                    <Input
+                                                        placeholder="End year"
+                                                        value={edu.endDate || ""}
+                                                        onChange={(e) => onChange(`education.${index}.endDate`, e.target.value)}
                                                         className="h-8 text-sm border-gray-200"
                                                     />
                                                 </div>
@@ -436,6 +518,355 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                                                 <Plus className="size-4" />
                                             </Button>
                                         </div>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+
+                            <AccordionItem value="languages" className="border-b-0 py-2">
+                                <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
+                                    <div className="flex items-center gap-3 text-sm font-semibold">
+                                        <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50">
+                                            <Globe className="size-4" />
+                                        </div>
+                                        Languages
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
+                                    <div onClick={() => onSelectElement?.('languages')} className="space-y-3">
+                                        {data.languages?.map((lang: any, index: number) => (
+                                            <div key={index} className="grid grid-cols-[1fr_120px] gap-2">
+                                                <Input
+                                                    placeholder="Language"
+                                                    value={lang.language || ""}
+                                                    onChange={(e) => onChange(`languages.${index}.language`, e.target.value)}
+                                                    className="h-9 border-gray-200"
+                                                />
+                                                <Input
+                                                    placeholder="Fluent"
+                                                    value={lang.proficiency || ""}
+                                                    onChange={(e) => onChange(`languages.${index}.proficiency`, e.target.value)}
+                                                    className="h-9 border-gray-200"
+                                                />
+                                            </div>
+                                        ))}
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-2 h-9 p-0 text-sm font-medium"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onChange("languages", [...(data.languages || []), { language: "", proficiency: "Fluent" }])
+                                            }}
+                                        >
+                                            <Plus className="size-4" />
+                                            Add Language
+                                        </Button>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+
+                            <AccordionItem value="projects" className="border-b-0 py-2">
+                                <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
+                                    <div className="flex items-center gap-3 text-sm font-semibold">
+                                        <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50">
+                                            <LayoutGrid className="size-4" />
+                                        </div>
+                                        Featured Projects
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
+                                    <div onClick={() => onSelectElement?.('projects')} className="space-y-3">
+                                        {data.projects?.map((project: any, index: number) => (
+                                            <div key={index} className="p-3 border rounded-lg space-y-2">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <Input
+                                                        placeholder="Project title"
+                                                        value={project.name || ""}
+                                                        onChange={(e) => onChange(`projects.${index}.name`, e.target.value)}
+                                                        className="h-9 border-gray-200"
+                                                    />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-6 text-gray-400 hover:text-red-500"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onChange("projects", (data.projects || []).filter((_: any, i: number) => i !== index))
+                                                        }}
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </div>
+                                                <Textarea
+                                                    placeholder="Project description"
+                                                    value={project.description || ""}
+                                                    onChange={(e) => onChange(`projects.${index}.description`, e.target.value)}
+                                                    className="min-h-[80px] resize-none border-gray-200 text-sm"
+                                                />
+                                            </div>
+                                        ))}
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-2 h-9 p-0 text-sm font-medium"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onChange("projects", [...(data.projects || []), { id: Date.now().toString(), name: "", description: "", link: "", technologies: [], outcome: "" }])
+                                            }}
+                                        >
+                                            <Plus className="size-4" />
+                                            Add Project
+                                        </Button>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+
+                            <AccordionItem value="certifications" className="border-b-0 py-2">
+                                <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
+                                    <div className="flex items-center gap-3 text-sm font-semibold">
+                                        <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50">
+                                            <Award className="size-4" />
+                                        </div>
+                                        Certifications
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
+                                    <div onClick={() => onSelectElement?.('certifications')} className="space-y-3">
+                                        {data.certifications?.map((cert: any, index: number) => (
+                                            <div key={index} className="p-3 border rounded-lg space-y-2">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <Input
+                                                        placeholder="Certification name"
+                                                        value={cert.name || ""}
+                                                        onChange={(e) => onChange(`certifications.${index}.name`, e.target.value)}
+                                                        className="h-9 border-gray-200"
+                                                    />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-6 text-gray-400 hover:text-red-500"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onChange("certifications", (data.certifications || []).filter((_: any, i: number) => i !== index))
+                                                        }}
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <Input
+                                                        placeholder="Organization"
+                                                        value={cert.organization || ""}
+                                                        onChange={(e) => onChange(`certifications.${index}.organization`, e.target.value)}
+                                                        className="h-9 border-gray-200"
+                                                    />
+                                                    <Input
+                                                        placeholder="Year"
+                                                        value={cert.year || ""}
+                                                        onChange={(e) => onChange(`certifications.${index}.year`, e.target.value)}
+                                                        className="h-9 border-gray-200"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-2 h-9 p-0 text-sm font-medium"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onChange("certifications", [...(data.certifications || []), { id: Date.now().toString(), name: "", organization: "", year: "" }])
+                                            }}
+                                        >
+                                            <Plus className="size-4" />
+                                            Add Certification
+                                        </Button>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+
+                            <AccordionItem value="volunteering" className="border-b-0 py-2">
+                                <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
+                                    <div className="flex items-center gap-3 text-sm font-semibold">
+                                        <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50">
+                                            <History className="size-4" />
+                                        </div>
+                                        Volunteering
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
+                                    <div onClick={() => onSelectElement?.('volunteering')} className="space-y-3">
+                                        {data.volunteering?.map((vol: any, index: number) => (
+                                            <div key={index} className="p-3 border rounded-lg space-y-2">
+                                                <Input
+                                                    placeholder="Organization"
+                                                    value={vol.organization || ""}
+                                                    onChange={(e) => onChange(`volunteering.${index}.organization`, e.target.value)}
+                                                    className="h-9 border-gray-200"
+                                                />
+                                                <Input
+                                                    placeholder="Role"
+                                                    value={vol.role || ""}
+                                                    onChange={(e) => onChange(`volunteering.${index}.role`, e.target.value)}
+                                                    className="h-9 border-gray-200"
+                                                />
+                                                <Textarea
+                                                    placeholder="Description"
+                                                    value={vol.description || ""}
+                                                    onChange={(e) => onChange(`volunteering.${index}.description`, e.target.value)}
+                                                    className="min-h-[80px] resize-none border-gray-200 text-sm"
+                                                />
+                                            </div>
+                                        ))}
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-2 h-9 p-0 text-sm font-medium"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onChange("volunteering", [...(data.volunteering || []), { id: Date.now().toString(), organization: "", role: "", startDate: "", endDate: "", description: "" }])
+                                            }}
+                                        >
+                                            <Plus className="size-4" />
+                                            Add Volunteering
+                                        </Button>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+
+                            <AccordionItem value="awards" className="border-b-0 py-2">
+                                <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
+                                    <div className="flex items-center gap-3 text-sm font-semibold">
+                                        <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50">
+                                            <Award className="size-4" />
+                                        </div>
+                                        Awards & Hobbies
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
+                                    <div className="space-y-3" onClick={() => onSelectElement?.('awards')}>
+                                        {data.awards?.map((award: any, index: number) => (
+                                            <div key={index} className="p-3 border rounded-lg space-y-2">
+                                                <Input
+                                                    placeholder="Award name"
+                                                    value={award.name || ""}
+                                                    onChange={(e) => onChange(`awards.${index}.name`, e.target.value)}
+                                                    className="h-9 border-gray-200"
+                                                />
+                                                <Input
+                                                    placeholder="Organization / Year"
+                                                    value={award.organization || ""}
+                                                    onChange={(e) => onChange(`awards.${index}.organization`, e.target.value)}
+                                                    className="h-9 border-gray-200"
+                                                />
+                                            </div>
+                                        ))}
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-2 h-9 p-0 text-sm font-medium"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onChange("awards", [...(data.awards || []), { id: Date.now().toString(), name: "", organization: "", year: "", reason: "" }])
+                                            }}
+                                        >
+                                            <Plus className="size-4" />
+                                            Add Award
+                                        </Button>
+                                    </div>
+
+                                    <div className="space-y-2" onClick={() => onSelectElement?.('hobbies')}>
+                                        <Label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Hobbies</Label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {data.hobbies?.map((hobby: string, index: number) => (
+                                                <div key={index} className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">
+                                                    {hobby}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-4 hover:bg-blue-100"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onChange("hobbies", (data.hobbies || []).filter((_: any, i: number) => i !== index))
+                                                        }}
+                                                    >
+                                                        <Trash2 className="size-3" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                placeholder="Add a hobby..."
+                                                className="flex-1 h-9 border-gray-200"
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        const newHobby = e.currentTarget.value.trim()
+                                                        if (newHobby) {
+                                                            onChange("hobbies", [...(data.hobbies || []), newHobby])
+                                                            e.currentTarget.value = ""
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                className="px-3 h-9 border-gray-200"
+                                                onClick={(e) => {
+                                                    const input = e.currentTarget.parentElement?.querySelector('input')
+                                                    const newHobby = input?.value.trim()
+                                                    if (newHobby) {
+                                                        onChange("hobbies", [...(data.hobbies || []), newHobby])
+                                                        if (input) input.value = ""
+                                                    }
+                                                }}
+                                            >
+                                                <Plus className="size-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+
+                            <AccordionItem value="referees" className="border-b-0 py-2">
+                                <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
+                                    <div className="flex items-center gap-3 text-sm font-semibold">
+                                        <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50">
+                                            <User className="size-4" />
+                                        </div>
+                                        Referees
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
+                                    <div onClick={() => onSelectElement?.('referees')} className="space-y-3">
+                                        {data.referees?.map((ref: any, index: number) => (
+                                            <div key={index} className="p-3 border rounded-lg space-y-2">
+                                                <Input
+                                                    placeholder="Name"
+                                                    value={ref.name || ""}
+                                                    onChange={(e) => onChange(`referees.${index}.name`, e.target.value)}
+                                                    className="h-9 border-gray-200"
+                                                />
+                                                <Input
+                                                    placeholder="Title / Organization"
+                                                    value={ref.title || ""}
+                                                    onChange={(e) => onChange(`referees.${index}.title`, e.target.value)}
+                                                    className="h-9 border-gray-200"
+                                                />
+                                                <Input
+                                                    placeholder="Phone / Email"
+                                                    value={ref.phone || ""}
+                                                    onChange={(e) => onChange(`referees.${index}.phone`, e.target.value)}
+                                                    className="h-9 border-gray-200"
+                                                />
+                                            </div>
+                                        ))}
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-2 h-9 p-0 text-sm font-medium"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onChange("referees", [...(data.referees || []), { id: Date.now().toString(), name: "", title: "", organization: "", phone: "", email: "", availableOnRequest: true }])
+                                            }}
+                                        >
+                                            <Plus className="size-4" />
+                                            Add Referee
+                                        </Button>
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>

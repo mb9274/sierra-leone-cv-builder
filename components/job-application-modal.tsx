@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -41,20 +41,24 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
   >([{ name: "", position: "", company: "", email: "", phone: "" }])
 
   // Load CV data on mount
-  useState(() => {
+  useEffect(() => {
     const savedCV = localStorage.getItem("cvbuilder_current")
     if (savedCV) {
       const cv: CVData = JSON.parse(savedCV)
+      const location =
+        cv.personalInfo.location ||
+        [cv.personalInfo.addressCity, cv.personalInfo.addressCountry].filter(Boolean).join(", ")
+
       setCvData(cv)
       setFormData((prev) => ({
         ...prev,
         fullName: cv.personalInfo.fullName,
         email: cv.personalInfo.email,
         phone: cv.personalInfo.phone,
-        location: cv.personalInfo.location || "",
+        location,
       }))
     }
-  })
+  }, [])
 
   const addReference = () => {
     if (references.length < 3) {
