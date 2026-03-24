@@ -17,7 +17,7 @@ const DEFAULT_DATA = {
     fullName: "",
     email: "",
     phone: "",
-    location: "",
+    location: "Freetown, Sierra Leone",
     addressCity: "",
     addressCountry: "",
     summary: "",
@@ -89,6 +89,7 @@ export default function CVBuilderPage() {
   // Load saved data on mount
   useEffect(() => {
     let mounted = true
+    setSelectedElement("personalInfo")
 
     const loadSavedCv = async () => {
       // Check sessionStorage first (from dashboard), then localStorage.

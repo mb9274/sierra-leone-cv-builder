@@ -5,6 +5,8 @@ import { extractCvData, type ExtractedCv } from "@/lib/cv-extractor"
 
 export const runtime = "nodejs"
 
+const STORAGE_BUCKET = "cv-uploads"
+
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/msword",
@@ -47,7 +49,12 @@ type UploadResult = {
     id: string
     createdAt: Date
     updatedAt: Date
+    storageBucket?: string
+    storagePath?: string
+    originalFileName?: string
+    mimeType?: string
   }
+  storageStatus: "saved" | "skipped"
 }
 
 function withIds<T extends Record<string, any>>(items: T[] | undefined, prefix: string): T[] | undefined {
@@ -500,12 +507,55 @@ function makeLegacyInsert(cv: ExtractedCv, userId: string) {
   }
 }
 
+async function uploadOriginalFile(
+  file: File,
+  userId: string,
+  supabase: ReturnType<typeof createAdminClient>,
+) {
+  const storagePath = `${userId}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, "_")}`
+  const fileBuffer = Buffer.from(await file.arrayBuffer())
+
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(storagePath, fileBuffer, {
+    contentType: file.type,
+    upsert: false,
+  })
+
+  if (error) {
+    throw new Error(`Storage upload failed: ${error.message}`)
+  }
+
+  return {
+    storageBucket: STORAGE_BUCKET,
+    storagePath,
+    originalFileName: file.name,
+    mimeType: file.type,
+  }
+}
+
 async function processUpload(
   file: File,
   user: { id: string; email?: string | null },
   emit?: (event: UploadProgressEvent) => void,
 ): Promise<UploadResult> {
   emit?.({ stage: "starting", message: `Preparing ${file.name} for upload...` })
+
+  const supabase = createAdminClient()
+  let storageMeta:
+    | {
+        storageBucket: string
+        storagePath: string
+        originalFileName: string
+        mimeType: string
+      }
+    | null = null
+  let storageErrorMessage = ""
+
+  try {
+    storageMeta = await uploadOriginalFile(file, user.id, supabase)
+  } catch (error) {
+    storageErrorMessage = error instanceof Error ? error.message : "Storage upload failed"
+    console.warn("Original file storage upload failed:", storageErrorMessage)
+  }
 
   const textResult = await extractFileText(file, emit)
   const fallbackText = textResult.text
@@ -525,6 +575,10 @@ async function processUpload(
     notes: [],
   }
 
+  if (storageErrorMessage) {
+    debug.notes.push(`Original file was not saved to Supabase Storage: ${storageErrorMessage}`)
+  }
+
   if (!fallbackText.trim()) {
     debug.notes.push("No extractable text was found in this file.")
     debug.notes.push("If the PDF is scanned or image-based, upload text-based CV content or convert it to searchable text first.")
@@ -538,26 +592,42 @@ async function processUpload(
 
   emit?.({ stage: "saving", message: "Saving the extracted CV..." })
 
-  const supabase = createAdminClient()
   const primary = await supabase
     .from("cvs")
     .insert({
       user_id: user.id,
-      data: extractedCV,
+      data: {
+        ...extractedCV,
+        ...(storageMeta || {}),
+      },
     })
     .select("id, data, created_at, updated_at")
     .single()
 
   if (!primary.error) {
     const cv = {
-      ...normalizeExtractedCv(extractedCV, extractedCV, extractedCV.sourceText || fallbackText),
+      ...normalizeExtractedCv(
+        {
+          ...extractedCV,
+          ...(storageMeta || {}),
+        },
+        extractedCV,
+        extractedCV.sourceText || fallbackText,
+      ),
       id: primary.data.id,
       createdAt: new Date(primary.data.created_at),
       updatedAt: new Date(primary.data.updated_at),
+      ...(storageMeta || {}),
     }
 
     emit?.({ stage: "done", message: "CV uploaded successfully" })
-    return { success: true, message: "CV uploaded successfully", debug, cv }
+    return {
+      success: true,
+      message: "CV uploaded successfully",
+      debug,
+      cv,
+      storageStatus: storageMeta?.storagePath ? "saved" : "skipped",
+    }
   }
 
   const primaryMessage = String(primary.error.message || "").toLowerCase()
@@ -575,17 +645,47 @@ async function processUpload(
 
     if (!legacy.error) {
       const cv = {
-        ...normalizeExtractedCv(extractedCV, extractedCV, extractedCV.sourceText || fallbackText),
+        ...normalizeExtractedCv(
+          {
+            ...extractedCV,
+            ...(storageMeta || {}),
+          },
+          extractedCV,
+          extractedCV.sourceText || fallbackText,
+        ),
         id: legacy.data.id,
         createdAt: new Date(legacy.data.created_at),
         updatedAt: new Date(legacy.data.updated_at),
+        ...(storageMeta || {}),
       }
 
       emit?.({ stage: "done", message: "CV uploaded successfully" })
-      return { success: true, message: "CV uploaded successfully", debug, cv }
+      return {
+        success: true,
+        message: "CV uploaded successfully",
+        debug,
+        cv,
+        storageStatus: storageMeta?.storagePath ? "saved" : "skipped",
+      }
+    }
+
+    if (storageMeta?.storagePath) {
+      try {
+        await supabase.storage.from(STORAGE_BUCKET).remove([storageMeta.storagePath])
+      } catch {
+        // Ignore cleanup errors if the DB insert fails.
+      }
     }
 
     throw new Error(`Database error: ${legacy.error.message}`)
+  }
+
+  if (storageMeta?.storagePath) {
+    try {
+      await supabase.storage.from(STORAGE_BUCKET).remove([storageMeta.storagePath])
+    } catch {
+      // Ignore cleanup errors if the DB insert fails.
+    }
   }
 
   throw new Error(`Database error: ${primary.error.message}`)

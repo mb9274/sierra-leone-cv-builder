@@ -5,7 +5,7 @@ import { getCvLocation } from "@/lib/cv-location"
 
 export function MinimalLayout({ cvData, theme, isEditing, editedData, onEdit }: CVLayoutProps) {
     const data = isEditing && editedData ? editedData : cvData
-    const location = getCvLocation(data.personalInfo)
+    const location = getCvLocation(data)
 
     return (
         <div className="p-16 print:p-12 max-w-3xl mx-auto text-slate-900">

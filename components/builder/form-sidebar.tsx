@@ -26,6 +26,7 @@ import {
     Link2,
     Trash2,
     Upload,
+    MapPin,
     X
 } from "lucide-react"
 import {
@@ -83,7 +84,15 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                         >
 
                             {/* Personal Information */}
-                            <AccordionItem value="personalInfo" className="border-b-0 py-2">
+                            <AccordionItem
+                                value="personalInfo"
+                                className="border-b-0 py-2 scroll-mt-4"
+                                ref={(el) => {
+                                    if (selectedElement === "personalInfo" && el) {
+                                        el.scrollIntoView({ block: "start", behavior: "smooth" })
+                                    }
+                                }}
+                            >
                                 <AccordionTrigger className="hover:no-underline py-3 group px-2 md:px-3">
                                     <div className="flex items-center gap-3 text-sm font-semibold">
                                         <div className="p-1 rounded bg-gray-50 text-gray-400 group-data-[state=open]:text-blue-600 group-data-[state=open]:bg-blue-50">
@@ -94,106 +103,129 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                                 </AccordionTrigger>
                                 <AccordionContent className="space-y-4 pt-1 px-2 md:px-3">
                                     <div className="grid gap-4" onClick={() => onSelectElement?.('personalInfo')}>
-                                        <div className="flex items-center gap-4">
-                                            <div className="size-16 rounded-full bg-gray-100 border-2 flex items-center justify-center overflow-hidden shrink-0">
-                                                {data.personalInfo?.profilePhoto && data.personalInfo.profilePhoto !== "/placeholder-user.jpg" ? (
-                                                    <img src={data.personalInfo.profilePhoto} alt="Profile" className="size-full object-cover" />
-                                                ) : (
-                                                    <User className="size-6 text-gray-400" />
-                                                )}
+                                        <div className="rounded-3xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-white p-5 space-y-4 shadow-md ring-1 ring-blue-100">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between gap-3">
+                                                <Label htmlFor="location" className="flex items-center gap-2 text-sm uppercase tracking-[0.28em] text-blue-800 font-black">
+                                                    <MapPin className="size-4" />
+                                                    Location
+                                                </Label>
+                                                    <span className="rounded-full bg-blue-100 px-3 py-1 text-[10px] font-semibold text-blue-800">
+                                                        Required for preview
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-blue-900/70">
+                                                    Type your location here. Example: Freetown, Sierra Leone.
+                                                </p>
                                             </div>
-                                            <div className="flex-1">
-                                                <Label htmlFor="profilePhoto" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2 block">Profile Photo</Label>
-                                                <div className="flex items-center gap-2">
+                                            <Input
+                                                id="location"
+                                                placeholder="Type your location here"
+                                                value={data.personalInfo?.location || ""}
+                                                onChange={(e) => onChange("personalInfo.location", e.target.value)}
+                                                className="h-14 rounded-2xl border-blue-300 bg-white px-4 text-lg font-semibold shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                            />
+                                            <p className="text-xs font-medium text-blue-800/80">
+                                                City and Country are optional if you already typed the location above.
+                                            </p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="addressCity" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">City</Label>
                                                     <Input
-                                                        id="profilePhoto"
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleImageUpload}
-                                                        className="hidden"
+                                                        id="addressCity"
+                                                        placeholder="Freetown"
+                                                        value={data.personalInfo?.addressCity || ""}
+                                                        onChange={(e) => onChange("personalInfo.addressCity", e.target.value)}
+                                                        className="h-10 border-gray-200"
                                                     />
-                                                    <Button type="button" variant="outline" size="sm" className="h-8 gap-2 w-full text-xs" onClick={() => document.getElementById("profilePhoto")?.click()}>
-                                                        <Upload className="size-3" />
-                                                        Upload Image
-                                                    </Button>
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="addressCountry" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Country</Label>
+                                                    <Input
+                                                        id="addressCountry"
+                                                        placeholder="Sierra Leone"
+                                                        value={data.personalInfo?.addressCountry || ""}
+                                                        onChange={(e) => onChange("personalInfo.addressCountry", e.target.value)}
+                                                        className="h-10 border-gray-200"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="fullName" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Full Name</Label>
-                                            <Input
-                                                id="fullName"
-                                                placeholder="e.g. David St. Peter"
-                                                value={data.personalInfo?.fullName || ""}
-                                                onChange={(e) => onChange("personalInfo.fullName", e.target.value)}
-                                                className="h-11 md:h-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="jobTitle" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Job Title</Label>
-                                            <Input
-                                                id="jobTitle"
-                                                placeholder="e.g. UX Designer"
-                                                value={data.personalInfo?.jobTitle || ""}
-                                                onChange={(e) => onChange("personalInfo.jobTitle", e.target.value)}
-                                                className="h-10 border-gray-200"
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="email" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Email</Label>
-                                                <Input
-                                                    id="email"
-                                                    type="email"
-                                                    placeholder="name@email.com"
-                                                    value={data.personalInfo?.email || ""}
-                                                    onChange={(e) => onChange("personalInfo.email", e.target.value)}
-                                                    className="h-10 border-gray-200"
-                                                />
+                                        <details className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                            <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-700">
+                                                More personal details
+                                            </summary>
+                                            <div className="space-y-4 border-t px-4 py-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="size-16 rounded-full bg-gray-100 border-2 flex items-center justify-center overflow-hidden shrink-0">
+                                                        {data.personalInfo?.profilePhoto && data.personalInfo.profilePhoto !== "/placeholder-user.jpg" ? (
+                                                            <img src={data.personalInfo.profilePhoto} alt="Profile" className="size-full object-cover" />
+                                                        ) : (
+                                                            <User className="size-6 text-gray-400" />
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <Label htmlFor="profilePhoto" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2 block">Profile Photo</Label>
+                                                        <div className="flex items-center gap-2">
+                                                            <Input
+                                                                id="profilePhoto"
+                                                                type="file"
+                                                                accept="image/*"
+                                                                onChange={handleImageUpload}
+                                                                className="hidden"
+                                                            />
+                                                            <Button type="button" variant="outline" size="sm" className="h-8 gap-2 w-full text-xs" onClick={() => document.getElementById("profilePhoto")?.click()}>
+                                                                <Upload className="size-3" />
+                                                                Upload Image
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="fullName" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Full Name</Label>
+                                                    <Input
+                                                        id="fullName"
+                                                        placeholder="e.g. David St. Peter"
+                                                        value={data.personalInfo?.fullName || ""}
+                                                        onChange={(e) => onChange("personalInfo.fullName", e.target.value)}
+                                                        className="h-11 md:h-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="jobTitle" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Job Title</Label>
+                                                    <Input
+                                                        id="jobTitle"
+                                                        placeholder="e.g. UX Designer"
+                                                        value={data.personalInfo?.jobTitle || ""}
+                                                        onChange={(e) => onChange("personalInfo.jobTitle", e.target.value)}
+                                                        className="h-10 border-gray-200"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="email" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Email</Label>
+                                                        <Input
+                                                            id="email"
+                                                            type="email"
+                                                            placeholder="name@email.com"
+                                                            value={data.personalInfo?.email || ""}
+                                                            onChange={(e) => onChange("personalInfo.email", e.target.value)}
+                                                            className="h-10 border-gray-200"
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="phone" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Phone</Label>
+                                                        <Input
+                                                            id="phone"
+                                                            placeholder="+000 123 456"
+                                                            value={data.personalInfo?.phone || ""}
+                                                            onChange={(e) => onChange("personalInfo.phone", e.target.value)}
+                                                            className="h-10 border-gray-200"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="phone" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Phone</Label>
-                                                <Input
-                                                    id="phone"
-                                                    placeholder="+000 123 456"
-                                                    value={data.personalInfo?.phone || ""}
-                                                    onChange={(e) => onChange("personalInfo.phone", e.target.value)}
-                                                    className="h-10 border-gray-200"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="location" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Location</Label>
-                                            <Input
-                                                id="location"
-                                                placeholder="Freetown, Sierra Leone"
-                                                value={data.personalInfo?.location || ""}
-                                                onChange={(e) => onChange("personalInfo.location", e.target.value)}
-                                                className="h-10 border-gray-200"
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="addressCity" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">City</Label>
-                                                <Input
-                                                    id="addressCity"
-                                                    placeholder="Freetown"
-                                                    value={data.personalInfo?.addressCity || ""}
-                                                    onChange={(e) => onChange("personalInfo.addressCity", e.target.value)}
-                                                    className="h-10 border-gray-200"
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="addressCountry" className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Country</Label>
-                                                <Input
-                                                    id="addressCountry"
-                                                    placeholder="Sierra Leone"
-                                                    value={data.personalInfo?.addressCountry || ""}
-                                                    onChange={(e) => onChange("personalInfo.addressCountry", e.target.value)}
-                                                    className="h-10 border-gray-200"
-                                                />
-                                            </div>
-                                        </div>
+                                        </details>
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>

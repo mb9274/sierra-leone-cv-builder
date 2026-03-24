@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Sparkles, Copy } from "lucide-react"
@@ -16,6 +17,7 @@ export default function CoverLetterGenerator() {
     const [jobDescription, setJobDescription] = useState("")
     const [isGenerating, setIsGenerating] = useState(false)
     const [generatedLetter, setGeneratedLetter] = useState("")
+    const [usedFallback, setUsedFallback] = useState(false)
     const [cvs, setCvs] = useState<CVData[]>([])
     const [selectedCvId, setSelectedCvId] = useState<string>("")
     const [selectedJobId, setSelectedJobId] = useState<string>("")
@@ -99,6 +101,7 @@ export default function CoverLetterGenerator() {
             const data = await response.json()
             if (data.coverLetter) {
                 setGeneratedLetter(data.coverLetter)
+                setUsedFallback(Boolean(data.fallback))
                 toast({
                     title: "Cover Letter Generated",
                     description: "Your cover letter is ready!",
@@ -207,11 +210,18 @@ export default function CoverLetterGenerator() {
                         <CardTitle>Generated Letter</CardTitle>
                         <CardDescription>Your tailored cover letter will appear here.</CardDescription>
                     </div>
-                    {generatedLetter && (
-                        <Button variant="outline" size="icon" onClick={handleCopy}>
-                            <Copy className="size-4" />
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {usedFallback && generatedLetter && (
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                                Fallback mode
+                            </Badge>
+                        )}
+                        {generatedLetter && (
+                            <Button variant="outline" size="icon" onClick={handleCopy}>
+                                <Copy className="size-4" />
+                            </Button>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent className="flex-1">
                     {generatedLetter ? (

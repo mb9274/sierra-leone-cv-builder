@@ -22,11 +22,16 @@ import {
   Eye,
   AlertCircle,
   UserCircle2,
+  ExternalLink,
+  Cloud,
+  Smartphone,
+  MapPin,
 } from "lucide-react"
 import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { normalizeCvRecord } from "@/lib/cv-storage"
+import { getCvLocation } from "@/lib/cv-location"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -134,6 +139,26 @@ export default function DashboardPage() {
     router.push("/preview")
   }
 
+  const handleViewOriginalFile = async (cv: CVData) => {
+    try {
+      const response = await fetch(`/api/cvs/${cv.id}/file-url`)
+      if (!response.ok) {
+        throw new Error("Original file link is not available")
+      }
+
+      const result = await response.json()
+      if (result.url) {
+        window.open(result.url, "_blank", "noopener,noreferrer")
+      }
+    } catch (error) {
+      toast({
+        title: "File not available",
+        description: error instanceof Error ? error.message : "Could not open the original file.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleUploadCV = () => {
     router.push("/cv")
   }
@@ -237,6 +262,10 @@ export default function DashboardPage() {
             {currentUser?.email && (
               <p className="mt-2 text-xs text-slate-500">Session email: {currentUser.email}</p>
             )}
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm text-blue-800 shadow-sm">
+              <MapPin className="size-4" />
+              Active location: {cvs[0] ? getCvLocation(cvs[0]) : "Freetown, Sierra Leone"}
+            </div>
           </div>
           <Button
             onClick={handleCreateNew}
@@ -245,6 +274,23 @@ export default function DashboardPage() {
             <Plus className="size-5" />
             Create New
           </Button>
+        </div>
+
+        <div className="mb-10 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="rounded-2xl bg-slate-900 p-3 text-white">
+              <Smartphone className="size-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-slate-900">Mobile CV Builder</p>
+              <p className="text-sm text-slate-600">
+                Open the dedicated mobile-first CV flow with form, preview, and Supabase Storage upload.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => router.push("/mobile-cv")}>
+              Open
+            </Button>
+          </div>
         </div>
 
         {/* CV Creation Section */}
@@ -404,14 +450,26 @@ export default function DashboardPage() {
                     <div className="h-1.5 w-full bg-gray-50 rounded" />
                     <div className="h-1.5 w-full bg-gray-50 rounded" />
                     <div className="h-1.5 w-3/4 bg-gray-50 rounded" />
+                    <div className="mt-auto inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700">
+                      {getCvLocation(cv) || "Location"}
+                    </div>
                   </div>
                 </div>
                 <CardContent className="p-5">
                   <h3 className="font-bold text-gray-900 truncate">{cv.personalInfo?.fullName || "Untitled Resume"}</h3>
+                  <p className="mt-1 text-sm text-gray-500 truncate">
+                    {getCvLocation(cv) || "Location not provided"}
+                  </p>
                   <div className="flex items-center gap-2 text-xs text-gray-400 mt-2">
                     <Clock className="size-3" />
                     <span>Last updated 2 days ago</span>
                   </div>
+                  {cv.storagePath && (
+                    <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                      <Cloud className="size-3.5" />
+                      Saved to Supabase Storage
+                    </div>
+                  )}
 
                   <div className="flex gap-2 mt-6">
                     <Button
@@ -430,6 +488,16 @@ export default function DashboardPage() {
                       <Edit2 className="size-4 mr-2" />
                       Edit
                     </Button>
+                    {cv.storagePath && (
+                      <Button
+                        className="flex-1 h-9 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                        variant="ghost"
+                        onClick={() => handleViewOriginalFile(cv)}
+                      >
+                        <ExternalLink className="size-4 mr-2" />
+                        Original
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -21,6 +22,7 @@ export default function CoverLetterPage() {
     const [jobDescription, setJobDescription] = useState("")
     const [isGenerating, setIsGenerating] = useState(false)
     const [generatedLetter, setGeneratedLetter] = useState("")
+    const [usedFallback, setUsedFallback] = useState(false)
     const [cvs, setCvs] = useState<CVData[]>([])
     const [selectedCvId, setSelectedCvId] = useState<string>("")
     const [selectedJobId, setSelectedJobId] = useState<string>("")
@@ -123,6 +125,7 @@ export default function CoverLetterPage() {
             
             if (data.coverLetter) {
                 setGeneratedLetter(data.coverLetter)
+                setUsedFallback(Boolean(data.fallback))
                 toast({
                     title: "Cover Letter Generated",
                     description: "Your cover letter is ready!",
@@ -259,17 +262,24 @@ export default function CoverLetterPage() {
                     </Card>
 
                     <Card className="h-full flex flex-col">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <div className="space-y-1">
-                                <CardTitle>Generated Letter</CardTitle>
-                                <CardDescription>Your tailored cover letter will appear here.</CardDescription>
-                            </div>
-                            {generatedLetter && (
-                                <Button variant="outline" size="icon" onClick={handleCopy}>
-                                    <Copy className="size-4" />
-                                </Button>
-                            )}
-                        </CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="space-y-1">
+                        <CardTitle>Generated Letter</CardTitle>
+                        <CardDescription>Your tailored cover letter will appear here.</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {usedFallback && generatedLetter && (
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                                Fallback mode
+                            </Badge>
+                        )}
+                        {generatedLetter && (
+                            <Button variant="outline" size="icon" onClick={handleCopy}>
+                                <Copy className="size-4" />
+                            </Button>
+                        )}
+                    </div>
+                </CardHeader>
                         <CardContent className="flex-1">
                             {generatedLetter ? (
                                 <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap p-4 bg-muted/50 rounded-lg h-full overflow-auto text-sm leading-relaxed">

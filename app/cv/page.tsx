@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Upload, FileText, ArrowLeft, Eye, Trash2, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
+import { Upload, FileText, ArrowLeft, Eye, Trash2, CheckCircle, AlertCircle, Loader2, ExternalLink, Cloud } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import type { CVData } from "@/lib/types"
@@ -84,6 +84,12 @@ export default function CVManagementPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null)
+  const [uploadSummary, setUploadSummary] = useState<{
+    kind: "success" | "warning"
+    title: string
+    message: string
+    confidence?: "high" | "partial" | "low"
+  } | null>(null)
 
   useEffect(() => {
     loadCVs()
@@ -150,6 +156,7 @@ export default function CVManagementPage() {
 
     setIsUploading(true)
     setError("")
+    setUploadSummary(null)
     setUploadProgress({
       stage: "starting",
       message: "Preparing your CV upload...",
@@ -182,6 +189,12 @@ export default function CVManagementPage() {
         (debug?.sectionCount || 0) < 1
 
       if (looksImageOnly) {
+        setUploadSummary({
+          kind: "warning",
+          title: "Manual editor needed",
+          message: "The file looked scanned or image-only, so the app could not recover all CV details automatically.",
+          confidence: "low",
+        })
         toast({
           title: "Image-only or scanned file detected",
           description: "This file does not contain enough readable text, so we are opening the manual editor.",
@@ -190,15 +203,41 @@ export default function CVManagementPage() {
         return
       }
 
+      const uploadMessage =
+        result.storageStatus === "saved"
+          ? "Full CV data saved, and the original file was stored in Supabase Storage."
+          : "Full CV data saved, but the original file was not stored in Supabase Storage."
+      const confidence =
+        debug?.coreFieldCount >= 4 && debug?.sectionCount >= 3
+          ? "high"
+          : debug?.coreFieldCount >= 2 || debug?.sectionCount >= 1
+            ? "partial"
+            : "low"
+
+      setUploadSummary({
+        kind: "success",
+        title: "Upload complete",
+        message: uploadMessage,
+        confidence,
+      })
+
       sessionStorage.setItem("cvbuilder_current", JSON.stringify(result.cv))
       toast({
         title: "CV uploaded successfully",
-        description: "Opening the editor with the extracted CV.",
+        description:
+          result.storageStatus === "saved"
+            ? "Saved original file to Supabase Storage and opening the editor."
+            : "Storage upload skipped, CV still saved.",
       })
       router.push("/builder")
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to upload CV"
       setError(message)
+      setUploadSummary({
+        kind: "warning",
+        title: "Upload failed",
+        message: message,
+      })
       toast({
         title: "Upload failed",
         description: message,
@@ -229,6 +268,26 @@ export default function CVManagementPage() {
   const handleEditInBuilder = (cv: CVData) => {
     sessionStorage.setItem("cvbuilder_current", JSON.stringify(cv))
     router.push("/builder")
+  }
+
+  const handleViewOriginalFile = async (cv: CVData) => {
+    try {
+      const response = await fetch(`/api/cvs/${cv.id}/file-url`)
+      if (!response.ok) {
+        throw new Error("Original file link is not available")
+      }
+
+      const result = await response.json()
+      if (result.url) {
+        window.open(result.url, "_blank", "noopener,noreferrer")
+      }
+    } catch (error) {
+      toast({
+        title: "File not available",
+        description: error instanceof Error ? error.message : "Could not open the original file.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleDeleteCV = async (cvId: string) => {
@@ -348,6 +407,28 @@ export default function CVManagementPage() {
                 </div>
               )}
 
+              {uploadSummary && !isUploading && (
+                <Alert className={uploadSummary.kind === "success" ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}>
+                  <AlertCircle className={`h-4 w-4 ${uploadSummary.kind === "success" ? "text-emerald-700" : "text-amber-700"}`} />
+                  <AlertDescription className={uploadSummary.kind === "success" ? "text-emerald-900" : "text-amber-900"}>
+                    <div className="space-y-1">
+                      <p className="font-semibold">{uploadSummary.title}</p>
+                      <p className="text-sm">{uploadSummary.message}</p>
+                      {uploadSummary.confidence && (
+                        <p className="text-xs font-medium uppercase tracking-wide opacity-80">
+                          Extraction confidence:{" "}
+                          {uploadSummary.confidence === "high"
+                            ? "High confidence"
+                            : uploadSummary.confidence === "partial"
+                              ? "Partial extraction"
+                              : "Low confidence"}
+                        </p>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="flex flex-wrap gap-3 justify-center">
                 <Button variant="outline" onClick={handleManualFallback}>
                   Open manual editor
@@ -382,6 +463,12 @@ export default function CVManagementPage() {
                           {cv.personalInfo.summary && (
                             <p className="text-sm text-gray-500 line-clamp-2 mb-3">{cv.personalInfo.summary}</p>
                           )}
+                          {cv.storagePath && (
+                            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                              <Cloud className="size-3.5" />
+                              Saved to Supabase Storage
+                            </div>
+                          )}
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span>Created: {new Date(cv.createdAt).toLocaleDateString()}</span>
                             <span>Updated: {new Date(cv.updatedAt).toLocaleDateString()}</span>
@@ -409,6 +496,11 @@ export default function CVManagementPage() {
                           <Button variant="outline" size="sm" onClick={() => handleEditInBuilder(cv)}>
                             <FileText className="h-4 w-4" />
                           </Button>
+                          {cv.storagePath && (
+                            <Button variant="outline" size="sm" onClick={() => handleViewOriginalFile(cv)}>
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button variant="outline" size="sm" onClick={() => handleDeleteCV(cv.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>

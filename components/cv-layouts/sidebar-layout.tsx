@@ -6,7 +6,7 @@ import { getCvLocation } from "@/lib/cv-location"
 
 export function SidebarLayout({ cvData, theme, isEditing, editedData, onEdit }: CVLayoutProps) {
     const data = isEditing && editedData ? editedData : cvData
-    const location = getCvLocation(data.personalInfo)
+    const location = getCvLocation(data)
 
     // Extract background color from theme.bg class name safely
     const bgColorClass = theme.bg.includes('bg-') ? theme.bg : 'bg-slate-100';

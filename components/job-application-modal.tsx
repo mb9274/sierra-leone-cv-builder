@@ -10,6 +10,7 @@ import { X, FileText, Plus, Trash2, Check } from "lucide-react"
 import type { Job, CVData, JobApplication } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
+import { getCvLocation } from "@/lib/cv-location"
 
 interface JobApplicationModalProps {
   job: Job
@@ -45,9 +46,7 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
     const savedCV = localStorage.getItem("cvbuilder_current")
     if (savedCV) {
       const cv: CVData = JSON.parse(savedCV)
-      const location =
-        cv.personalInfo.location ||
-        [cv.personalInfo.addressCity, cv.personalInfo.addressCountry].filter(Boolean).join(", ")
+      const location = getCvLocation(cv as any)
 
       setCvData(cv)
       setFormData((prev) => ({
@@ -163,7 +162,7 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
             <div>
               <CardTitle className="text-2xl">Apply for {job.title}</CardTitle>
               <CardDescription>
-                {job.company} • {job.location}
+                {job.company} - {job.location}
               </CardDescription>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>

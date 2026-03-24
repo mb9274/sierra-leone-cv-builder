@@ -55,7 +55,7 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                 jobTitle: data.personalInfo?.jobTitle || "Professional",
                 email: data.personalInfo?.email || "yourname@gmail.com",
                 phone: data.personalInfo?.phone || "+000 123 456 789",
-                location: getCvLocation(data.personalInfo) || "Your Location",
+                location: getCvLocation(data) || "Your Location",
                 summary: data.personalInfo?.summary || "Write a professional summary that highlights your key skills and achievements...",
                 profilePhoto: data.personalInfo?.profilePhoto || "/placeholder-user.jpg",
             },
@@ -121,7 +121,7 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                                         color: 'var(--cv-color, #6b7280)'
                                     }}>
                                     {resumeData.personalInfo.jobTitle}
-                                    {getCvLocation(resumeData.personalInfo) ? ` | ${getCvLocation(resumeData.personalInfo)}` : ''}
+                                    {getCvLocation(resumeData) ? ` | ${getCvLocation(resumeData)}` : ''}
                                 </p>
                             </div>
                         </div>

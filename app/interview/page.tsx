@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -28,6 +29,7 @@ export default function MockInterviewPage() {
   const [isStarted, setIsStarted] = useState(false)
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false)
   const [isLoadingCvs, setIsLoadingCvs] = useState(true)
+  const [usedFallback, setUsedFallback] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -135,6 +137,7 @@ export default function MockInterviewPage() {
 
       const data = await response.json()
       console.log("Interview response:", data)
+      setUsedFallback(Boolean(data.fallback))
 
       let aiResponse = ""
       if (data.questions && data.questions.length > 0) {
@@ -247,17 +250,31 @@ export default function MockInterviewPage() {
             <p className="text-xs text-muted-foreground">AI Recruiter</p>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
-          className={isVoiceEnabled ? "text-primary bg-primary/10" : "text-muted-foreground"}
-        >
-          {isVoiceEnabled ? <Volume2 className="size-5" /> : <VolumeX className="size-5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          {usedFallback && (
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+              Fallback mode
+            </Badge>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
+            className={isVoiceEnabled ? "text-primary bg-primary/10" : "text-muted-foreground"}
+          >
+            {isVoiceEnabled ? <Volume2 className="size-5" /> : <VolumeX className="size-5" />}
+          </Button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-hidden p-4 max-w-3xl mx-auto w-full flex flex-col">
+        {usedFallback && (
+          <div className="mb-3">
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+              Fallback mode is active
+            </Badge>
+          </div>
+        )}
         <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
           <div className="space-y-4 pb-4">
             {messages.map((msg, i) => (

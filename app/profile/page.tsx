@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, Eye, Edit, User } from "lucide-react"
+import { FileText, Eye, Edit, User, ExternalLink, Cloud } from "lucide-react"
 import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { normalizeCvRecord } from "@/lib/cv-storage"
@@ -102,6 +102,26 @@ export default function ProfilePage() {
     })
   }
 
+  const handleViewOriginalFile = async (cv: CVData) => {
+    try {
+      const response = await fetch(`/api/cvs/${cv.id}/file-url`)
+      if (!response.ok) {
+        throw new Error("Original file link is not available")
+      }
+
+      const result = await response.json()
+      if (result.url) {
+        window.open(result.url, "_blank", "noopener,noreferrer")
+      }
+    } catch (error) {
+      toast({
+        title: "File not available",
+        description: error instanceof Error ? error.message : "Could not open the original file.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -195,6 +215,12 @@ export default function ProfilePage() {
                         <p className="text-sm text-muted-foreground">
                           Last edited: {new Date(cv.updatedAt).toLocaleDateString()}
                         </p>
+                        {cv.storagePath && (
+                          <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                            <Cloud className="size-3.5" />
+                            Saved to Supabase Storage
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -218,6 +244,15 @@ export default function ProfilePage() {
                       >
                         <Edit className="size-4" />
                       </Button>
+                      {cv.storagePath && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewOriginalFile(cv)}
+                        >
+                          <ExternalLink className="size-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}

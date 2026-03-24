@@ -1,4 +1,5 @@
 import type { CVData } from "./types"
+import { getCvLocation } from "./cv-location"
 
 type CVRecord = {
   id?: string
@@ -12,9 +13,16 @@ type CVRecord = {
   phone?: string
   summary?: string
   age?: number | string
+  location?: string
+  addressCity?: string
+  addressCountry?: string
   photo_url?: string
   template?: string
   templateId?: string
+  storageBucket?: string
+  storagePath?: string
+  originalFileName?: string
+  mimeType?: string
   education?: CVData["education"]
   experience?: CVData["experience"]
   skills?: CVData["skills"]
@@ -41,8 +49,13 @@ function toDate(value: string | Date | undefined, fallback = new Date()) {
 function normalizePersonalInfo(record: CVRecord, source: any): CVData["personalInfo"] {
   const personalInfo = source?.personalInfo || {}
   const location =
-    personalInfo.location ||
-    [personalInfo.addressCity, personalInfo.addressCountry].filter(Boolean).join(", ")
+    getCvLocation({
+      location: personalInfo.location || record.location,
+      addressCity: personalInfo.addressCity || record.addressCity,
+      addressCountry: personalInfo.addressCountry || record.addressCountry,
+      personalInfo,
+    }) ||
+    ""
 
   return {
     fullName: personalInfo.fullName || record.full_name || "",
@@ -82,6 +95,10 @@ export function normalizeCvRecord(record: CVRecord): CVData {
     availability: source?.availability || record.availability || "",
     styles: source?.styles || record.styles || {},
     sourceText: source?.sourceText || record.sourceText || "",
+    storageBucket: source?.storageBucket || record.storageBucket || "",
+    storagePath: source?.storagePath || record.storagePath || "",
+    originalFileName: source?.originalFileName || record.originalFileName || "",
+    mimeType: source?.mimeType || record.mimeType || "",
     createdAt: toDate(source?.createdAt || record.createdAt || record.created_at),
     updatedAt: toDate(source?.updatedAt || record.updatedAt || record.updated_at),
   } as CVData

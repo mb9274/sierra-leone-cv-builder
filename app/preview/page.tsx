@@ -17,6 +17,7 @@ import { BoldRedLayout } from "@/components/cv-layouts/bold-red-layout"
 import { TealSidebarLayout } from "@/components/cv-layouts/teal-sidebar-layout"
 import { BlueWaveLayout } from "@/components/cv-layouts/blue-wave-layout"
 import { loadAvailableCvs } from "@/lib/cv-collection"
+import { getCvLocation } from "@/lib/cv-location"
 
 const templateThemes: Record<string, any> = {
   "sierra-leone-professional": {
@@ -253,6 +254,7 @@ export default function PreviewPage() {
   }
 
   const theme = templateThemes[cvData.templateId || "sierra-leone-professional"] || templateThemes["sierra-leone-professional"]
+  const cvLocation = getCvLocation(cvData)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
@@ -262,7 +264,12 @@ export default function PreviewPage() {
             <Button variant="ghost" size="icon" onClick={() => router.push("/builder")}>
               <ArrowLeft className="size-5" />
             </Button>
-            <h1 className="text-2xl font-bold text-foreground">Your Professional CV</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Your Professional CV</h1>
+              <p className="text-sm text-muted-foreground">
+                {cvLocation || "Location not provided yet"}
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             {isEditing ? (

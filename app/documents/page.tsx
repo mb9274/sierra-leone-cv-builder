@@ -54,7 +54,7 @@ export default function DocumentsPage() {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>
   }
 
-  const location = getCvLocation(cvData.personalInfo)
+  const location = getCvLocation(cvData)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">

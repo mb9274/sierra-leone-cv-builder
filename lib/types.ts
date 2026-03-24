@@ -4,6 +4,10 @@ export interface CVData {
   verifiedAt?: string
   templateId?: string // Added template selection support
   sourceText?: string
+  storageBucket?: string
+  storagePath?: string
+  originalFileName?: string
+  mimeType?: string
   personalInfo: {
     fullName: string
     email: string

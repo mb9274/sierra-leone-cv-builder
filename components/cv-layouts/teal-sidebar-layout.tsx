@@ -3,7 +3,7 @@ import { getCvLocation } from "@/lib/cv-location"
 
 export function TealSidebarLayout({ cvData, theme, isEditing, editedData, onEdit }: CVLayoutProps) {
     const data = isEditing && editedData ? editedData : cvData
-    const location = getCvLocation(data.personalInfo)
+    const location = getCvLocation(data)
 
     return (
         <div className="flex min-h-[1100px]">

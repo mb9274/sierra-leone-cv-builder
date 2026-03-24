@@ -1,37 +1,159 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { ApiResponse, handleApiError } from "@/lib/api-utils"
 
-function handleFallbackActions(action: string, prompt: string, cvData: any) {
-  if (action === "generate_cover_letter") {
-    const fallbackLetter = `Dear Hiring Manager,
+function extractJobTitle(prompt: string) {
+  const titleMatch = prompt.match(/Job Title:\s*(.+)/i)
+  if (titleMatch?.[1]) return titleMatch[1].trim()
 
-I am writing to express my strong interest in the ${prompt.split('\n')[0] || 'position'} at your company. With my background in ${cvData.experience?.[0]?.position || 'the field'}, I am confident that I would be a valuable asset to your team.
+  const positionMatch = prompt.match(/Position:\s*(.+)/i)
+  if (positionMatch?.[1]) return positionMatch[1].trim()
 
-My experience at ${cvData.experience?.[0]?.company || 'my previous company'} has equipped me with strong skills in ${cvData.skills?.slice(0, 3).join(", ") || "professional communication and problem solving"}. I am impressed by your company's reputation and would welcome the opportunity to contribute my skills to your projects.
+  const firstLine = prompt.split("\n").map((line) => line.trim()).find(Boolean)
+  return firstLine || "the role"
+}
 
-Thank you for your time and consideration. I look forward to hearing from you.
+function buildCoverLetterFallback(prompt: string, cvData: any) {
+  const jobTitle = extractJobTitle(prompt)
+  const company =
+    prompt.match(/Company:\s*(.+)/i)?.[1]?.trim() ||
+    prompt.match(/at\s+(.+?)(?:\n|$)/i)?.[1]?.trim() ||
+    "your company"
+  const name = cvData?.personalInfo?.fullName || "Your Name"
+  const summary = cvData?.personalInfo?.summary || "my professional background"
+  const experience = cvData?.experience?.[0]
+  const experienceLine = experience
+    ? `My background as ${experience.position || "a professional"} at ${experience.company || "my previous company"} has helped me build practical experience in ${cvData?.skills?.slice(0, 3).join(", ") || "communication, problem solving, and teamwork"}.`
+    : `I bring a strong commitment to learning, professionalism, and delivering quality work in ${cvData?.skills?.slice(0, 3).join(", ") || "communication, problem solving, and teamwork"}.`
+
+  return `Dear Hiring Manager,
+
+I am writing to express my interest in the ${jobTitle} position at ${company}.
+
+${experienceLine}
+
+My professional summary reflects ${summary}. I believe this background, combined with my motivation to contribute, makes me a strong candidate for this role.
+
+Thank you for your time and consideration. I would welcome the opportunity to discuss how I can contribute to your team.
 
 Sincerely,
-${cvData.personalInfo?.fullName || "Your Name"}`
+${name}`
+}
 
-    return ApiResponse.success({ coverLetter: fallbackLetter, fallback: true })
+function buildInterviewQuestions(cvData: any) {
+  const fullName = cvData?.personalInfo?.fullName || "the candidate"
+  const topSkills = cvData?.skills?.slice(0, 3) || []
+  const topExperience = cvData?.experience?.[0]
+
+  return [
+    `Can you tell me about yourself and what makes you a good fit for this role, ${fullName}?`,
+    `How have your skills in ${topSkills.join(", ") || "communication and teamwork"} helped you in past roles?`,
+    topExperience
+      ? `Tell me about your experience as ${topExperience.position} at ${topExperience.company}.`
+      : "Can you describe a project or achievement you are most proud of?",
+    "How do you handle pressure, deadlines, or difficult challenges at work?",
+    "Do you have any questions for us about the role or the company?",
+  ]
+}
+
+function buildInterviewFollowUp(prompt: string, cvData: any) {
+  const lower = prompt.toLowerCase()
+  const firstSkill = cvData?.skills?.[0] || "your work"
+  const firstRole = cvData?.experience?.[0]?.position || "your role"
+  const firstCompany = cvData?.experience?.[0]?.company || "your previous company"
+  const name = cvData?.personalInfo?.fullName || "you"
+
+  if (prompt.trim().length < 30) {
+    return `Thanks, ${name}. Could you expand on that with one concrete example from ${firstRole} at ${firstCompany}?`
+  }
+
+  if (/(example|specific|project|challenge|achievement|result|outcome)/.test(lower)) {
+    return "That is a good direction. Can you give one specific example, the result you achieved, and what you learned from it?"
+  }
+
+  if (/(strength|strong|skill|skills|competency)/.test(lower)) {
+    return `That sounds relevant. Can you give a short example of when you used ${firstSkill} in a real situation?`
+  }
+
+  if (/(team|collaborat|group|colleague)/.test(lower)) {
+    return "How do you usually handle teamwork when people have different ideas or priorities?"
+  }
+
+  if (/(pressure|deadline|urgent|fast-paced)/.test(lower)) {
+    return "That helps. How do you stay organized and make decisions when you are under pressure or facing a deadline?"
+  }
+
+  if (/(weakness|improve|better|learn)/.test(lower)) {
+    return "That is honest. What have you done to improve in that area, and what is different now?"
+  }
+
+  return `Thank you. Could you give one specific example from ${firstRole} at ${firstCompany} and explain the outcome?`
+}
+
+function cleanGeminiText(text: string) {
+  let output = String(text || "").trim()
+  if (output.includes("```json")) output = output.split("```json")[1].split("```")[0].trim()
+  else if (output.includes("```")) output = output.split("```")[1].split("```")[0].trim()
+  return output
+}
+
+async function callGemini(prompt: string, apiKey: string, maxOutputTokens = 1200, temperature = 0.4) {
+  const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
+
+  for (const model of models) {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature,
+            maxOutputTokens,
+          },
+        }),
+      },
+    )
+
+    if (!response.ok) {
+      continue
+    }
+
+    const data = await response.json()
+    const text = cleanGeminiText(data.candidates?.[0]?.content?.parts?.[0]?.text || "")
+    if (text) return text
+  }
+
+  return ""
+}
+
+function handleFallbackActions(action: string, prompt: string, cvData: any) {
+  if (action === "generate_cover_letter") {
+    return ApiResponse.success({
+      coverLetter: buildCoverLetterFallback(prompt, cvData),
+      fallback: true,
+    })
   }
 
   if (action === "mock_interview") {
     if (prompt === "start") {
       return ApiResponse.success({
-        questions: [
-          "Could you tell me about your background and experience?",
-          "What are your greatest professional strengths?",
-          "Why are you interested in this position?",
-          "Where do you see yourself in five years?",
-          "Do you have any questions for us?"
-        ],
+        questions: buildInterviewQuestions(cvData),
         fallback: true
       })
     }
     return ApiResponse.success({
-      message: "That's a great answer. Can you tell me more about a specific challenge you faced in your previous role?",
+      message: buildInterviewFollowUp(prompt, cvData),
       fallback: true
     })
   }
@@ -212,21 +334,10 @@ INSTRUCTIONS:
 5. Ensure it feels local to the Sierra Leonean job market (e.g., formal and respectful).
 
 RETURN ONLY THE COVER LETTER TEXT.`
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: coverLetterPrompt }] }],
-          }),
-        }
-      )
-
-      if (!response.ok) throw new Error(`Gemini API error: ${response.statusText}`)
-      const data = await response.json()
-      const coverLetter = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+      const coverLetter = await callGemini(coverLetterPrompt, apiKey, 1400, 0.5)
+      if (!coverLetter) {
+        return handleFallbackActions(action, prompt, cvData)
+      }
       return ApiResponse.success({ coverLetter })
 
     } else if (action === "mock_interview") {
@@ -255,37 +366,36 @@ User Response: "${prompt}"
 
 INSTRUCTIONS:
 1. Provide briefly constructive feedback on their response.
-2. Then ask the NEXT relevant follow-up question.
+2. Then ask ONE natural follow-up question that connects to their answer.
+3. Avoid repeating the same phrasing such as "I do not get you clear" or "tell me more" unless absolutely necessary.
+4. If the answer is short or vague, ask for a concrete example, outcome, or lesson learned.
+5. Keep the response concise, professional, and conversational.
 3. Be professional and encouraging.
 
 RETURN THE FEEDBACK AND NEXT QUESTION AS PLAIN TEXT.`
       }
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: interviewPrompt }] }],
-          }),
-        }
-      )
-
-      if (!response.ok) throw new Error(`Gemini API error: ${response.statusText}`)
-      const data = await response.json()
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+      const text = await callGemini(interviewPrompt, apiKey, 1000, 0.6)
 
       if (prompt === "start") {
         try {
-          // Clean possible markdown
-          let jsonStr = text
-          if (jsonStr.includes("```json")) jsonStr = jsonStr.split("```json")[1].split("```")[0]
-          else if (jsonStr.includes("```")) jsonStr = jsonStr.split("```")[1].split("```")[0]
-          return ApiResponse.success(JSON.parse(jsonStr.trim()))
+          if (text) {
+            let jsonStr = text
+            if (jsonStr.includes("```json")) jsonStr = jsonStr.split("```json")[1].split("```")[0]
+            else if (jsonStr.includes("```")) jsonStr = jsonStr.split("```")[1].split("```")[0]
+            const parsed = JSON.parse(jsonStr.trim())
+            if (parsed.questions?.length) {
+              return ApiResponse.success(parsed)
+            }
+          }
+
+          return handleFallbackActions(action, prompt, cvData)
         } catch (e) {
-          return ApiResponse.success({ questions: ["Tell me about yourself.", "Why should we hire you?"] })
+          return handleFallbackActions(action, prompt, cvData)
         }
+      }
+
+      if (!text) {
+        return handleFallbackActions(action, prompt, cvData)
       }
 
       return ApiResponse.success({ message: text })
