@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { createClient } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { getSupabaseUrl } from "@/lib/supabase/env"
@@ -38,21 +37,7 @@ export default function SignInClient() {
   }
 
   const handleGoogleSignIn = async () => {
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        },
-      })
-
-      if (error) {
-        setError(error.message)
-      }
-    } catch (err) {
-      setError(getFriendlyError(err, "Sign in is not configured correctly."))
-    }
+    window.location.href = `/api/auth/oauth?provider=google&next=${encodeURIComponent(next)}`
   }
 
   const handleEmailSignIn = async (e: React.FormEvent) => {

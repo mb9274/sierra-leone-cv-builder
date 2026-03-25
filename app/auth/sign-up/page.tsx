@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { createClient } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 
@@ -33,21 +32,7 @@ export default function SignUpPage() {
   }
 
   const handleGoogleSignUp = async () => {
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`,
-        },
-      })
-
-      if (error) {
-        setError(error.message)
-      }
-    } catch (err) {
-      setError(getFriendlyError(err, "Sign up is not configured correctly."))
-    }
+    window.location.href = `/api/auth/oauth?provider=google&next=${encodeURIComponent("/dashboard")}`
   }
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
@@ -57,45 +42,39 @@ export default function SignUpPage() {
     setMessage("")
 
     try {
-      const supabase = createClient()
-      console.log("Attempting sign up with email:", email)
-      
-      const { error, data } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          // Remove any email restrictions - allow all emails
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth/sign-in")}`,
+      const response = await fetch("/api/auth/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          next: "/auth/sign-in",
+        }),
       })
 
-      console.log("Sign up response:", { error, data })
+      const payload = await response.json().catch(() => null)
 
-      if (error) {
-        console.error("Sign up error details:", error)
-        
-        // Check for specific error types and provide helpful messages
-        if (error.message?.includes('User already registered')) {
+      if (!response.ok) {
+        const message = payload?.error?.message || payload?.message || "Registration failed."
+        if (message.includes("User already registered")) {
           setError("This email is already registered. Try signing in instead.")
-        } else if (error.message?.includes('Invalid email')) {
+        } else if (message.includes("Invalid email")) {
           setError("This email format is not valid. Please check and try again.")
-        } else if (error.message?.includes('Password')) {
+        } else if (message.includes("Password")) {
           setError("Password must be at least 6 characters long.")
         } else {
-          setError(`Registration failed: ${error.message || 'Please try again later.'}`)
+          setError(`Registration failed: ${message}`)
         }
       } else {
-        console.log("Sign up successful, user:", data)
-        setMessage("Account created successfully. Check your email if confirmation is required.")
+        setMessage(payload?.message || "Account created successfully. Check your email if confirmation is required.")
         setTimeout(() => {
           router.push("/auth/sign-in")
         }, 2000)
       }
     } catch (err) {
-      console.error("Unexpected sign up error:", err)
       setError(getFriendlyError(err, "An unexpected error occurred. Please try again."))
     } finally {
       setLoading(false)
