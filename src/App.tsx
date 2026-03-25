@@ -199,6 +199,10 @@ export default function App() {
     }
   }
 
+  const handleGoToDashboard = () => {
+    window.location.href = "/dashboard"
+  }
+
   const handleDownload = async () => {
     if (!previewCv) return
 
@@ -257,6 +261,7 @@ export default function App() {
                 onBack={() => setStep(1)}
                 onDownload={handleDownload}
                 onUpload={handleUpload}
+                onGoToDashboard={handleGoToDashboard}
               />
             </div>
         )}
@@ -272,17 +277,28 @@ export default function App() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setStep(1)
-                  setUploadState({ status: "idle" })
-                  setPreviewCv(null)
-                }}
-                className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-base font-semibold text-white"
-              >
-                Start another CV
-              </button>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep(1)
+                    setUploadState({ status: "idle" })
+                    setPreviewCv(null)
+                  }}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-700"
+                >
+                  Start another CV
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleGoToDashboard}
+                  className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-base font-semibold text-white"
+                >
+                  Go to dashboard
+                </button>
+              </div>
+
             </div>
           </div>
         )}

@@ -9,6 +9,7 @@ type Props = {
   onBack: () => void
   onDownload: () => void
   onUpload: () => void
+  onGoToDashboard?: () => void
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -20,8 +21,10 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-export function CVPreview({ cv, uploadState, onBack, onDownload, onUpload }: Props) {
+export function CVPreview({ cv, uploadState, onBack, onDownload, onUpload, onGoToDashboard }: Props) {
   if (!cv) return null
+  const isUploading = uploadState.status === "uploading"
+  const isSaved = uploadState.status === "success"
 
   return (
     <section className="space-y-4">
@@ -87,29 +90,42 @@ export function CVPreview({ cv, uploadState, onBack, onDownload, onUpload }: Pro
         </div>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-700"
+          disabled={isUploading}
+          className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Edit
         </button>
         <button
           type="button"
           onClick={onDownload}
-          className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-700"
+          disabled={isUploading}
+          className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Download PDF
         </button>
         <button
           type="button"
           onClick={onUpload}
-          className="flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200"
+          disabled={isUploading}
+          className="flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Save CV
+          {isUploading ? "Saving..." : isSaved ? "Saved" : "Save CV"}
         </button>
       </div>
+
+      {isSaved && onGoToDashboard && (
+        <button
+          type="button"
+          onClick={onGoToDashboard}
+          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-700"
+        >
+          Go to dashboard
+        </button>
+      )}
     </section>
   )
 }
