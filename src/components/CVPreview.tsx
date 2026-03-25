@@ -82,7 +82,7 @@ export function CVPreview({ cv, uploadState, onBack, onDownload, onUpload }: Pro
                 : "bg-slate-100 text-slate-700"
           }`}
         >
-          <p className="font-semibold">{uploadState.status === "success" ? "Upload complete" : uploadState.status === "error" ? "Upload error" : "Uploading..."}</p>
+          <p className="font-semibold">{uploadState.status === "success" ? "Save complete" : uploadState.status === "error" ? "Save error" : "Saving..."}</p>
           <p className="mt-1">{uploadState.message}</p>
         </div>
       )}
@@ -107,7 +107,7 @@ export function CVPreview({ cv, uploadState, onBack, onDownload, onUpload }: Pro
           onClick={onUpload}
           className="flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200"
         >
-          Upload to Supabase
+          Save CV
         </button>
       </div>
     </section>

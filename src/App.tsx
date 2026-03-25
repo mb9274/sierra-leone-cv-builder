@@ -4,7 +4,6 @@ import { useMemo, useState } from "react"
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib"
 import { CVForm } from "./components/CVForm"
 import { CVPreview } from "./components/CVPreview"
-import { createClient } from "@/lib/supabase/client"
 import type { CVData, UploadState } from "./types"
 
 const emptyCv: CVData = {
@@ -144,8 +143,6 @@ export default function App() {
   const [previewCv, setPreviewCv] = useState<CVData | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof CVData, string>>>({})
   const [uploadState, setUploadState] = useState<UploadState>({ status: "idle" })
-  const supabase = createClient()
-  const storageReady = Boolean(supabase)
 
   const canPreview = useMemo(() => Object.keys(validateCv(cv)).length === 0, [cv])
 
@@ -163,34 +160,36 @@ export default function App() {
 
   const handleUpload = async () => {
     if (!previewCv) return
-    if (!supabase) {
-      setUploadState({
-        status: "error",
-        message: "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
-      })
-      return
-    }
-
-    setUploadState({ status: "uploading", message: "Generating your PDF and uploading it to Supabase Storage..." })
+    setUploadState({ status: "uploading", message: "Generating your PDF and saving it to your CV library..." })
 
     try {
       const fileName = `${previewCv.fullName || "cv"}-${Date.now()}.pdf`
       const blob = await createCvPdfBlob(previewCv)
 
-      const { error } = await supabase.storage.from("cvuploads").upload(fileName, blob, {
-        contentType: "application/pdf",
-        upsert: false,
+      const formData = new FormData()
+      formData.append("file", new File([blob], fileName, { type: "application/pdf" }))
+
+      const response = await fetch("/api/cv/upload", {
+        method: "POST",
+        body: formData,
       })
 
-      if (error) {
-        throw error
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        throw new Error(result?.error || result?.message || "Upload failed")
       }
+
+      const result = await response.json().catch(() => null)
+      const uploadedCv = result?.cv || null
 
       setUploadState({
         status: "success",
-        message: "Your PDF CV was uploaded successfully and saved in Supabase Storage.",
-        filePath: fileName,
+        message: "Your CV was saved to your library and the PDF was stored in Supabase Storage.",
+        filePath: uploadedCv?.storagePath || fileName,
       })
+      if (uploadedCv) {
+        setPreviewCv(uploadedCv)
+      }
       setStep(3)
     } catch (error) {
       setUploadState({
@@ -217,18 +216,11 @@ export default function App() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f8fafc_0,#e2e8f0_45%,#cbd5e1_100%)] px-4 py-6">
       <div className="mx-auto flex w-full max-w-md flex-col gap-5">
-        {!storageReady && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Supabase is not configured yet. Add the public URL and anon key in <code>.env.local</code> to enable PDF
-            uploads.
-          </div>
-        )}
-
         <header className="rounded-[28px] bg-slate-950 px-5 py-6 text-white shadow-2xl shadow-slate-300">
           <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Mobile CV App</p>
           <h1 className="mt-2 text-3xl font-black leading-tight">Build, preview, and upload your CV on mobile</h1>
           <p className="mt-3 text-sm text-slate-300">
-            Fill the form, generate a preview, then upload the CV as a PDF to Supabase Storage.
+            Fill the form, generate a preview, then save the CV to your library and store the PDF.
           </p>
         </header>
 
@@ -241,7 +233,7 @@ export default function App() {
               Preview
             </div>
             <div className={step >= 3 ? "rounded-2xl bg-slate-900 py-2 text-white" : "rounded-2xl bg-slate-100 py-2"}>
-              Upload
+              Save
             </div>
           </div>
         </div>
@@ -273,10 +265,10 @@ export default function App() {
           <div className="rounded-[28px] bg-white p-5 shadow-xl ring-1 ring-slate-100">
             <div className="space-y-4">
               <div className="rounded-[24px] bg-emerald-50 p-5 text-emerald-900">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em]">Upload confirmed</p>
-                <h2 className="mt-2 text-2xl font-bold">Your CV is now in Supabase Storage</h2>
+                <p className="text-xs font-semibold uppercase tracking-[0.25em]">Save confirmed</p>
+                <h2 className="mt-2 text-2xl font-bold">Your CV is now in your library</h2>
                 <p className="mt-2 text-sm">
-                  {uploadState.status === "success" ? uploadState.message : "Upload finished."}
+                  {uploadState.status === "success" ? uploadState.message : "Save finished."}
                 </p>
               </div>
 
