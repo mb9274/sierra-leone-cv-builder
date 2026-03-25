@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib"
 import { CVForm } from "./components/CVForm"
 import { CVPreview } from "./components/CVPreview"
-import { supabase } from "./services/supabaseClient"
+import { createClient } from "@/lib/supabase/client"
 import type { CVData, UploadState } from "./types"
 
 const emptyCv: CVData = {
@@ -144,6 +144,7 @@ export default function App() {
   const [previewCv, setPreviewCv] = useState<CVData | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof CVData, string>>>({})
   const [uploadState, setUploadState] = useState<UploadState>({ status: "idle" })
+  const supabase = createClient()
   const storageReady = Boolean(supabase)
 
   const canPreview = useMemo(() => Object.keys(validateCv(cv)).length === 0, [cv])
