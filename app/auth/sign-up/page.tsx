@@ -20,17 +20,33 @@ export default function SignUpPage() {
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
 
-  const handleGoogleSignUp = async () => {
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`,
-      },
-    })
+  const getFriendlyError = (err: unknown, fallback: string) => {
+    if (err instanceof Error && err.message.includes("Missing Supabase env vars")) {
+      return "Supabase is not configured in Vercel. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+    }
 
-    if (error) {
-      setError(error.message)
+    if (err instanceof Error && err.message) {
+      return err.message
+    }
+
+    return fallback
+  }
+
+  const handleGoogleSignUp = async () => {
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`,
+        },
+      })
+
+      if (error) {
+        setError(error.message)
+      }
+    } catch (err) {
+      setError(getFriendlyError(err, "Sign up is not configured correctly."))
     }
   }
 
@@ -40,9 +56,8 @@ export default function SignUpPage() {
     setError("")
     setMessage("")
 
-    const supabase = createClient()
-    
     try {
+      const supabase = createClient()
       console.log("Attempting sign up with email:", email)
       
       const { error, data } = await supabase.auth.signUp({
@@ -81,7 +96,7 @@ export default function SignUpPage() {
       }
     } catch (err) {
       console.error("Unexpected sign up error:", err)
-      setError("An unexpected error occurred. Please try again.")
+      setError(getFriendlyError(err, "An unexpected error occurred. Please try again."))
     } finally {
       setLoading(false)
     }

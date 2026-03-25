@@ -23,17 +23,33 @@ export default function SignInClient() {
   const routeError = searchParams.get("error")
   const visibleError = error || routeError || ""
 
-  const handleGoogleSignIn = async () => {
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    })
+  const getFriendlyError = (err: unknown, fallback: string) => {
+    if (err instanceof Error && err.message.includes("Missing Supabase env vars")) {
+      return "Supabase is not configured in Vercel. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+    }
 
-    if (error) {
-      setError(error.message)
+    if (err instanceof Error && err.message) {
+      return err.message
+    }
+
+    return fallback
+  }
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        },
+      })
+
+      if (error) {
+        setError(error.message)
+      }
+    } catch (err) {
+      setError(getFriendlyError(err, "Sign in is not configured correctly."))
     }
   }
 
@@ -42,20 +58,24 @@ export default function SignInClient() {
     setLoading(true)
     setError("")
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    if (error) {
-      setError(error.message)
-    } else {
-      router.replace(next)
-      router.refresh()
+      if (error) {
+        setError(error.message)
+      } else {
+        router.replace(next)
+        router.refresh()
+      }
+    } catch (err) {
+      setError(getFriendlyError(err, "Sign in is not configured correctly."))
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
