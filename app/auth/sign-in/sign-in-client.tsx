@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { createClient } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
+import { getSupabaseUrl } from "@/lib/supabase/env"
 
 export default function SignInClient() {
   const router = useRouter()
@@ -22,6 +23,7 @@ export default function SignInClient() {
   const next = searchParams.get("next") || "/dashboard"
   const routeError = searchParams.get("error")
   const visibleError = error || routeError || ""
+  const effectiveSupabaseUrl = getSupabaseUrl()
 
   const getFriendlyError = (err: unknown, fallback: string) => {
     if (err instanceof Error && err.message.includes("Missing Supabase env vars")) {
@@ -171,6 +173,10 @@ export default function SignInClient() {
             <Link href="/auth/sign-up" className="text-primary hover:underline">
               Sign up
             </Link>
+          </div>
+
+          <div className="text-center text-xs text-muted-foreground">
+            Connecting to: <span className="font-mono">{effectiveSupabaseUrl}</span>
           </div>
         </CardContent>
       </Card>
