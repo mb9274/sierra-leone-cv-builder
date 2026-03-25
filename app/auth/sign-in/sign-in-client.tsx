@@ -61,14 +61,22 @@ export default function SignInClient() {
     setError("")
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch("/api/auth/sign-in", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          next,
+        }),
       })
 
-      if (error) {
-        setError(error.message)
+      const payload = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setError(payload?.error?.message || payload?.message || "Failed to sign in.")
       } else {
         router.replace(next)
         router.refresh()
