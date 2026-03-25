@@ -38,9 +38,7 @@ export function AppSidebar() {
   }, [pathname])
 
   const handleSignOut = async () => {
-    const { createClient } = await import("@/lib/supabase/client")
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await fetch("/api/auth/sign-out", { method: "POST" })
     router.replace("/")
   }
 

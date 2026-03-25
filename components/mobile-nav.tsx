@@ -37,9 +37,7 @@ export function MobileNav() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
-    const { createClient } = await import("@/lib/supabase/client")
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await fetch("/api/auth/sign-out", { method: "POST" })
     window.location.href = "/"
   }
 
