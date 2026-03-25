@@ -28,8 +28,17 @@ export async function POST(request: Request) {
       },
     })
 
-    // Build a deploy-safe base URL: explicit env wins, then Vercel URL, then localhost for local dev.
+    // Prefer the actual request origin so links follow the deployment/domain that served the request.
+    const requestOrigin = (() => {
+      try {
+        return new URL(request.url).origin
+      } catch {
+        return null
+      }
+    })()
+
     const appBaseUrl =
+      requestOrigin ||
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
