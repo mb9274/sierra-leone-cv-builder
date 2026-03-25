@@ -1,18 +1,18 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import { getSupabaseUrl } from "./env"
 
 let adminClient: ReturnType<typeof createSupabaseClient> | undefined
 
 export function createAdminClient() {
   if (adminClient) return adminClient
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!url || !serviceRoleKey) {
+  if (!serviceRoleKey) {
     throw new Error("Supabase admin client is not configured")
   }
 
-  adminClient = createSupabaseClient(url, serviceRoleKey, {
+  adminClient = createSupabaseClient(getSupabaseUrl(), serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
