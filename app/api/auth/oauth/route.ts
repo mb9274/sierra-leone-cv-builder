@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env"
+import { getAuthFriendlyMessage } from "@/lib/auth-errors"
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,14 +32,14 @@ export async function GET(request: NextRequest) {
 
     if (error || !data?.url) {
       return NextResponse.json(
-        { error: { message: error?.message || "Failed to start OAuth sign-in." } },
+        { error: { message: getAuthFriendlyMessage(error, "We could not start Google sign-in.") } },
         { status: 400 },
       )
     }
 
     return NextResponse.redirect(data.url)
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to start OAuth sign-in."
+    const message = getAuthFriendlyMessage(error, "We could not start Google sign-in.")
     return NextResponse.json({ error: { message } }, { status: 500 })
   }
 }

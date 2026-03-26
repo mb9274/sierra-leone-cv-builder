@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -9,6 +10,7 @@ import { FileText, Eye, Edit, User, ExternalLink, Cloud } from "lucide-react"
 import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { normalizeCvRecord } from "@/lib/cv-storage"
+import { saveLocalCv } from "@/lib/cv-collection"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -211,7 +213,7 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-3">
                       <FileText className="size-8 text-primary" />
                       <div>
-                        <p className="font-semibold">{cv.personalInfo.fullName}</p>
+                        <p className="font-semibold">{cv.personalInfo?.fullName || "Untitled CV"}</p>
                         <p className="text-sm text-muted-foreground">
                           Last edited: {new Date(cv.updatedAt).toLocaleDateString()}
                         </p>
@@ -228,7 +230,7 @@ export default function ProfilePage() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          localStorage.setItem("cvbuilder_current", JSON.stringify(cv))
+                          saveLocalCv(cv)
                           router.push("/preview")
                         }}
                       >
@@ -238,7 +240,7 @@ export default function ProfilePage() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          localStorage.setItem("cvbuilder_current", JSON.stringify(cv))
+                          saveLocalCv(cv)
                           router.push("/builder")
                         }}
                       >

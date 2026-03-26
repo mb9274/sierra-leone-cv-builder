@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { SuccessStoriesCarousel } from "@/components/success-stories-carousel"
 import { PhoneMockup } from "@/components/phone-mockup"
+import { readStoredJson } from "@/lib/safe-json"
 import {
   Briefcase,
   ArrowRight,
@@ -18,18 +19,23 @@ import {
   Settings,
   FolderOpen,
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
+
+export const dynamic = "force-dynamic"
 
 export default function HomePage() {
   const router = useRouter()
   const [stats, setStats] = useState({ cvsCreated: 0, usersHelped: 0, jobsMatched: 0 })
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const targetStats = { cvsCreated: 2847, usersHelped: 1523, jobsMatched: 892 }
-    const savedCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-    targetStats.cvsCreated += savedCVs.length
-    targetStats.usersHelped += savedCVs.length
+    const savedCVs = readStoredJson<unknown[]>("cvbuilder_cvs", [])
+    const savedCVCount = Array.isArray(savedCVs) ? savedCVs.length : 0
+
+    targetStats.cvsCreated += savedCVCount
+    targetStats.usersHelped += savedCVCount
 
     let currentStep = 0
     const interval = setInterval(() => {
@@ -92,7 +98,13 @@ export default function HomePage() {
           {/* Desktop: browser + phone mockup layout */}
           <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
             <div className="relative">
-              <PhoneMockup />
+              {mounted ? (
+                <PhoneMockup />
+              ) : (
+                <div className="relative w-[260px] lg:w-[280px] rounded-[2.5rem] border-[10px] border-slate-800 bg-slate-800 p-1.5 shadow-2xl">
+                  <div className="relative w-full aspect-[9/19] max-h-[520px] rounded-[1.75rem] overflow-hidden bg-slate-100" />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -161,7 +173,11 @@ export default function HomePage() {
           <p className="text-muted-foreground mb-12 max-w-2xl">
             See how Sierra Leone youth transformed their careers with professional CVs
           </p>
-          <SuccessStoriesCarousel />
+          {mounted ? (
+            <SuccessStoriesCarousel />
+          ) : (
+            <div className="relative w-full max-w-5xl mx-auto h-[400px] rounded-2xl bg-muted animate-pulse" />
+          )}
         </div>
       </section>
 
@@ -178,7 +194,7 @@ export default function HomePage() {
               <div key={t.name} className="bg-background rounded-xl p-6 border border-border">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="relative size-12 rounded-full overflow-hidden border border-border">
-                    <Image src={t.img} alt={t.name} fill className="object-cover" />
+                    <img src={t.img} alt={t.name} className="h-full w-full object-cover" />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">{t.name}</p>

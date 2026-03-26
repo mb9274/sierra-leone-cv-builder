@@ -1,7 +1,4 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { ApiResponse, handleApiError } from "@/lib/api-utils"
-import { getSupabaseUrl } from "@/lib/supabase/env"
 
 export async function POST(request: Request) {
   try {
@@ -16,18 +13,6 @@ export async function POST(request: Request) {
     if (!emailRegex.test(email)) {
       return ApiResponse.error("Invalid email format", 400, "VALIDATION_ERROR")
     }
-
-    const cookieStore = await cookies()
-    const supabase = createServerClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-        },
-      },
-    })
 
     // Prefer the actual request origin so links follow the deployment/domain that served the request.
     const requestOrigin = (() => {

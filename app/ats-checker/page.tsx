@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import ATSCheckerClient from "./ats-checker-client"
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "ATS Checker - AI CV Builder",

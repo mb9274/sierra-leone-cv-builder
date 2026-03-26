@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -10,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowRight, Briefcase, GraduationCap } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { CVData } from "@/lib/types"
+import { saveLocalCv } from "@/lib/cv-collection"
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -99,6 +101,7 @@ export default function OnboardingPage() {
       }
       
       sessionStorage.setItem("cvbuilder_current", JSON.stringify(cvWithId))
+      saveLocalCv(cvWithId)
       
       toast({
         title: "CV Created",

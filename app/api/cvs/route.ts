@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { ApiResponse, handleApiError, withAuth, parseJsonBody } from "@/lib/api-utils"
 import { normalizeCvRecord } from "@/lib/cv-storage"
 import { CVData } from "@/lib/types"
@@ -148,7 +148,7 @@ const cvSchema = z
 
 export async function GET() {
   return withAuth(async (user) => {
-    const supabase = createAdminClient()
+    const supabase = await createAdminClient()
 
     const { data, error } = await supabase
       .from("cvs")
@@ -171,7 +171,7 @@ export async function POST(request: Request) {
 
     const cv: CVData = bodyParse.data as CVData
 
-    const supabase = createAdminClient()
+    const supabase = await createAdminClient()
     const { data, error } = await supabase
       .from("cvs")
       .insert({

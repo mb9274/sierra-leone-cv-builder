@@ -1,8 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Analytics } from "@vercel/analytics/next"
-import { Chatbot } from "@/components/chatbot"
-import { AppFrame } from "@/components/app-frame"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -28,6 +25,8 @@ export const metadata: Metadata = {
   },
 }
 
+export const dynamic = "force-dynamic"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,9 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased bg-background text-foreground">
-        <AppFrame>{children}</AppFrame>
-        <Chatbot />
-        <Analytics />
+        {children}
       </body>
     </html>
   )

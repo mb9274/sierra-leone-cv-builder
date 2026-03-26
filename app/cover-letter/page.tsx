@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -180,9 +181,9 @@ export default function CoverLetterPage() {
                                         <SelectValue placeholder={isLoadingCvs ? "Loading CVs..." : "Select a CV"} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {cvs.map((cv) => (
+                                        {cvs.filter((cv) => cv.id).map((cv) => (
                                             <SelectItem key={cv.id} value={cv.id}>
-                                                {cv.personalInfo.fullName} - {cv.personalInfo.summary?.substring(0, 30)}...
+                                                {cv.personalInfo?.fullName || "Untitled CV"} - {cv.personalInfo?.summary?.substring(0, 30) || "No summary"}...
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

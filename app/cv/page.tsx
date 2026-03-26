@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -11,6 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import type { CVData } from "@/lib/types"
 import { normalizeCvRecord } from "@/lib/cv-storage"
+import { saveLocalCv } from "@/lib/cv-collection"
 
 type UploadProgress = {
   stage: string
@@ -222,6 +224,7 @@ export default function CVManagementPage() {
       })
 
       sessionStorage.setItem("cvbuilder_current", JSON.stringify(result.cv))
+      saveLocalCv(result.cv)
       toast({
         title: "CV uploaded successfully",
         description:
@@ -262,11 +265,13 @@ export default function CVManagementPage() {
 
   const handleViewCV = (cv: CVData) => {
     sessionStorage.setItem("cvbuilder_current", JSON.stringify(cv))
+    saveLocalCv(cv)
     router.push("/preview")
   }
 
   const handleEditInBuilder = (cv: CVData) => {
     sessionStorage.setItem("cvbuilder_current", JSON.stringify(cv))
+    saveLocalCv(cv)
     router.push("/builder")
   }
 
@@ -450,7 +455,7 @@ export default function CVManagementPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold">{cv.personalInfo.fullName}</h3>
+                            <h3 className="text-lg font-semibold">{cv.personalInfo?.fullName || "Untitled CV"}</h3>
                             {cv.verifiedAt && (
                               <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
                                 <CheckCircle className="mr-1 h-3 w-3 inline" />
@@ -458,9 +463,9 @@ export default function CVManagementPage() {
                               </div>
                             )}
                           </div>
-                          <p className="text-gray-600 mb-2">{cv.personalInfo.email}</p>
-                          {cv.personalInfo.phone && <p className="text-gray-600 mb-2">{cv.personalInfo.phone}</p>}
-                          {cv.personalInfo.summary && (
+                          <p className="text-gray-600 mb-2">{cv.personalInfo?.email || "No email provided"}</p>
+                          {cv.personalInfo?.phone && <p className="text-gray-600 mb-2">{cv.personalInfo.phone}</p>}
+                          {cv.personalInfo?.summary && (
                             <p className="text-sm text-gray-500 line-clamp-2 mb-3">{cv.personalInfo.summary}</p>
                           )}
                           {cv.storagePath && (
@@ -473,7 +478,7 @@ export default function CVManagementPage() {
                             <span>Created: {new Date(cv.createdAt).toLocaleDateString()}</span>
                             <span>Updated: {new Date(cv.updatedAt).toLocaleDateString()}</span>
                           </div>
-                          {cv.skills.length > 0 && (
+                          {cv.skills?.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-3">
                               {cv.skills.slice(0, 5).map((skill, index) => (
                                 <div key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">

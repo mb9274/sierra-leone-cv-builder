@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -9,6 +10,7 @@ import { premiumProducts } from "@/lib/premium-products"
 import { PaymentModal } from "@/components/payment-modal"
 import type { PremiumProduct } from "@/lib/types"
 import { Toaster } from "@/components/ui/toaster"
+import { readStoredJson } from "@/lib/safe-json"
 
 export default function PaymentsPage() {
   const router = useRouter()
@@ -22,7 +24,7 @@ export default function PaymentsPage() {
 
   const handlePaymentSuccess = () => {
     // Store purchased product in localStorage
-    const purchased = JSON.parse(localStorage.getItem("purchased_products") || "[]")
+    const purchased = readStoredJson<string[]>("purchased_products", [])
     if (selectedProduct && !purchased.includes(selectedProduct.id)) {
       purchased.push(selectedProduct.id)
       localStorage.setItem("purchased_products", JSON.stringify(purchased))

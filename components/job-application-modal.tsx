@@ -11,6 +11,8 @@ import type { Job, CVData, JobApplication } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { getCvLocation } from "@/lib/cv-location"
+import { loadAvailableCvs } from "@/lib/cv-collection"
+import { readStoredJson } from "@/lib/safe-json"
 
 interface JobApplicationModalProps {
   job: Job
@@ -43,20 +45,24 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
 
   // Load CV data on mount
   useEffect(() => {
-    const savedCV = localStorage.getItem("cvbuilder_current")
-    if (savedCV) {
-      const cv: CVData = JSON.parse(savedCV)
+    const loadCv = async () => {
+      const cvs = await loadAvailableCvs()
+      if (cvs.length === 0) return
+
+      const cv = cvs[0]
       const location = getCvLocation(cv as any)
 
       setCvData(cv)
       setFormData((prev) => ({
         ...prev,
-        fullName: cv.personalInfo.fullName,
-        email: cv.personalInfo.email,
-        phone: cv.personalInfo.phone,
+        fullName: cv.personalInfo?.fullName || "",
+        email: cv.personalInfo?.email || "",
+        phone: cv.personalInfo?.phone || "",
         location,
       }))
     }
+
+    loadCv()
   }, [])
 
   const addReference = () => {
@@ -124,7 +130,7 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
 
     try {
       // Save application to localStorage
-      const existingApplications = JSON.parse(localStorage.getItem("job_applications") || "[]")
+      const existingApplications = readStoredJson<JobApplication[]>("job_applications", [])
       existingApplications.push(application)
       localStorage.setItem("job_applications", JSON.stringify(existingApplications))
 
@@ -312,7 +318,7 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
                     <FileText className="size-5 text-primary" />
                     <span className="font-semibold">Attached CV</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{cvData.personalInfo.fullName} - CV</p>
+                  <p className="text-sm text-muted-foreground">{cvData.personalInfo?.fullName || "Untitled CV"} - CV</p>
                 </div>
               )}
 

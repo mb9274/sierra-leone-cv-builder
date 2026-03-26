@@ -33,7 +33,7 @@ import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { getCvLocation } from "@/lib/cv-location"
-import { loadAvailableCvs } from "@/lib/cv-collection"
+import { loadAvailableCvs, saveLocalCv } from "@/lib/cv-collection"
 
 interface ATSCheckResult {
   score: number
@@ -63,20 +63,9 @@ export default function ATSCheckerClient() {
 
   useEffect(() => {
     const loadCvs = async () => {
-      // Load current CV from preview
-      const currentCV = localStorage.getItem("cvbuilder_current")
-      if (currentCV) {
-        try {
-          setCvData(JSON.parse(currentCV))
-        } catch (e) {
-          console.error("[v0] Failed to parse current CV:", e)
-        }
-      }
-
       const availableCvs = await loadAvailableCvs()
       setSavedCVs(availableCvs)
-
-      if (!currentCV && availableCvs.length > 0) {
+      if (availableCvs.length > 0) {
         setCvData(availableCvs[0])
       }
     }
@@ -91,7 +80,7 @@ export default function ATSCheckerClient() {
     let score = 100
 
     // Check personal info
-    if (!cv.personalInfo.fullName || cv.personalInfo.fullName.length < 3) {
+    if (!cv.personalInfo?.fullName || cv.personalInfo.fullName.length < 3) {
       issues.push({
         type: "error",
         category: "Personal Info",
@@ -103,7 +92,7 @@ export default function ATSCheckerClient() {
       strengths.push("Complete contact information provided")
     }
 
-    if (!cv.personalInfo.email || !cv.personalInfo.email.includes("@")) {
+    if (!cv.personalInfo?.email || !cv.personalInfo.email.includes("@")) {
       issues.push({
         type: "error",
         category: "Contact",
@@ -113,7 +102,7 @@ export default function ATSCheckerClient() {
       score -= 10
     }
 
-    if (!cv.personalInfo.phone || cv.personalInfo.phone.length < 10) {
+    if (!cv.personalInfo?.phone || cv.personalInfo.phone.length < 10) {
       issues.push({
         type: "warning",
         category: "Contact",
@@ -124,7 +113,7 @@ export default function ATSCheckerClient() {
     }
 
     // Check summary
-    if (!cv.personalInfo.summary || cv.personalInfo.summary.length < 50) {
+    if (!cv.personalInfo?.summary || cv.personalInfo.summary.length < 50) {
       issues.push({
         type: "warning",
         category: "Summary",
@@ -133,7 +122,7 @@ export default function ATSCheckerClient() {
       })
       score -= 8
       improvements.push("Expand your professional summary to 50-150 words")
-    } else if (cv.personalInfo.summary.length > 150) {
+    } else if ((cv.personalInfo?.summary || "").length > 150) {
       strengths.push("Strong professional summary that highlights key qualifications")
     }
 
@@ -643,7 +632,7 @@ export default function ATSCheckerClient() {
                           <CardContent className="pt-6">
                             <div className="flex items-center justify-between">
                               <div>
-                                <h3 className="font-semibold text-lg">{cv.personalInfo.fullName}</h3>
+                                <h3 className="font-semibold text-lg">{cv.personalInfo?.fullName || "Untitled CV"}</h3>
                                 <p className="text-sm text-muted-foreground">
                                   {cv.experience.length} experience • {cv.skills.length} skills
                                 </p>
@@ -841,12 +830,12 @@ export default function ATSCheckerClient() {
                     <CardContent>
                       <div className="grid md:grid-cols-2 gap-4">
                         <Button
-                          variant="outline"
-                          onClick={() => {
-                            localStorage.setItem("cvbuilder_current", JSON.stringify(cvData))
-                            router.push("/builder")
-                          }}
-                          className="h-auto py-4"
+                        variant="outline"
+                        onClick={() => {
+                          saveLocalCv(cvData)
+                          router.push("/builder")
+                        }}
+                        className="h-auto py-4"
                         >
                           <div className="text-left">
                             <div className="font-semibold flex items-center gap-2 mb-1">

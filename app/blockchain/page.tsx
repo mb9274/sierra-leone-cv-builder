@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import type React from "react"
 
@@ -10,6 +11,7 @@ import { FileText, Wallet, Upload, RefreshCw, CheckCircle, ArrowLeft } from "luc
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { PROGRAM_ID } from "@/lib/solana-config"
+import { readStoredJson } from "@/lib/safe-json"
 
 // Types for Phantom wallet
 declare global {
@@ -35,13 +37,9 @@ export default function BlockchainPage() {
     }
 
     // Load CV data from localStorage
-    try {
-      const cvs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-      if (cvs.length > 0) {
-        setCvData(cvs[0]) // Use first CV
-      }
-    } catch (e) {
-      console.error("[v0] Failed to parse CVs:", e)
+    const cvs = readStoredJson<any[]>("cvbuilder_cvs", [])
+    if (cvs.length > 0) {
+      setCvData(cvs[0]) // Use first CV
     }
   }, [])
 

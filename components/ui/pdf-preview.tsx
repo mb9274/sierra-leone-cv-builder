@@ -229,9 +229,9 @@ export function PDFPreview({ file, onExtracted, onError, onManualFallback }: PDF
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                 <h4 className="font-semibold">Personal Information</h4>
-                <p><strong>Name:</strong> {extractedData.personalInfo?.fullName}</p>
-                <p><strong>Email:</strong> {extractedData.personalInfo?.email}</p>
-                <p><strong>Phone:</strong> {extractedData.personalInfo?.phone}</p>
+                <p><strong>Name:</strong> {extractedData.personalInfo?.fullName || "Not provided"}</p>
+                <p><strong>Email:</strong> {extractedData.personalInfo?.email || "Not provided"}</p>
+                <p><strong>Phone:</strong> {extractedData.personalInfo?.phone || "Not provided"}</p>
                 {getCvLocation(extractedData.personalInfo) && <p><strong>Location:</strong> {getCvLocation(extractedData.personalInfo)}</p>}
                 {extractedData.personalInfo?.summary && (
                   <p><strong>Summary:</strong> {extractedData.personalInfo.summary}</p>

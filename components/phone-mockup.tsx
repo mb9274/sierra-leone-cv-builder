@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
 
 const cvImages = [
   "/clare-cv.png",
@@ -35,12 +34,10 @@ export function PhoneMockup() {
                 className={`absolute inset-0 transition-opacity duration-700 ${index === currentIndex ? "opacity-100 z-10" : "opacity-0"
                   }`}
               >
-                <Image
+                <img
                   src={src}
                   alt={`CV template ${index + 1}`}
-                  fill
-                  className="object-cover object-top"
-                  sizes="280px"
+                  className="h-full w-full object-cover object-top"
                 />
               </div>
             ))}

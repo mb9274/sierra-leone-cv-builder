@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env"
+import { getAuthFriendlyMessage } from "@/lib/auth-errors"
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,14 +48,14 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: { message: error.message } },
+        { error: { message: getAuthFriendlyMessage(error, "We could not create your account.") } },
         { status: 400 },
       )
     }
 
     return response
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to sign up."
+    const message = getAuthFriendlyMessage(error, "We could not create your account.")
     return NextResponse.json({ error: { message } }, { status: 500 })
   }
 }

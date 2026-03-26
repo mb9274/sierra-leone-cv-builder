@@ -171,9 +171,9 @@ export default function MockInterview() {
                                     <SelectValue placeholder={isLoadingCvs ? "Loading CVs..." : "Select a CV"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {cvs.map((cv) => (
+                                    {cvs.filter((cv) => cv.id).map((cv) => (
                                         <SelectItem key={cv.id} value={cv.id}>
-                                            {cv.personalInfo.fullName}
+                                            {cv.personalInfo?.fullName || "Untitled CV"}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

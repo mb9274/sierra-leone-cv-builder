@@ -116,8 +116,12 @@ A comprehensive citizens services platform built for Sierra Leone youth (ages 18
    ```env
    # Supabase (Required)
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+   SUPABASE_SECRET_KEY=your_supabase_secret_key
+
+   # Legacy names still supported by the app
+   # NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   # SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
    # App URL (Recommended for production links)
    NEXT_PUBLIC_APP_URL=https://sierra-leone-cv-builder.vercel.app

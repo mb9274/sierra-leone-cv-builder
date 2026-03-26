@@ -8,6 +8,11 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
+  experimental: {
+    cpus: 1,
+    webpackBuildWorker: false,
+    workerThreads: true,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

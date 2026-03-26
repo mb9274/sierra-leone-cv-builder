@@ -435,6 +435,34 @@ No need for multiple websites - CV building, jobs, learning, all here!
 Ready to start your career journey? Let me know what you need help with! 🚀`
   }
 
+  if (
+    message.includes("dashboard") ||
+    message.includes("generate cv") ||
+    message.includes("generate a cv") ||
+    message.includes("saved cv") ||
+    message.includes("my cv") ||
+    message.includes("location") ||
+    message.includes("ats checker") ||
+    message.includes("upload cv") ||
+    message.includes("preview")
+  ) {
+    return `I can help you use the app quickly:
+
+• Dashboard: shows your CVs, quick stats, and the AI assistant
+• Generate CV: open the Generate page, enter your full name and email, then fill the rest and I create the full CV
+• Builder: edit your CV step by step
+• Preview: see and print your CV
+• Upload CV: import a PDF, DOCX, or image CV
+• ATS Checker: score your CV for employer screening
+• Jobs: browse and apply to job posts
+
+Try asking me:
+• "How do I generate a CV?"
+• "Where do I edit my location?"
+• "How do I fix my CV score?"
+• "How do I open my saved CVs?"`
+  }
+
   if (message.includes("ats") || message.includes("applicant tracking")) {
     return `**ATS (Applicant Tracking System) Checker** - Check if your CV passes employer screening software!
 

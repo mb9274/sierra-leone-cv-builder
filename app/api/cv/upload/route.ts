@@ -510,7 +510,7 @@ function makeLegacyInsert(cv: ExtractedCv, userId: string) {
 async function uploadOriginalFile(
   file: File,
   userId: string,
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: Awaited<ReturnType<typeof createAdminClient>>,
 ) {
   const storagePath = `${userId}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, "_")}`
   const fileBuffer = Buffer.from(await file.arrayBuffer())
@@ -539,7 +539,7 @@ async function processUpload(
 ): Promise<UploadResult> {
   emit?.({ stage: "starting", message: `Preparing ${file.name} for upload...` })
 
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
   let storageMeta:
     | {
         storageBucket: string

@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -10,7 +11,8 @@ import { StylePanel } from "@/components/builder/style-panel"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { ChevronLeft, ChevronRight, Menu } from "lucide-react"
-import { loadAvailableCvs } from "@/lib/cv-collection"
+import { loadAvailableCvs, saveLocalCv } from "@/lib/cv-collection"
+import { sanitizeCvRecord } from "@/lib/cv-storage"
 
 const DEFAULT_DATA = {
   personalInfo: {
@@ -92,35 +94,6 @@ export default function CVBuilderPage() {
     setSelectedElement("personalInfo")
 
     const loadSavedCv = async () => {
-      // Check sessionStorage first (from dashboard), then localStorage.
-      const sessionSaved = sessionStorage.getItem("cvbuilder_current")
-      const localSaved = localStorage.getItem("cvbuilder_current")
-      const saved = sessionSaved || localSaved
-
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved)
-          const merged = { ...DEFAULT_DATA, ...parsed }
-          const role = detectRoleFamily(merged)
-          const autoTemplate = ROLE_TEMPLATES[role] || DEFAULT_DATA.templateId
-          const effectiveTemplate =
-            manualTemplateSelection.current || (merged.templateId && merged.templateId !== DEFAULT_DATA.templateId)
-              ? merged.templateId || DEFAULT_DATA.templateId
-              : autoTemplate
-
-          if (!mounted) return
-
-          setCvData({
-            ...merged,
-            templateId: effectiveTemplate,
-          })
-          localStorage.setItem("cvbuilder_current", saved)
-          return
-        } catch (e) {
-          console.error("Failed to load saved CV:", e)
-        }
-      }
-
       const availableCvs = await loadAvailableCvs()
       if (!mounted || availableCvs.length === 0) return
 
@@ -134,7 +107,7 @@ export default function CVBuilderPage() {
       }
 
       setCvData(initialCv)
-      localStorage.setItem("cvbuilder_current", JSON.stringify(initialCv))
+      saveLocalCv(initialCv)
     }
 
     loadSavedCv()
@@ -150,7 +123,7 @@ export default function CVBuilderPage() {
       if (cvData) {
         setIsSaved(false)
         try {
-          localStorage.setItem("cvbuilder_current", JSON.stringify(cvData))
+          saveLocalCv(sanitizeCvRecord(cvData))
         } catch (e) {
           console.error("Auto-save failed:", e)
         }
@@ -218,21 +191,15 @@ export default function CVBuilderPage() {
   const handleShare = () => {
     // Save the CV first
     const verificationId = `CV${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`
-    const cvToSave = {
+    const cvToSave = sanitizeCvRecord({
       ...cvData,
       id: cvData.id || Date.now().toString(),
       verificationId,
       updatedAt: new Date(),
       createdAt: cvData.createdAt || new Date(),
-    }
+    })
 
-    let existingCVs = []
-    try { existingCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]") } catch { }
-    const index = existingCVs.findIndex((c: any) => c.id === cvToSave.id)
-    if (index !== -1) existingCVs[index] = cvToSave
-    else existingCVs.push(cvToSave)
-    localStorage.setItem("cvbuilder_cvs", JSON.stringify(existingCVs))
-    localStorage.setItem("cvbuilder_current", JSON.stringify(cvToSave))
+    saveLocalCv(cvToSave)
 
     toast({ title: "CV Saved!", description: "Redirecting to preview..." })
     setTimeout(() => router.push("/preview"), 800)

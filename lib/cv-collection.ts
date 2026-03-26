@@ -2,6 +2,7 @@ import type { CVData } from "./types"
 import { normalizeCvRecord } from "./cv-storage"
 
 const LOCAL_STORAGE_KEY = "cvbuilder_cvs"
+const CURRENT_STORAGE_KEY = "cvbuilder_current"
 
 function getTime(value: string | Date | undefined) {
   if (!value) return 0
@@ -27,20 +28,65 @@ function mergeById(records: CVData[]) {
   return [...merged.values()].sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt))
 }
 
+function readStoredCurrentCv() {
+  if (typeof window === "undefined") return null
+
+  const saved = sessionStorage.getItem(CURRENT_STORAGE_KEY) || localStorage.getItem(CURRENT_STORAGE_KEY)
+  if (!saved) return null
+
+  try {
+    return JSON.parse(saved)
+  } catch (error) {
+    console.error("Failed to parse stored current CV:", error)
+    return null
+  }
+}
+
 export function loadLocalCvs(): CVData[] {
   if (typeof window === "undefined") return []
 
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
-    if (!raw) return []
+    const currentRaw = localStorage.getItem(CURRENT_STORAGE_KEY)
 
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
+    const parsed = raw ? JSON.parse(raw) : []
+    const current = currentRaw ? JSON.parse(currentRaw) : null
 
-    return parsed.map((record) => normalizeCvRecord(record))
+    const records = Array.isArray(parsed) ? parsed : []
+    if (current && typeof current === "object") {
+      records.unshift(current)
+    }
+
+    return records.map((record) => normalizeCvRecord(record))
   } catch (error) {
     console.error("Failed to load local CVs:", error)
     return []
+  }
+}
+
+export function saveLocalCv(cv: CVData) {
+  if (typeof window === "undefined") return
+
+  try {
+    const storedCurrent = readStoredCurrentCv()
+    const createdAt = cv.createdAt || storedCurrent?.createdAt || new Date()
+    const id =
+      cv.id ||
+      storedCurrent?.id ||
+      (typeof createdAt === "string" ? createdAt : createdAt.toISOString()).replace(/[:.]/g, "-")
+
+    const current = normalizeCvRecord({
+      ...cv,
+      id,
+      createdAt,
+      updatedAt: new Date(),
+    })
+    localStorage.setItem(CURRENT_STORAGE_KEY, JSON.stringify(current))
+
+    const existing = loadLocalCvs().filter((record) => record.id !== current.id)
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([current, ...existing]))
+  } catch (error) {
+    console.error("Failed to save local CV:", error)
   }
 }
 

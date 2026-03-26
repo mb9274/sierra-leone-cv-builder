@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -16,7 +17,8 @@ import { MinimalLayout } from "@/components/cv-layouts/minimal-layout"
 import { BoldRedLayout } from "@/components/cv-layouts/bold-red-layout"
 import { TealSidebarLayout } from "@/components/cv-layouts/teal-sidebar-layout"
 import { BlueWaveLayout } from "@/components/cv-layouts/blue-wave-layout"
-import { loadAvailableCvs } from "@/lib/cv-collection"
+import { loadAvailableCvs, saveLocalCv } from "@/lib/cv-collection"
+import { sanitizeCvRecord } from "@/lib/cv-storage"
 import { getCvLocation } from "@/lib/cv-location"
 
 const templateThemes: Record<string, any> = {
@@ -153,19 +155,6 @@ export default function PreviewPage() {
     let mounted = true
 
     const loadCurrentCv = async () => {
-      const savedCV = localStorage.getItem("cvbuilder_current")
-      if (savedCV) {
-        try {
-          const data = normalizeCvDates(JSON.parse(savedCV))
-          if (!mounted) return
-          setCvData(data)
-          setEditedData(data)
-          return
-        } catch (e) {
-          console.error("[v0] Failed to parse current CV:", e)
-        }
-      }
-
       const availableCvs = await loadAvailableCvs()
       if (!mounted || availableCvs.length === 0) {
         router.push("/builder")
@@ -175,7 +164,7 @@ export default function PreviewPage() {
       const data = normalizeCvDates(availableCvs[0])
       setCvData(data)
       setEditedData(data)
-      localStorage.setItem("cvbuilder_current", JSON.stringify(data))
+      saveLocalCv(data)
     }
 
     loadCurrentCv()
@@ -189,23 +178,8 @@ export default function PreviewPage() {
     if (editedData) {
       setSaving(true)
       const now = new Date()
-      const nextCv: CVData = { ...editedData, updatedAt: now }
-      localStorage.setItem("cvbuilder_current", JSON.stringify(nextCv))
-
-      let savedCVs = []
-      try {
-        savedCVs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
-      } catch (e) {
-        console.error("[v0] Failed to parse saved CVs:", e)
-      }
-
-      const index = savedCVs.findIndex((cv: CVData) => cv.id === nextCv.id)
-      const nextList = index !== -1 ? savedCVs.map((cv: CVData) => (cv.id === nextCv.id ? nextCv : cv)) : [nextCv, ...savedCVs]
-      try {
-        localStorage.setItem("cvbuilder_cvs", JSON.stringify(nextList))
-      } catch (e) {
-        console.error("[v0] Failed to save CVs to localStorage:", e)
-      }
+      const nextCv: CVData = sanitizeCvRecord({ ...editedData, updatedAt: now })
+      saveLocalCv(nextCv)
 
       setCvData(nextCv)
       setEditedData(nextCv)
@@ -225,7 +199,7 @@ export default function PreviewPage() {
   }
 
   const handleDownloadPDF = () => {
-    const filename = cvData?.personalInfo.fullName
+    const filename = cvData?.personalInfo?.fullName
       ? `${cvData.personalInfo.fullName.replace(/\s+/g, "_")}_CV.pdf`
       : "CV.pdf"
 
@@ -255,6 +229,8 @@ export default function PreviewPage() {
 
   const theme = templateThemes[cvData.templateId || "sierra-leone-professional"] || templateThemes["sierra-leone-professional"]
   const cvLocation = getCvLocation(cvData)
+  const printableCvData = sanitizeCvRecord(cvData)
+  const printableEditedData = editedData ? sanitizeCvRecord(editedData) : null
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
@@ -333,50 +309,50 @@ export default function PreviewPage() {
             {/* Render Layout based on theme */}
             {theme.layout === "bold-red" ? (
               <BoldRedLayout
-                cvData={cvData}
+                cvData={printableCvData}
                 theme={theme}
                 isEditing={isEditing}
-                editedData={editedData}
+                editedData={printableEditedData}
                 onEdit={setEditedData}
               />
             ) : theme.layout === "teal-sidebar" ? (
               <TealSidebarLayout
-                cvData={cvData}
+                cvData={printableCvData}
                 theme={theme}
                 isEditing={isEditing}
-                editedData={editedData}
+                editedData={printableEditedData}
                 onEdit={setEditedData}
               />
             ) : theme.layout === "blue-wave" ? (
               <BlueWaveLayout
-                cvData={cvData}
+                cvData={printableCvData}
                 theme={theme}
                 isEditing={isEditing}
-                editedData={editedData}
+                editedData={printableEditedData}
                 onEdit={setEditedData}
               />
             ) : theme.layout === "sidebar" ? (
               <SidebarLayout
-                cvData={cvData}
+                cvData={printableCvData}
                 theme={theme}
                 isEditing={isEditing}
-                editedData={editedData}
+                editedData={printableEditedData}
                 onEdit={setEditedData}
               />
             ) : theme.layout === "minimal" ? (
               <MinimalLayout
-                cvData={cvData}
+                cvData={printableCvData}
                 theme={theme}
                 isEditing={isEditing}
-                editedData={editedData}
+                editedData={printableEditedData}
                 onEdit={setEditedData}
               />
             ) : (
               <StandardLayout
-                cvData={cvData}
+                cvData={printableCvData}
                 theme={theme}
                 isEditing={isEditing}
-                editedData={editedData}
+                editedData={printableEditedData}
                 onEdit={setEditedData}
               />
             )}

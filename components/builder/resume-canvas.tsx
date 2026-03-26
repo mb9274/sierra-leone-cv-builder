@@ -112,7 +112,7 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                                         fontWeight: 'var(--cv-font-weight, bold)',
                                         color: 'var(--cv-color, #111827)'
                                     }}>
-                                    {resumeData.personalInfo.fullName}
+                                    {resumeData.personalInfo?.fullName || "Your Name"}
                                 </h1>
                                 <p className="opacity-80"
                                     style={{
@@ -160,11 +160,11 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <p className="opacity-70 uppercase" style={{ fontSize: '0.75em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #9ca3af)' }}>Phone</p>
-                                        <p style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>{resumeData.personalInfo.phone}</p>
+                                        <p style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>{resumeData.personalInfo?.phone || "Not provided"}</p>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="opacity-70 uppercase" style={{ fontSize: '0.75em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #9ca3af)' }}>Email</p>
-                                        <p className="truncate" style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>{resumeData.personalInfo.email}</p>
+                                        <p className="truncate" style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, bold)', color: 'var(--cv-color, #111827)' }}>{resumeData.personalInfo?.email || "Not provided"}</p>
                                     </div>
                                     {(resumeData.personalInfo.linkedin || resumeData.personalInfo.portfolio || (resumeData.links && resumeData.links.length > 0)) && (
                                         <div className={`space-y-4 p-2 -mx-2 rounded transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 ${selectedElement === 'links' ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`}
@@ -251,7 +251,7 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                                     Profile
                                 </h2>
                                 <p className="leading-relaxed opacity-90" style={{ fontSize: '0.875em', fontWeight: 'var(--cv-font-weight, 500)', color: 'var(--cv-color, #4b5563)' }}>
-                                    {resumeData.personalInfo.summary}
+                                    {resumeData.personalInfo?.summary || "Summary not provided"}
                                 </p>
                             </section>
 

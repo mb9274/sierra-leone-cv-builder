@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Phone, Mail, MapPin, MessageSquare, ArrowLeft, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+export const dynamic = "force-dynamic"
 
 export default function ContactPage() {
   return (

@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
+import { getAuthFriendlyMessage } from "@/lib/auth-errors"
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -18,18 +20,6 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
-
-  const getFriendlyError = (err: unknown, fallback: string) => {
-    if (err instanceof Error && err.message.includes("Missing Supabase env vars")) {
-      return "Supabase is not configured in Vercel. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
-    }
-
-    if (err instanceof Error && err.message) {
-      return err.message
-    }
-
-    return fallback
-  }
 
   const handleGoogleSignUp = async () => {
     window.location.href = `/api/auth/oauth?provider=google&next=${encodeURIComponent("/dashboard")}`
@@ -75,7 +65,7 @@ export default function SignUpPage() {
         }, 2000)
       }
     } catch (err) {
-      setError(getFriendlyError(err, "An unexpected error occurred. Please try again."))
+      setError(getAuthFriendlyMessage(err, "An unexpected error occurred. Please try again."))
     } finally {
       setLoading(false)
     }
@@ -165,12 +155,12 @@ export default function SignUpPage() {
               />
             </div>
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+              <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {error}
               </div>
             )}
             {message && (
-              <div className="text-sm text-green-600 bg-green-50 p-3 rounded">
+              <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">
                 {message}
               </div>
             )}

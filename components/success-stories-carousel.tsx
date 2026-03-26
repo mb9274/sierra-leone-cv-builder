@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 const successStories = [
@@ -97,14 +96,13 @@ export function SuccessStoriesCarousel() {
         {successStories.map((story, index) => (
           <div
             key={story.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentIndex ? "opacity-100" : "opacity-0"
+          className={`absolute inset-0 transition-opacity duration-1000 ${index === currentIndex ? "opacity-100" : "opacity-0"
               }`}
           >
-            <Image
+            <img
               src={story.image || "/placeholder.svg"}
               alt={story.title}
-              fill
-              className="object-cover"
+              className="h-full w-full object-cover"
             />
             {/* Overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />

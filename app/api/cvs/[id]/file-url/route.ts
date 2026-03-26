@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { ApiResponse, handleApiError, withAuth } from "@/lib/api-utils"
 import { normalizeCvRecord } from "@/lib/cv-storage"
 
@@ -9,7 +9,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const { id } = await params
 
     return withAuth(async (user) => {
-      const supabase = createAdminClient()
+      const supabase = await createAdminClient()
 
       const { data, error } = await supabase
         .from("cvs")

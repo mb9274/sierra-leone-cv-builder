@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { FileText, Search, CheckCircle2, XCircle, ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { readStoredJson } from "@/lib/safe-json"
 
 interface VerificationResult {
   verified: boolean
@@ -51,7 +53,7 @@ export default function VerifyPage() {
 
     setTimeout(() => {
       // Check if verification ID exists in localStorage
-      const cvs = JSON.parse(localStorage.getItem("cvbuilder_cvs") || "[]")
+      const cvs = readStoredJson<any[]>("cvbuilder_cvs", [])
       const foundCV = cvs.find((cv: any) => cv.verificationId === id || cv.id === id)
 
       if (foundCV) {
@@ -187,8 +189,10 @@ export default function VerifyPage() {
                   {result.cvData && (
                     <div className="pt-4 border-t">
                       <Label className="text-muted-foreground mb-2 block">CV Owner Information</Label>
-                      <p className="text-lg font-semibold text-foreground">{result.cvData.personalInfo.fullName}</p>
-                      <p className="text-muted-foreground">{result.cvData.personalInfo.email}</p>
+                      <p className="text-lg font-semibold text-foreground">
+                        {result.cvData.personalInfo?.fullName || "Untitled CV"}
+                      </p>
+                      <p className="text-muted-foreground">{result.cvData.personalInfo?.email || "No email provided"}</p>
                     </div>
                   )}
                 </CardContent>

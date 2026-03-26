@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = createAdminClient()
+    const supabase = await createAdminClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {

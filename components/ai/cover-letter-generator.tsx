@@ -141,9 +141,9 @@ export default function CoverLetterGenerator() {
                                 <SelectValue placeholder={isLoadingCvs ? "Loading CVs..." : "Select a CV"} />
                             </SelectTrigger>
                             <SelectContent>
-                                {cvs.map((cv) => (
+                                {cvs.filter((cv) => cv.id).map((cv) => (
                                     <SelectItem key={cv.id} value={cv.id}>
-                                        {cv.personalInfo.fullName} - {cv.personalInfo.summary?.substring(0, 30)}...
+                                        {cv.personalInfo?.fullName || "Untitled CV"} - {cv.personalInfo?.summary?.substring(0, 30) || "No summary"}...
                                     </SelectItem>
                                 ))}
                             </SelectContent>

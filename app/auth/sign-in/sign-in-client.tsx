@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
+import { getAuthFriendlyMessage } from "@/lib/auth-errors"
 
 export default function SignInClient() {
   const router = useRouter()
@@ -20,19 +21,10 @@ export default function SignInClient() {
 
   const next = searchParams.get("next") || "/dashboard"
   const routeError = searchParams.get("error")
-  const visibleError = error || routeError || ""
-
-  const getFriendlyError = (err: unknown, fallback: string) => {
-    if (err instanceof Error && err.message.includes("Missing Supabase env vars")) {
-      return "Supabase is not configured in Vercel. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
-    }
-
-    if (err instanceof Error && err.message) {
-      return err.message
-    }
-
-    return fallback
-  }
+  const routeErrorMessage = routeError
+    ? getAuthFriendlyMessage(routeError, "We could not sign you in.")
+    : ""
+  const visibleError = error || routeErrorMessage || ""
 
   const handleGoogleSignIn = async () => {
     window.location.href = `/api/auth/oauth?provider=google&next=${encodeURIComponent(next)}`
@@ -59,13 +51,18 @@ export default function SignInClient() {
       const payload = await response.json().catch(() => null)
 
       if (!response.ok) {
-        setError(payload?.error?.message || payload?.message || "Failed to sign in.")
+        setError(
+          getAuthFriendlyMessage(
+            payload?.error?.message || payload?.message || "Failed to sign in.",
+            "We could not sign you in.",
+          ),
+        )
       } else {
         router.replace(next)
         router.refresh()
       }
     } catch (err) {
-      setError(getFriendlyError(err, "Sign in is not configured correctly."))
+      setError(getAuthFriendlyMessage(err, "We could not sign you in."))
     } finally {
       setLoading(false)
     }
@@ -143,7 +140,7 @@ export default function SignInClient() {
               />
             </div>
             {visibleError && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+              <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {visibleError}
               </div>
             )}

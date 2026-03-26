@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Download, Printer, FileText, Mail, Phone, MapPin, Award } from "lucide-react"
 import type { CVData } from "@/lib/types"
 import { getCvLocation } from "@/lib/cv-location"
-import { loadAvailableCvs } from "@/lib/cv-collection"
+import { loadAvailableCvs, saveLocalCv } from "@/lib/cv-collection"
 
 export default function DocumentsPage() {
   const router = useRouter()
@@ -17,13 +18,6 @@ export default function DocumentsPage() {
     let mounted = true
 
     const loadCurrentCv = async () => {
-      const savedCV = localStorage.getItem("cvbuilder_current")
-      if (savedCV) {
-        if (!mounted) return
-        setCvData(JSON.parse(savedCV))
-        return
-      }
-
       const availableCvs = await loadAvailableCvs()
       if (!mounted || availableCvs.length === 0) {
         router.push("/dashboard")
@@ -32,7 +26,7 @@ export default function DocumentsPage() {
 
       const data = availableCvs[0]
       setCvData(data)
-      localStorage.setItem("cvbuilder_current", JSON.stringify(data))
+      saveLocalCv(data)
     }
 
     loadCurrentCv()
@@ -96,20 +90,20 @@ export default function DocumentsPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Full Name</p>
-                  <p className="text-lg font-semibold text-foreground">{cvData.personalInfo.fullName}</p>
+                  <p className="text-lg font-semibold text-foreground">{cvData.personalInfo?.fullName || "Untitled CV"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Email Address</p>
                   <p className="text-lg font-medium text-foreground flex items-center gap-2">
                     <Mail className="size-4 text-[#4CAF50]" />
-                    {cvData.personalInfo.email}
+                    {cvData.personalInfo?.email || "No email provided"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Phone Number</p>
                   <p className="text-lg font-medium text-foreground flex items-center gap-2">
                     <Phone className="size-4 text-[#4CAF50]" />
-                    {cvData.personalInfo.phone}
+                    {cvData.personalInfo?.phone || "No phone provided"}
                   </p>
                 </div>
                 {location && (
@@ -122,7 +116,7 @@ export default function DocumentsPage() {
                   </div>
                 )}
               </div>
-              {cvData.personalInfo.summary && (
+              {cvData.personalInfo?.summary && (
                 <div className="pt-4 border-t">
                   <p className="text-sm text-muted-foreground mb-2">Professional Summary</p>
                   <p className="text-foreground leading-relaxed">{cvData.personalInfo.summary}</p>
