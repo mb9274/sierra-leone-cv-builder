@@ -4,12 +4,11 @@
   "private": true,
   "packageManager": "npm@10",
   "scripts": {
-    "prebuild": "node scripts/prebuild.cjs",
+    "predev": "node scripts/prepare-next.cjs",
+    "prebuild": "node scripts/prepare-next.cjs",
+    "dev": "node scripts/dev.cjs",
     "build": "node scripts/build.cjs",
-    "dev": "next dev --turbopack -H 127.0.0.1",
-    "local": "node scripts/run-local.cjs",
-    "lint": "eslint .",
-    "start": "next start -H 127.0.0.1 -p 3000"
+    "start": "next start"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

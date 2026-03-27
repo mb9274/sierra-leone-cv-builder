@@ -195,6 +195,14 @@ export default function DashboardPage() {
     toast({ title: "CV Deleted" })
   }
 
+  const handleSignOut = async () => {
+    try {
+      await fetch("/api/auth/sign-out", { method: "POST" })
+    } finally {
+      router.replace("/")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="flex min-h-screen">
@@ -235,7 +243,7 @@ export default function DashboardPage() {
             </button>
             <button
               type="button"
-              onClick={() => router.push("/auth/sign-out")}
+              onClick={handleSignOut}
               className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
             >
               <LogOut className="size-4" />

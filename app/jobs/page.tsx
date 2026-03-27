@@ -14,6 +14,35 @@ import { scanCVForJobs } from "@/lib/ai-suggestions"
 import { JobApplicationModal } from "@/components/job-application-modal"
 import { loadCurrentCv } from "@/lib/cv-collection"
 
+const MAP_WIDTH = 500
+const MAP_HEIGHT = 400
+const MAP_BOUNDS = {
+  minLat: 6.9,
+  maxLat: 10,
+  minLng: -13.3,
+  maxLng: -10.3,
+}
+
+function getJobSvgPosition(job: Job) {
+  if (job.coordinates) {
+    const x =
+      ((job.coordinates.lng - MAP_BOUNDS.minLng) / (MAP_BOUNDS.maxLng - MAP_BOUNDS.minLng)) * MAP_WIDTH
+    const y =
+      ((MAP_BOUNDS.maxLat - job.coordinates.lat) / (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat)) * MAP_HEIGHT
+
+    return {
+      x: Math.max(16, Math.min(MAP_WIDTH - 16, x)),
+      y: Math.max(16, Math.min(MAP_HEIGHT - 16, y)),
+    }
+  }
+
+  if (job.location.includes("Freetown")) return { x: 120, y: 205 }
+  if (job.location.includes("Bo")) return { x: 240, y: 270 }
+  if (job.location.includes("Makeni")) return { x: 280, y: 130 }
+
+  return { x: 200, y: 200 }
+}
+
 export default function JobsPage() {
   const router = useRouter()
   const [jobs, setJobs] = useState<Job[]>([])
@@ -271,22 +300,7 @@ export default function JobsPage() {
                       // Bo: ~7.96°N, -11.74°E (central-south)
                       // Makeni: ~8.88°N, -12.04°E (central-north)
 
-                      let x = 200,
-                        y = 200 // default center
-
-                      if (job.location.includes("Freetown")) {
-                        // Western coastal city
-                        x = 120 + Math.random() * 40
-                        y = 180 + Math.random() * 40
-                      } else if (job.location.includes("Bo")) {
-                        // Southern central region
-                        x = 240
-                        y = 270
-                      } else if (job.location.includes("Makeni")) {
-                        // Northern central region
-                        x = 280
-                        y = 130
-                      }
+                      const { x, y } = getJobSvgPosition(job)
 
                       return (
                         <g

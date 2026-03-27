@@ -68,7 +68,11 @@ function patchNextWorker() {
   fs.writeFileSync(workerFile, original.replace(needle, replacement))
 }
 
-patchNextWorker()
+try {
+  patchNextWorker()
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error)
+}
 
 for (const dir of [nextDir, tempNextDir]) {
   fs.rmSync(dir, { recursive: true, force: true })
