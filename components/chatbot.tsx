@@ -8,40 +8,105 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Bot, MessageCircle, Send, Sparkles, X } from "lucide-react"
-import { generateChatbotResponse, type ChatMessage } from "@/lib/chatbot-responses"
+import type { ChatMessage } from "@/lib/chatbot-responses"
 
 type ChatbotProps = {
   userName?: string
   embedded?: boolean
 }
 
+const CHAT_MEMORY_VERSION = "v2"
+
 const quickPrompts = [
-  "How do I generate a CV?",
-  "Where do I edit my location?",
-  "How do I open my saved CVs?",
-  "What does ATS Checker do?",
+  "Explain anything to me",
+  "Help me write a CV summary",
+  "How do I use this app?",
+  "What can you help with?",
 ]
 
 function buildWelcomeMessage(userName?: string) {
   const name = userName?.trim()
   if (name) {
-    return `Welcome back, ${name}. I’m your AI assistant. Ask me about generating a CV, editing your location, finding saved CVs, the ATS checker, jobs, applications, or anything else in the app.`
+    return `Welcome back, ${name}. I'm your AI assistant. Ask me anything.`
   }
 
-  return "Welcome. I’m your AI assistant. Ask me about generating a CV, editing your location, finding saved CVs, the ATS checker, jobs, applications, or anything else in the app."
+  return "Welcome. I'm your AI assistant. Ask me anything."
+}
+
+function getStoredGeminiApiKey() {
+  if (typeof window === "undefined") return ""
+  return localStorage.getItem("gemini_api_key")?.trim() || ""
+}
+
+function getChatStorageKey(userName?: string) {
+  const name = userName?.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "guest"
+  return `chatbot_history_${CHAT_MEMORY_VERSION}_${name}`
+}
+
+function getChatSummaryKey(userName?: string) {
+  const name = userName?.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "guest"
+  return `chatbot_summary_${CHAT_MEMORY_VERSION}_${name}`
+}
+
+function serializeMessages(messages: ChatMessage[]) {
+  return messages.slice(-30).map((message) => ({
+    ...message,
+    timestamp: message.timestamp.toISOString(),
+  }))
+}
+
+function hydrateMessages(raw: unknown, welcome: string): ChatMessage[] | null {
+  if (!Array.isArray(raw)) return null
+
+  const messages = raw
+    .map((message) => {
+      const item = message as Partial<ChatMessage> & { timestamp?: string | Date }
+      if (item.role !== "user" && item.role !== "assistant") return null
+      if (typeof item.content !== "string") return null
+
+      const timestamp =
+        item.timestamp instanceof Date
+          ? item.timestamp
+          : typeof item.timestamp === "string"
+            ? new Date(item.timestamp)
+            : new Date()
+
+      return {
+        role: item.role,
+        content: item.content,
+        timestamp: Number.isNaN(timestamp.getTime()) ? new Date() : timestamp,
+      } satisfies ChatMessage
+    })
+    .filter(Boolean) as ChatMessage[]
+
+  return messages.length > 0 ? messages : [{ role: "assistant", content: welcome, timestamp: new Date() }]
+}
+
+function sanitizeSummary(value: string) {
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 8)
+    .join("\n")
 }
 
 export function Chatbot({ userName, embedded = false }: ChatbotProps) {
+  const welcomeMessage = buildWelcomeMessage(userName)
+  const storageKey = getChatStorageKey(userName)
+  const summaryKey = getChatSummaryKey(userName)
   const [isOpen, setIsOpen] = useState(embedded)
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      content: buildWelcomeMessage(userName),
+      content: welcomeMessage,
       timestamp: new Date(),
     },
   ])
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [hasLoadedHistory, setHasLoadedHistory] = useState(false)
+  const [conversationSummary, setConversationSummary] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -57,14 +122,81 @@ export function Chatbot({ userName, embedded = false }: ChatbotProps) {
       setMessages([
         {
           role: "assistant",
-          content: buildWelcomeMessage(userName),
+          content: welcomeMessage,
           timestamp: new Date(),
         },
       ])
     }
-  }, [userName])
+  }, [userName, welcomeMessage])
 
-  const handleSend = (messageText?: string) => {
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    try {
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        const hydrated = hydrateMessages(parsed, welcomeMessage)
+        if (hydrated) {
+          setMessages(hydrated)
+        }
+      }
+      const savedSummary = localStorage.getItem(summaryKey)
+      if (savedSummary) {
+        setConversationSummary(savedSummary)
+      }
+    } catch {
+      // Ignore malformed saved history.
+    } finally {
+      setHasLoadedHistory(true)
+    }
+  }, [storageKey, welcomeMessage])
+
+  useEffect(() => {
+    if (!hasLoadedHistory || typeof window === "undefined") return
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(serializeMessages(messages)))
+    } catch {
+      // Ignore storage quota and serialization failures.
+    }
+  }, [hasLoadedHistory, messages, storageKey])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    try {
+      if (conversationSummary.trim()) {
+        localStorage.setItem(summaryKey, conversationSummary)
+      } else {
+        localStorage.removeItem(summaryKey)
+      }
+    } catch {
+      // Ignore storage failures.
+    }
+  }, [conversationSummary, summaryKey])
+
+  const clearConversation = () => {
+    const freshMessage = {
+      role: "assistant" as const,
+      content: welcomeMessage,
+      timestamp: new Date(),
+    }
+
+    setMessages([freshMessage])
+    setConversationSummary("")
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(storageKey)
+        localStorage.removeItem(summaryKey)
+      } catch {
+        // Ignore storage failures.
+      }
+    }
+  }
+
+  const handleSend = async (messageText?: string) => {
     const prompt = (messageText ?? input).trim()
     if (!prompt) return
 
@@ -73,20 +205,79 @@ export function Chatbot({ userName, embedded = false }: ChatbotProps) {
       content: prompt,
       timestamp: new Date(),
     }
-    setMessages((prev) => [...prev, userMessage])
+    const nextMessages = [...messages, userMessage]
+    setMessages(nextMessages)
     setInput("")
     setIsTyping(true)
 
-    setTimeout(() => {
-      const response = generateChatbotResponse(prompt, messages)
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: response,
-        timestamp: new Date(),
+    try {
+      const response = await fetch("/api/gemini", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "chat",
+          prompt,
+          context: {
+            summary: conversationSummary,
+            history: nextMessages.slice(-20),
+          },
+          apiKey: getStoredGeminiApiKey(),
+        }),
+      })
+
+      const result = await response.json().catch(() => null)
+      const assistantText = String(result?.message || result?.text || "").trim()
+
+      if (!response.ok || !assistantText) {
+        throw new Error(result?.error?.message || result?.error || "AI assistant failed to respond")
       }
-      setMessages((prev) => [...prev, assistantMessage])
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: assistantText,
+          timestamp: new Date(),
+        },
+      ])
+
+      const summaryResponse = await fetch("/api/gemini", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "summarize_chat",
+          context: {
+            summary: conversationSummary,
+            history: [...nextMessages, { role: "assistant", content: assistantText, timestamp: new Date() }].slice(-20),
+          },
+          apiKey: getStoredGeminiApiKey(),
+        }),
+      })
+
+      const summaryResult = await summaryResponse.json().catch(() => null)
+      const nextSummary = String(summaryResult?.summary || "").trim()
+      if (summaryResponse.ok && nextSummary) {
+        setConversationSummary(sanitizeSummary(nextSummary))
+      }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            error instanceof Error
+              ? error.message
+              : "I couldn't reach the AI service right now. Check your Gemini API key in Settings and try again.",
+          timestamp: new Date(),
+        },
+      ])
+    } finally {
       setIsTyping(false)
-    }, 500)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -126,16 +317,26 @@ export function Chatbot({ userName, embedded = false }: ChatbotProps) {
                 <p className="text-xs text-white/80">Answers app questions and guides users</p>
               </div>
             </div>
-            {!embedded && (
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsOpen(false)}
-                className="h-8 w-8 p-0 text-white hover:bg-white/15"
+                onClick={clearConversation}
+                className="h-8 rounded-full px-3 text-white hover:bg-white/15"
               >
-                <X className="h-4 w-4" />
+                Reset
               </Button>
-            )}
+              {!embedded && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                  className="h-8 w-8 p-0 text-white hover:bg-white/15"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
 
           {embedded && (

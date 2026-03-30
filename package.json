@@ -2,12 +2,10 @@
   "name": "ai-cv-builder",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "npm@10",
+  "packageManager": "npm@10.0.0",
   "scripts": {
-    "predev": "node scripts/prepare-next.cjs",
-    "prebuild": "node scripts/prepare-next.cjs",
-    "dev": "node scripts/dev.cjs",
-    "build": "node scripts/build.cjs",
+    "dev": "C:\\Users\\DELL\\OneDrive\\Desktop\\sierra-leone-cv-builder-1\\start-local.cmd",
+    "build": "node C:\\Users\\DELL\\OneDrive\\Desktop\\sierra-leone-cv-builder-1\\scripts\\build.cjs",
     "start": "next start"
   },
   "dependencies": {
