@@ -157,11 +157,11 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                                             </summary>
                                             <div className="space-y-4 border-t px-4 py-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="size-16 rounded-full bg-gray-100 border-2 flex items-center justify-center overflow-hidden shrink-0">
+                                                    <div className="size-24 md:size-28 rounded-full bg-gray-100 border-2 flex items-center justify-center overflow-hidden shrink-0">
                                                         {data.personalInfo?.profilePhoto && data.personalInfo.profilePhoto !== "/placeholder-user.jpg" ? (
                                                             <img src={data.personalInfo.profilePhoto} alt="Profile" className="size-full object-cover" />
                                                         ) : (
-                                                            <User className="size-6 text-gray-400" />
+                                                            <User className="size-10 text-gray-400" />
                                                         )}
                                                     </div>
                                                     <div className="flex-1">

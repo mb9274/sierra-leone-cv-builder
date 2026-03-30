@@ -95,7 +95,7 @@ export function ResumeCanvas({ data, templateId = "minimal", zoomLevel = 100, se
                         style={getStyle('personalInfo')}
                     >
                         <div className="flex gap-4 md:gap-8 items-center">
-                            <div className="size-16 md:size-24 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 flex-shrink-0">
+                            <div className="size-24 md:size-32 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 flex-shrink-0">
                                 <img
                                     src={resumeData.personalInfo.profilePhoto || null}
                                     alt="Profile"

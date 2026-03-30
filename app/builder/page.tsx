@@ -10,7 +10,7 @@ import { ResumeCanvas } from "@/components/builder/resume-canvas"
 import { StylePanel } from "@/components/builder/style-panel"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { ChevronLeft, ChevronRight, Menu } from "lucide-react"
+import { ChevronLeft, ChevronRight, Menu, SlidersHorizontal } from "lucide-react"
 import { loadAvailableCvs, saveLocalCv } from "@/lib/cv-collection"
 import { sanitizeCvRecord } from "@/lib/cv-storage"
 
@@ -223,55 +223,45 @@ export default function CVBuilderPage() {
       {/* Three Panel Layout */}
       <div className="flex flex-1 overflow-hidden print:block relative">
         {/* Left: Form Sidebar - Hidden on mobile/tablet by default */}
-        {showLeftSidebar && (
-          <div className="fixed bottom-0 left-0 right-0 h-[85vh] z-50 bg-white border-t shadow-2xl animate-in slide-in-from-bottom duration-300 ease-out md:relative md:w-[500px] lg:relative lg:inset-auto lg:w-[580px] lg:min-w-[580px] lg:max-w-[680px] border-r overflow-y-auto print:hidden">
-            <FormSidebar
-              data={cvData}
-              onChange={handleChange}
-              selectedElement={selectedElement}
-              onSelectElement={setSelectedElement}
-              onClose={() => setShowLeftSidebar(false)}
-            />
-          </div>
-        )}
+        <div
+          className={`fixed bottom-0 left-0 right-0 h-[85vh] z-50 bg-white border-t shadow-2xl border-r overflow-hidden print:hidden transition-all duration-300 ease-in-out md:relative md:top-auto md:bottom-auto md:left-auto md:right-auto md:h-full ${
+            showLeftSidebar
+              ? "translate-y-0 opacity-100 pointer-events-auto md:w-[500px] lg:w-[580px] lg:min-w-[580px] lg:max-w-[680px] md:translate-x-0"
+              : "translate-y-full opacity-0 pointer-events-none md:translate-y-0 md:-translate-x-full md:w-0 md:min-w-0 md:max-w-0 md:opacity-0"
+          }`}
+        >
+          <FormSidebar
+            data={cvData}
+            onChange={handleChange}
+            selectedElement={selectedElement}
+            onSelectElement={setSelectedElement}
+            onClose={() => setShowLeftSidebar(false)}
+          />
+        </div>
 
         {/* Center: Resume Canvas */}
         <div className="flex-1 bg-gray-100 overflow-auto print:bg-white print:overflow-visible relative">
-          {/* Toggles - Show on mobile and tablet */}
-          <div className={`absolute top-3 left-3 z-10 flex gap-2 print:hidden lg:hidden ${showLeftSidebar ? 'hidden' : ''}`}>
+          {/* Sidebar toggles */}
+          <div className="sticky top-3 z-20 px-3 flex items-center justify-between gap-3 print:hidden pointer-events-none">
             <Button
               variant="outline"
-              className="h-12 w-12 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-lg"
-              onClick={() => setShowLeftSidebar(true)}
+              className="pointer-events-auto h-11 px-4 gap-2 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-full"
+              onClick={() => setShowLeftSidebar((visible) => !visible)}
             >
-              <ChevronRight className="h-6 w-6" />
+              {showLeftSidebar ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              <span className="text-xs font-semibold hidden sm:inline">
+                {showLeftSidebar ? "Hide Info" : "Show Info"}
+              </span>
             </Button>
-          </div>
-          <div className={`absolute top-3 left-3 z-10 flex gap-2 print:hidden lg:hidden ${showLeftSidebar ? '' : 'hidden'}`}>
             <Button
               variant="outline"
-              className="h-12 w-12 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-lg"
-              onClick={() => setShowLeftSidebar(false)}
+              className="pointer-events-auto h-11 px-4 gap-2 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-full"
+              onClick={() => setShowRightSidebar((visible) => !visible)}
             >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-          </div>
-          <div className={`absolute top-3 right-3 z-10 flex gap-2 print:hidden lg:hidden ${showRightSidebar ? 'hidden' : ''}`}>
-            <Button
-              variant="outline"
-              className="h-12 w-12 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-lg"
-              onClick={() => setShowRightSidebar(true)}
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-          </div>
-          <div className={`absolute top-3 right-3 z-10 flex gap-2 print:hidden lg:hidden ${showRightSidebar ? '' : 'hidden'}`}>
-            <Button
-              variant="outline"
-              className="h-12 w-12 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-lg"
-              onClick={() => setShowRightSidebar(false)}
-            >
-              <ChevronRight className="h-6 w-6" />
+              <SlidersHorizontal className="h-5 w-5" />
+              <span className="text-xs font-semibold hidden sm:inline">
+                {showRightSidebar ? "Hide Edit" : "Show Edit"}
+              </span>
             </Button>
           </div>
           <ResumeCanvas
@@ -284,16 +274,20 @@ export default function CVBuilderPage() {
         </div>
 
         {/* Right: Style Panel - Hidden on mobile/tablet by default */}
-        {showRightSidebar && (
-          <div className="fixed bottom-0 left-0 right-0 h-[85vh] z-50 bg-white border-t shadow-2xl animate-in slide-in-from-bottom duration-300 ease-out md:fixed md:right-0 md:top-0 md:h-full md:w-80 md:border-l md:animate-in md:slide-in-from-right lg:relative lg:inset-auto lg:w-[300px] lg:min-w-[300px] lg:max-w-[350px] lg:border-l overflow-y-auto print:hidden">
-            <StylePanel
-              data={cvData}
-              onChange={handleChange}
-              selectedElement={selectedElement}
-              onClose={() => setShowRightSidebar(false)}
-            />
-          </div>
-        )}
+        <div
+          className={`fixed bottom-0 left-0 right-0 h-[85vh] z-50 bg-white border-t shadow-2xl border-l overflow-hidden print:hidden transition-all duration-300 ease-in-out md:fixed md:right-0 md:top-0 md:left-auto md:h-full lg:relative lg:inset-auto ${
+            showRightSidebar
+              ? "translate-y-0 opacity-100 pointer-events-auto md:w-80 lg:w-[300px] lg:min-w-[300px] lg:max-w-[350px] md:translate-x-0"
+              : "translate-y-full opacity-0 pointer-events-none md:translate-y-0 md:translate-x-full md:w-0 md:min-w-0 md:max-w-0 md:opacity-0"
+          }`}
+        >
+          <StylePanel
+            data={cvData}
+            onChange={handleChange}
+            selectedElement={selectedElement}
+            onClose={() => setShowRightSidebar(false)}
+          />
+        </div>
       </div>
 
       <Toaster />
