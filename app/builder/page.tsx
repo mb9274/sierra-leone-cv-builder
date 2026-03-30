@@ -224,7 +224,7 @@ export default function CVBuilderPage() {
       <div className="flex flex-1 overflow-hidden print:block relative">
         {/* Left: Form Sidebar - Hidden on mobile/tablet by default */}
         {showLeftSidebar && (
-          <div className="fixed bottom-0 left-0 right-0 h-[85vh] z-50 bg-white border-t shadow-2xl animate-in slide-in-from-bottom duration-300 ease-out md:relative md:w-[300px] lg:relative lg:inset-auto lg:w-[260px] lg:min-w-[260px] lg:max-w-[300px] border-r overflow-y-auto print:hidden">
+          <div className="fixed bottom-0 left-0 right-0 h-[85vh] z-50 bg-white border-t shadow-2xl animate-in slide-in-from-bottom duration-300 ease-out md:relative md:w-[500px] lg:relative lg:inset-auto lg:w-[580px] lg:min-w-[580px] lg:max-w-[680px] border-r overflow-y-auto print:hidden">
             <FormSidebar
               data={cvData}
               onChange={handleChange}

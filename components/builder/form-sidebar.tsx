@@ -58,7 +58,7 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
     }
 
     return (
-        <aside className="w-[350px] max-w-[90vw] border-r bg-white flex flex-col h-[calc(100vh-64px)] overflow-hidden relative">
+        <aside className="w-full min-w-0 border-r bg-white flex flex-col h-[calc(100vh-64px)] overflow-hidden relative">
             {onClose && <Button variant="ghost" size="icon" className="absolute top-2 right-2 z-10 lg:hidden" onClick={onClose}><X className="size-4"/></Button>}
             <Tabs defaultValue="create" className="w-full flex flex-col flex-1 overflow-hidden">
                 {/* Sidebar Header */}
