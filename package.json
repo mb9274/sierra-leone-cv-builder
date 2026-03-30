@@ -5,7 +5,7 @@
   "packageManager": "npm@10.0.0",
   "scripts": {
     "dev": "C:\\Users\\DELL\\OneDrive\\Desktop\\sierra-leone-cv-builder-1\\start-local.cmd",
-    "build": "node C:\\Users\\DELL\\OneDrive\\Desktop\\sierra-leone-cv-builder-1\\scripts\\build.cjs",
+    "build": "node scripts/build.cjs",
     "start": "next start"
   },
   "dependencies": {
