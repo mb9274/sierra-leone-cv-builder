@@ -230,12 +230,6 @@ IMPORTANT:
     jsonString = jsonString.substring(startIdx, endIdx + 1)
   }
 
-  // Additional cleaning for common issues
-  jsonString = jsonString
-    .replace(/\\n/g, "\\n")  // Fix escaped newlines
-    .replace(/\\"/g, '\\"')  // Fix escaped quotes
-    .replace(/\\\\/g, '\\\\') // Fix double backslashes
-
   try {
     const aiGeneratedCV = JSON.parse(jsonString)
     return validateAndStructureCV(aiGeneratedCV, fullName, email, skillsArray)

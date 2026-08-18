@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
 import { ApiResponse, handleApiError, withAuth, parseJsonBody } from "@/lib/api-utils"
 import { normalizeCvRecord } from "@/lib/cv-storage"
 import { CVData } from "@/lib/types"
+import { createAdminClient, Query, ID } from "@/lib/appwrite/server"
+import { appwriteConfig } from "@/lib/appwrite/config"
 
 const isoDateSchema = z.union([
   z.string().datetime(),
@@ -14,9 +14,7 @@ const isoDateSchema = z.union([
 
 const cvSchema = z
   .object({
-    id: z.string().min(1).optional(), // Make optional since database generates UUID
-    verificationId: z.string().min(1).optional(),
-    verifiedAt: z.string().min(1).optional(),
+    id: z.string().min(1).optional(),
     templateId: z.string().min(1).optional(),
     personalInfo: z.object({
       fullName: z.string().optional().default(""),
@@ -146,22 +144,30 @@ const cvSchema = z
   })
   .passthrough()
 
+function toCvRecord(doc: any) {
+  const parsed = typeof doc.data === "string" ? JSON.parse(doc.data) : doc.data || {}
+  return {
+    id: doc.$id,
+    data: parsed,
+    created_at: doc.$createdAt,
+    updated_at: doc.$updatedAt,
+    user_id: doc.user_id,
+  }
+}
+
 export async function GET() {
   return withAuth(async (user) => {
-    const supabase = await createAdminClient()
+    const { databases } = await createAdminClient()
 
-    const { data, error } = await supabase
-      .from("cvs")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
+    const result = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.collectionId,
+      [Query.equal("user_id", user.$id), Query.orderDesc("$createdAt")],
+    )
 
-    if (error) {
-      return ApiResponse.error("Failed to fetch CVs", 500, "DATABASE_ERROR", error.message)
-    }
-
-    return ApiResponse.success({ cvs: data ?? [] })
-  }, createClient)
+    const cvs = result.documents.map((doc) => normalizeCvRecord(toCvRecord(doc)))
+    return ApiResponse.success({ cvs })
+  })
 }
 
 export async function POST(request: Request) {
@@ -170,50 +176,18 @@ export async function POST(request: Request) {
     if (!bodyParse.success) return bodyParse.response
 
     const cv: CVData = bodyParse.data as CVData
+    const { databases } = await createAdminClient()
 
-    const supabase = await createAdminClient()
-    const { data, error } = await supabase
-      .from("cvs")
-      .insert({
-        user_id: user.id,
-        data: cv,
-      })
-      .select("*")
-      .single()
+    const doc = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.collectionId,
+      ID.unique(),
+      {
+        user_id: user.$id,
+        data: JSON.stringify(cv),
+      },
+    )
 
-    if (error && error.message?.toLowerCase().includes("column") && error.message.toLowerCase().includes("data")) {
-      const legacyInsert = {
-        user_id: user.id,
-        full_name: cv.personalInfo?.fullName || "",
-        email: cv.personalInfo?.email || "",
-        phone: cv.personalInfo?.phone || "",
-        age: cv.personalInfo?.age ? Number.parseInt(cv.personalInfo.age, 10) : null,
-        summary: cv.personalInfo?.summary || "",
-        education: cv.education || [],
-        experience: cv.experience || [],
-        skills: cv.skills || [],
-        languages: cv.languages || [],
-        photo_url: cv.personalInfo?.profilePhoto || "",
-        template: cv.templateId || "professional",
-      }
-
-      const fallback = await supabase
-        .from("cvs")
-        .insert(legacyInsert)
-        .select("*")
-        .single()
-
-      if (fallback.error) {
-        return ApiResponse.error("Failed to create CV", 500, "DATABASE_ERROR", fallback.error.message)
-      }
-
-      return ApiResponse.success({ cv: normalizeCvRecord(fallback.data) }, 201)
-    }
-
-    if (error) {
-      return ApiResponse.error("Failed to create CV", 500, "DATABASE_ERROR", error.message)
-    }
-
-    return ApiResponse.success({ cv: normalizeCvRecord(data) }, 201)
-  }, createClient)
+    return ApiResponse.success({ cv: normalizeCvRecord(toCvRecord(doc)) }, 201)
+  })
 }

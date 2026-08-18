@@ -134,7 +134,7 @@ async function createCvPdfBlob(cv: CVData) {
   }
 
   const bytes = await pdfDoc.save()
-  return new Blob([bytes], { type: "application/pdf" })
+  return new Blob([bytes as unknown as BlobPart], { type: "application/pdf" })
 }
 
 export default function App() {

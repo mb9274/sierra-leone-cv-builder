@@ -8,21 +8,22 @@ type CVRecord = {
   updated_at?: string | Date
   createdAt?: string | Date
   updatedAt?: string | Date
-  full_name?: string
-  email?: string
-  phone?: string
-  summary?: string
-  age?: number | string
-  location?: string
-  addressCity?: string
-  addressCountry?: string
-  photo_url?: string
-  template?: string
-  templateId?: string
-  storageBucket?: string
-  storagePath?: string
-  originalFileName?: string
-  mimeType?: string
+  full_name?: string | null
+  email?: string | null
+  phone?: string | null
+  summary?: string | null
+  age?: number | string | null
+  location?: string | null
+  addressCity?: string | null
+  addressCountry?: string | null
+  photo_url?: string | null
+  template?: string | null
+  templateId?: string | null
+  storageBucket?: string | null
+  storagePath?: string | null
+  originalFileName?: string | null
+  mimeType?: string | null
+  sourceText?: string | null
   education?: CVData["education"]
   experience?: CVData["experience"]
   skills?: CVData["skills"]
@@ -37,7 +38,6 @@ type CVRecord = {
   referees?: CVData["referees"]
   availability?: CVData["availability"]
   styles?: CVData["styles"]
-  sourceText?: string
   personalInfo?: Partial<CVData["personalInfo"]>
 }
 
@@ -68,8 +68,8 @@ function sanitizeValue<T>(value: T): T {
   return value
 }
 
-export function sanitizeCvRecord(record: CVRecord) {
-  return sanitizeValue(record)
+export function sanitizeCvRecord<T>(record: T): T {
+  return sanitizeValue(record) as T
 }
 
 function toDate(value: string | Date | undefined, fallback = new Date()) {

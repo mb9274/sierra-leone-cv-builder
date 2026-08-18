@@ -1,7 +1,11 @@
 import type { CVData } from "./types"
 
 // Generate professional summary suggestions
-export function generateSummary(context: { name?: string; education?: unknown[]; experience?: unknown[] }): string {
+export function generateSummary(context: {
+  name?: string
+  education?: Array<{ degree?: string; fieldOfStudy?: string }>
+  experience?: unknown[]
+}): string {
   const { education, experience } = context
   const degree = education?.[0]?.degree || "Bachelor's Degree"
   const field = education?.[0]?.fieldOfStudy || "your field"

@@ -191,10 +191,11 @@ function parseSkills(text: string, sections: Record<string, string[]>) {
   return [...new Set([...matched, ...bulletSkills])].slice(0, 20)
 }
 
-function parseDateRange(text: string) {
+function parseDateRange(text: string): { startDate: string; endDate: string } {
   const years = text.match(/\b(19|20)\d{2}\b/g) || []
-  if (years.length >= 2) return { startDate: years[0], endDate: years[years.length - 1] }
-  if (years.length === 1) return { startDate: years[0], endDate: /present|current|ongoing/i.test(text) ? "Present" : years[0] }
+  const yearAt = (index: number) => years[index] || ""
+  if (years.length >= 2) return { startDate: yearAt(0), endDate: yearAt(years.length - 1) }
+  if (years.length === 1) return { startDate: yearAt(0), endDate: /present|current|ongoing/i.test(text) ? "Present" : yearAt(0) }
   if (/present|current|ongoing/i.test(text)) return { startDate: "", endDate: "Present" }
   return { startDate: "", endDate: "" }
 }

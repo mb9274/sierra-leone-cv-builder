@@ -286,9 +286,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Use fallback if no API key or for specific actions
-    if (!apiKey || (action !== "generate_cover_letter" && action !== "mock_interview")) {
-      console.log("[v0] Gemini API key not found or unsupported action, using template fallback")
+    // Use fallback if no API key
+    if (!apiKey) {
+      console.log("[v0] Gemini API key not found, using template fallback")
       return handleFallbackActions(action, prompt, cvData)
     }
 

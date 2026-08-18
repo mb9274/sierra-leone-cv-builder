@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
 import { ApiResponse, handleApiError, withAuth, parseJsonBody } from "@/lib/api-utils"
+import { createAdminClient, Query } from "@/lib/appwrite/server"
+import { appwriteConfig } from "@/lib/appwrite/config"
+import { normalizeCvRecord } from "@/lib/cv-storage"
 
 const idSchema = z.string().min(1)
 
@@ -15,8 +16,6 @@ const isoDateSchema = z.union([
 const cvSchema = z
   .object({
     id: z.string().min(1),
-    verificationId: z.string().min(1).optional(),
-    verifiedAt: z.string().min(1).optional(),
     templateId: z.string().min(1).optional(),
     personalInfo: z.object({
       fullName: z.string().optional().default(""),
@@ -71,80 +70,39 @@ const cvSchema = z
       )
       .optional()
       .default([]),
-    projects: z
-      .array(
-        z.object({
-          id: z.string().min(1),
-          name: z.string().optional().default(""),
-          description: z.string().optional().default(""),
-          link: z.string().optional(),
-          technologies: z.array(z.string()).optional(),
-          outcome: z.string().optional(),
-        }),
-      )
-      .optional(),
-    technicalWriting: z
-      .array(
-        z.object({
-          id: z.string().min(1),
-          title: z.string().optional().default(""),
-          link: z.string().optional().default(""),
-          platform: z.string().optional(),
-        }),
-      )
-      .optional(),
-    certifications: z
-      .array(
-        z.object({
-          id: z.string().min(1),
-          name: z.string().optional().default(""),
-          organization: z.string().optional().default(""),
-          year: z.string().optional().default(""),
-        }),
-      )
-      .optional(),
-    volunteering: z
-      .array(
-        z.object({
-          id: z.string().min(1),
-          organization: z.string().optional().default(""),
-          role: z.string().optional().default(""),
-          startDate: z.string().optional().default(""),
-          endDate: z.string().optional().default(""),
-          description: z.string().optional().default(""),
-        }),
-      )
-      .optional(),
-    awards: z
-      .array(
-        z.object({
-          id: z.string().min(1),
-          name: z.string().optional().default(""),
-          organization: z.string().optional().default(""),
-          year: z.string().optional().default(""),
-          reason: z.string().optional().default(""),
-        }),
-      )
-      .optional(),
+    projects: z.array(z.any()).optional(),
+    technicalWriting: z.array(z.any()).optional(),
+    certifications: z.array(z.any()).optional(),
+    volunteering: z.array(z.any()).optional(),
+    awards: z.array(z.any()).optional(),
     hobbies: z.array(z.string()).optional(),
-    referees: z
-      .array(
-        z.object({
-          id: z.string().min(1),
-          name: z.string().optional().default(""),
-          title: z.string().optional().default(""),
-          organization: z.string().optional().default(""),
-          phone: z.string().optional().default(""),
-          email: z.string().optional().default(""),
-          availableOnRequest: z.boolean().optional(),
-        }),
-      )
-      .optional(),
+    referees: z.array(z.any()).optional(),
     availability: z.string().optional(),
     createdAt: isoDateSchema,
     updatedAt: isoDateSchema,
   })
   .passthrough()
+
+function toCvRecord(doc: any) {
+  const parsed = typeof doc.data === "string" ? JSON.parse(doc.data) : doc.data || {}
+  return {
+    id: doc.$id,
+    data: parsed,
+    created_at: doc.$createdAt,
+    updated_at: doc.$updatedAt,
+    user_id: doc.user_id,
+  }
+}
+
+async function findUserCv(docId: string, userId: string) {
+  const { databases } = await createAdminClient()
+  const result = await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.collectionId,
+    [Query.equal("user_id", userId), Query.equal("$id", docId)],
+  )
+  return result.documents[0] || null
+}
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -155,24 +113,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     }
 
     return withAuth(async (user) => {
-      const supabase = await createAdminClient()
-
-      const { data, error } = await supabase
-        .from("cvs")
-        .select("id, data, created_at, updated_at")
-        .eq("id", parsedId.data)
-        .eq("user_id", user.id)
-        .single()
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return ApiResponse.notFound("CV not found")
-        }
-        return ApiResponse.error("Failed to fetch CV", 500, "DATABASE_ERROR", error.message)
-      }
-
-      return ApiResponse.success({ cv: data })
-    }, createClient)
+      const doc = await findUserCv(parsedId.data, user.$id)
+      if (!doc) return ApiResponse.notFound("CV not found")
+      return ApiResponse.success({ cv: doc })
+    })
   } catch (error) {
     return handleApiError(error)
   }
@@ -191,38 +135,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       if (!bodyParse.success) return bodyParse.response
 
       const cv = bodyParse.data
-      const supabase = await createAdminClient()
+      const { databases } = await createAdminClient()
 
-      // Validate that we have a valid ID
-      if (!parsedId.data) {
-        return ApiResponse.error("CV ID is required", 400, "VALIDATION_ERROR")
-      }
+      const doc = await findUserCv(parsedId.data, user.$id)
+      if (!doc) return ApiResponse.notFound("CV not found")
 
-      // Prepare update data - let trigger handle updated_at
-      const updateData: any = {
-        data: cv,
-      }
+      const updated = await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.collectionId,
+        doc.$id,
+        { data: JSON.stringify(cv) },
+      )
 
-      console.log("Updating CV with ID:", parsedId.data, "for user:", user.id)
-
-      const { data, error } = await supabase
-        .from("cvs")
-        .update(updateData)
-        .eq("id", parsedId.data)
-        .eq("user_id", user.id)
-        .select("id, data, created_at, updated_at")
-        .single()
-
-      if (error) {
-        console.error("Database update error:", error)
-        if (error.code === 'PGRST116') {
-          return ApiResponse.notFound("CV not found")
-        }
-        return ApiResponse.error("Failed to update CV", 500, "DATABASE_ERROR", error.message)
-      }
-
-      return ApiResponse.success({ cv: data })
-    }, createClient)
+      return ApiResponse.success({ cv: toCvRecord(updated) })
+    })
   } catch (error) {
     return handleApiError(error)
   }
@@ -237,28 +163,18 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     }
 
     return withAuth(async (user) => {
-      const supabase = await createAdminClient()
+      const doc = await findUserCv(parsedId.data, user.$id)
+      if (!doc) return ApiResponse.notFound("CV not found")
 
-      // Validate that we have a valid ID
-      if (!parsedId.data) {
-        return ApiResponse.error("CV ID is required", 400, "VALIDATION_ERROR")
-      }
-
-      console.log("Deleting CV with ID:", parsedId.data, "for user:", user.id)
-
-      const { error } = await supabase
-        .from("cvs")
-        .delete()
-        .eq("id", parsedId.data)
-        .eq("user_id", user.id)
-
-      if (error) {
-        console.error("Database delete error:", error)
-        return ApiResponse.error("Failed to delete CV", 500, "DATABASE_ERROR", error.message)
-      }
+      const { databases } = await createAdminClient()
+      await databases.deleteDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.collectionId,
+        doc.$id,
+      )
 
       return ApiResponse.success({ ok: true })
-    }, createClient)
+    })
   } catch (error) {
     return handleApiError(error)
   }

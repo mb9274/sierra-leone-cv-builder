@@ -1,46 +1,38 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@supabase/ssr"
-import { getAuthFriendlyMessage } from "@/lib/auth-errors"
-import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env"
+import { appwriteConfig } from "@/lib/appwrite/config"
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get("code")
   const next = requestUrl.searchParams.get("next") || "/dashboard"
+  const secret = requestUrl.searchParams.get("secret")
 
-  if (!code) {
-    return NextResponse.redirect(new URL(next, request.url))
-  }
-
-  const supabaseResponse = NextResponse.redirect(new URL(next, request.url))
-
-  const supabase = createServerClient(
-    getSupabaseUrl(),
-    getSupabaseAnonKey(),
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options)
-          })
-        },
-      },
-    },
-  )
-
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-  if (error) {
+  if (!secret) {
     const errorUrl = new URL("/auth/sign-in", request.url)
-    errorUrl.searchParams.set(
-      "error",
-      getAuthFriendlyMessage(error, "We could not complete the sign-in flow."),
-    )
+    errorUrl.searchParams.set("error", "No session secret provided.")
     return NextResponse.redirect(errorUrl)
   }
 
-  return supabaseResponse
+  const res = await fetch(`${appwriteConfig.endpoint}/account/sessions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Appwrite-Project": appwriteConfig.projectId,
+    },
+    body: JSON.stringify({ secret }),
+  })
+
+  if (!res.ok) {
+    const errorUrl = new URL("/auth/sign-in", request.url)
+    errorUrl.searchParams.set("error", "Could not complete sign-in.")
+    return NextResponse.redirect(errorUrl)
+  }
+
+  const setCookie = res.headers.get("set-cookie")
+  const response = NextResponse.redirect(new URL(next, request.url))
+
+  if (setCookie) {
+    response.headers.set("set-cookie", setCookie)
+  }
+
+  return response
 }

@@ -14,7 +14,7 @@ const nextConfig = {
     workerThreads: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     unoptimized: true,

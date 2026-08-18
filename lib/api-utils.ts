@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { ZodError } from "zod"
+import { getAuthenticatedUser } from "@/lib/appwrite/server"
 
 export interface ApiError {
   message: string
@@ -38,14 +39,11 @@ export class ApiResponse {
 }
 
 export function handleApiError(error: unknown): NextResponse {
-  console.error("API Error:", error)
-
   if (error instanceof ZodError) {
     return ApiResponse.validationError(error.issues)
   }
 
   if (error instanceof Error) {
-    // Handle specific error types
     if (error.message.includes("Unauthorized")) {
       return ApiResponse.unauthorized()
     }
@@ -58,15 +56,13 @@ export function handleApiError(error: unknown): NextResponse {
   return ApiResponse.error("An unexpected error occurred", 500)
 }
 
-export async function withAuth<T>(
+export async function withAuth(
   handler: (user: any) => Promise<NextResponse>,
-  createClient: () => Promise<any>
 ): Promise<NextResponse> {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const user = await getAuthenticatedUser()
 
-    if (userError || !user) {
+    if (!user) {
       return ApiResponse.unauthorized()
     }
 

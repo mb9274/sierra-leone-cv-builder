@@ -832,7 +832,7 @@ export default function ATSCheckerClient() {
                         <Button
                         variant="outline"
                         onClick={() => {
-                          saveLocalCv(cvData)
+                          if (cvData) saveLocalCv(cvData)
                           router.push("/builder")
                         }}
                         className="h-auto py-4"

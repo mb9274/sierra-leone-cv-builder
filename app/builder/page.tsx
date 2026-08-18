@@ -245,21 +245,21 @@ export default function CVBuilderPage() {
           <div className="sticky top-3 z-20 px-3 flex items-center justify-between gap-3 print:hidden pointer-events-none">
             <Button
               variant="outline"
-              className="pointer-events-auto h-11 px-4 gap-2 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-full"
+              className="pointer-events-auto h-10 w-10 sm:h-11 sm:w-auto sm:px-4 gap-2 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-full"
               onClick={() => setShowLeftSidebar((visible) => !visible)}
             >
               {showLeftSidebar ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              <span className="text-xs font-semibold hidden sm:inline">
+              <span className="hidden sm:inline text-xs font-semibold">
                 {showLeftSidebar ? "Hide Info" : "Show Info"}
               </span>
             </Button>
             <Button
               variant="outline"
-              className="pointer-events-auto h-11 px-4 gap-2 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-full"
+              className="pointer-events-auto h-10 w-10 sm:h-11 sm:w-auto sm:px-4 gap-2 bg-white/95 backdrop-blur shadow-md border-gray-200 hover:bg-white rounded-full"
               onClick={() => setShowRightSidebar((visible) => !visible)}
             >
               <SlidersHorizontal className="h-5 w-5" />
-              <span className="text-xs font-semibold hidden sm:inline">
+              <span className="hidden sm:inline text-xs font-semibold">
                 {showRightSidebar ? "Hide Edit" : "Show Edit"}
               </span>
             </Button>

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
           achievements: "Successfully delivered 5+ projects on time and within budget"
         }
       ],
-      skills: skills.split(',').map(s => s.trim()).filter(s => s),
+      skills: skills.split(',').map((s: string) => s.trim()).filter((s: string) => s),
       languages: [
         { language: "English", proficiency: "Fluent" },
         { language: "Krio", proficiency: "Native" }

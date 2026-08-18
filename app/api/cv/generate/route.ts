@@ -1,6 +1,8 @@
-import { createClient } from "@/lib/supabase/server"
 import type { CVData } from "@/lib/types"
 import { NextRequest, NextResponse } from "next/server"
+import { getAuthenticatedUser } from "@/lib/appwrite/server"
+import { createAdminClient, ID } from "@/lib/appwrite/server"
+import { appwriteConfig } from "@/lib/appwrite/config"
 
 type GenerateInput = {
   fullName: string
@@ -668,10 +670,7 @@ JSON shape:
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthenticatedUser()
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -700,71 +699,28 @@ export async function POST(request: NextRequest) {
     const skills = normalizeSkills(input.skills || input.jobTitle || input.careerGoals)
     const generatedCV = await generateCvWithGemini(input, skills).catch(() => buildFallbackCv(input, skills))
 
-    const primary = await supabase
-      .from("cvs")
-      .insert({
-        user_id: user.id,
-        data: generatedCV,
-      })
-      .select("id, data, created_at, updated_at")
-      .single()
+    const { databases } = createAdminClient()
 
-    if (!primary.error) {
-      return NextResponse.json({
-        success: true,
-        message: "CV generated successfully",
-        data: {
-          ...generatedCV,
-          id: primary.data.id,
-          createdAt: primary.data.created_at,
-          updatedAt: primary.data.updated_at,
-        },
-      })
-    }
+    const doc = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.collectionId,
+      ID.unique(),
+      {
+        user_id: user.$id,
+        data: JSON.stringify(generatedCV),
+      },
+    )
 
-    const message = String(primary.error.message || "").toLowerCase()
-    const needsLegacyFallback =
-      (message.includes("column") && message.includes("data")) ||
-      message.includes("null value in column \"age\"") ||
-      message.includes("age")
-
-    if (needsLegacyFallback) {
-      const legacy = await supabase
-        .from("cvs")
-        .insert({
-          user_id: user.id,
-          full_name: generatedCV.personalInfo.fullName,
-          email: generatedCV.personalInfo.email,
-          phone: generatedCV.personalInfo.phone,
-          age: 25,
-          summary: generatedCV.personalInfo.summary || "",
-          education: generatedCV.education || [],
-          experience: generatedCV.experience || [],
-          skills: generatedCV.skills || [],
-          languages: generatedCV.languages || [],
-          photo_url: generatedCV.personalInfo.profilePhoto || "",
-          template: generatedCV.templateId || "sierra-leone-professional",
-        })
-        .select("id, created_at, updated_at")
-        .single()
-
-      if (!legacy.error) {
-        return NextResponse.json({
-          success: true,
-          message: "CV generated successfully",
-          data: {
-            ...generatedCV,
-            id: legacy.data.id,
-            createdAt: legacy.data.created_at,
-            updatedAt: legacy.data.updated_at,
-          },
-        })
-      }
-
-      return NextResponse.json({ error: `Database error: ${legacy.error.message}` }, { status: 500 })
-    }
-
-    return NextResponse.json({ error: `Database error: ${primary.error.message}` }, { status: 500 })
+    return NextResponse.json({
+      success: true,
+      message: "CV generated successfully",
+      data: {
+        ...generatedCV,
+        id: doc.$id,
+        createdAt: doc.$createdAt,
+        updatedAt: doc.$updatedAt,
+      },
+    })
   } catch (error) {
     console.error("AI generation error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

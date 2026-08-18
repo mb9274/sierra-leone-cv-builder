@@ -42,8 +42,8 @@ export async function POST(request: Request) {
       status: "pending",
     }
 
-    // For a production app, integrate with Resend, SendGrid, or Supabase email functions
-    console.log("[v0] Email verification data:", emailData)
+    // NOTE: Email delivery is not yet implemented
+    // See EMAIL_SETUP.md for integration instructions
 
     // Return success with verification details
     return ApiResponse.success({
