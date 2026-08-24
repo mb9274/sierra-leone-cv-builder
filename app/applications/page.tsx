@@ -14,16 +14,28 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<JobApplication[]>([])
 
   useEffect(() => {
-    const savedApplications = localStorage.getItem("job_applications")
-    if (savedApplications) {
+    const loadData = async () => {
       try {
-        setApplications(JSON.parse(savedApplications))
-      } catch (e) {
-        console.error("[v0] Failed to parse job applications:", e)
-        setApplications([])
+        const sessionResponse = await fetch("/api/auth/session", { cache: "no-store" })
+        if (sessionResponse.status === 401) {
+          router.push("/auth/sign-in?next=/applications")
+          return
+        }
+      } catch {}
+
+      const savedApplications = localStorage.getItem("job_applications")
+      if (savedApplications) {
+        try {
+          setApplications(JSON.parse(savedApplications))
+        } catch (e) {
+          console.error("[v0] Failed to parse job applications:", e)
+          setApplications([])
+        }
       }
     }
-  }, [])
+
+    loadData()
+  }, [router])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -52,17 +64,17 @@ export default function ApplicationsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard")}>
               <ArrowLeft className="size-5" />
             </Button>
             <div className="flex items-center gap-2">
               <FileText className="size-6 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">My Applications</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">My Applications</h1>
             </div>
           </div>
-          <Button onClick={() => router.push("/jobs")}>Browse Jobs</Button>
+          <Button onClick={() => router.push("/jobs")} className="w-full sm:w-auto">Browse Jobs</Button>
         </div>
       </header>
 
@@ -81,9 +93,9 @@ export default function ApplicationsPage() {
             {applications.map((app) => (
               <Card key={app.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="flex justify-between items-start gap-4">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                     <div className="flex-1">
-                      <CardTitle className="text-2xl mb-2">{app.jobTitle}</CardTitle>
+                      <CardTitle className="text-xl sm:text-2xl mb-2">{app.jobTitle}</CardTitle>
                       <CardDescription className="text-base">
                         <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
                           <span className="flex items-center gap-1 font-medium text-foreground">{app.company}</span>
@@ -102,7 +114,7 @@ export default function ApplicationsPage() {
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Contact Email</p>
                       <p className="font-medium">{app.applicantInfo.email}</p>

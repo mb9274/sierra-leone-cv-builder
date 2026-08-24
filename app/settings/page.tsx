@@ -2,23 +2,36 @@
 export const dynamic = "force-dynamic"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
-import { Key, Eye, EyeOff, ExternalLink } from "lucide-react"
+import { Key, Eye, EyeOff, ExternalLink, ArrowLeft } from "lucide-react"
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { toast } = useToast()
   const [apiKey, setApiKey] = useState("")
   const [showKey, setShowKey] = useState(false)
 
   useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" })
+        if (response.status === 401) {
+          router.push("/auth/sign-in?next=/settings")
+          return
+        }
+      } catch {}
+    }
+    checkAuth()
+
     const savedKey = localStorage.getItem("gemini_api_key") || ""
     setApiKey(savedKey)
-  }, [])
+  }, [router])
 
   const handleSaveKey = () => {
     if (!apiKey.trim()) {
@@ -41,7 +54,11 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+          <Button variant="ghost" onClick={() => router.back()} className="mb-2">
+            <ArrowLeft className="mr-2 size-4" />
+            Back
+          </Button>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Settings</h1>
           <p className="text-muted-foreground">Manage your account and AI features</p>
         </div>
 

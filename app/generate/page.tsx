@@ -135,7 +135,7 @@ export default function GeneratePage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8fafc,_#e2e8f0_60%,_#cbd5e1)]">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <Button variant="outline" onClick={() => router.push("/dashboard")} className="bg-white/80 backdrop-blur">
             <ArrowLeft className="mr-2 size-4" />
             Back to Dashboard
@@ -149,7 +149,7 @@ export default function GeneratePage() {
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <Card className="border-0 bg-white/90 shadow-2xl backdrop-blur">
             <CardHeader className="pb-4">
-              <CardTitle className="text-3xl">Generate a full CV</CardTitle>
+              <CardTitle className="text-2xl sm:text-3xl">Generate a full CV</CardTitle>
               <CardDescription className="text-base">
                 Enter your details and let AI build the first complete version of your CV.
               </CardDescription>

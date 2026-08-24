@@ -164,7 +164,7 @@ export default function CoverLetterPage() {
                         <ArrowLeft className="mr-2 size-4" />
                         Back
                     </Button>
-                    <h1 className="text-3xl font-bold">AI Cover Letter Generator</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold">AI Cover Letter Generator</h1>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">

@@ -166,7 +166,7 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
         <CardHeader className="border-b">
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-2xl">Apply for {job.title}</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl">Apply for {job.title}</CardTitle>
               <CardDescription>
                 {job.company} - {job.location}
               </CardDescription>
@@ -207,7 +207,7 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>
                     Full Name <span className="text-red-500">*</span>
@@ -293,7 +293,7 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Expected Salary</Label>
                   <Input
@@ -359,7 +359,7 @@ export function JobApplicationModal({ job, onClose }: JobApplicationModalProps) 
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <Label>Name</Label>
                       <Input

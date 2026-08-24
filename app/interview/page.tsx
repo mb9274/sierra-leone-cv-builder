@@ -276,8 +276,8 @@ export default function MockInterviewPage() {
             </Badge>
           </div>
         )}
-        <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-          <div className="space-y-4 pb-4">
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-4 pb-4" ref={scrollRef}>
             {messages.map((msg, i) => (
               <div
                 key={i}

@@ -193,9 +193,9 @@ export default function JobsPage() {
             {filteredJobs.map((job) => (
               <Card key={job.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="flex justify-between items-start gap-4">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                     <div className="flex-1">
-                      <CardTitle className="text-2xl mb-2">{job.title}</CardTitle>
+                      <CardTitle className="text-xl sm:text-2xl mb-2">{job.title}</CardTitle>
                       <CardDescription className="text-base">
                         <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
                           <span className="flex items-center gap-1 font-medium text-foreground">{job.company}</span>
@@ -263,7 +263,7 @@ export default function JobsPage() {
         ) : (
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Map Container */}
-            <Card className="lg:col-span-1 h-[600px] sticky top-4">
+            <Card className="lg:col-span-1 h-[400px] sm:h-[500px] lg:h-[600px] lg:sticky lg:top-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="size-5" />
@@ -271,7 +271,7 @@ export default function JobsPage() {
                 </CardTitle>
                 <CardDescription>Click on a job marker to see details</CardDescription>
               </CardHeader>
-              <CardContent className="h-[500px]">
+              <CardContent className="h-[300px] sm:h-[400px] lg:h-[500px]">
                 <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-green-50 rounded-lg overflow-hidden border-2 border-border">
                   {/* SVG Map of Sierra Leone with job markers */}
                   <svg viewBox="0 0 500 400" className="w-full h-full">

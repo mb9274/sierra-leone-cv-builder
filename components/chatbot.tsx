@@ -412,7 +412,7 @@ export function Chatbot({ userName, embedded = false }: ChatbotProps) {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyPress}
                 placeholder="Ask about the app, CVs, jobs, or the chatbot..."
                 className="flex-1"
                 disabled={isTyping}

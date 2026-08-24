@@ -12,7 +12,8 @@ import { loadAvailableCvs, loadLocalCvs, saveLocalCv } from "@/lib/cv-collection
 import { normalizeCvRecord } from "@/lib/cv-storage"
 import { getCvLocation } from "@/lib/cv-location"
 import { Chatbot } from "@/components/chatbot"
-import type { CVData } from "@/lib/types"
+import { computeCareerJourney } from "@/lib/career-journey"
+import type { CVData, JobApplication } from "@/lib/types"
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -286,7 +287,7 @@ export default function DashboardPage() {
                   className="h-11 w-full rounded-full border-slate-300 bg-white pl-10 pr-4 shadow-sm sm:w-64"
                 />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button variant="outline" size="icon" className="rounded-full bg-white">
                   <Bell className="size-4" />
                 </Button>
@@ -470,6 +471,7 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="overflow-x-auto">
                     <table className="min-w-full text-left text-sm">
                       <thead className="bg-slate-50 text-slate-500">
                         <tr>
@@ -495,6 +497,7 @@ export default function DashboardPage() {
                         })}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 )}
               </CardContent>

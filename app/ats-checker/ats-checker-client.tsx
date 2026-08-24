@@ -847,7 +847,7 @@ export default function ATSCheckerClient() {
                             </div>
                           </div>
                         </Button>
-                        <Button variant="outline" onClick={() => router.push("/learning")} className="h-auto py-4">
+                        <Button variant="outline" onClick={() => router.push("/learning-center")} className="h-auto py-4">
                           <div className="text-left">
                             <div className="font-semibold flex items-center gap-2 mb-1">
                               <BookOpen className="size-5" />

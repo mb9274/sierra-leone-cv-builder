@@ -3,16 +3,25 @@ export const dynamic = "force-dynamic"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Sparkles, MessageSquare, FileText, MapPin } from "lucide-react"
-import CoverLetterGenerator from "@/components/ai/cover-letter-generator" // We will create this
-import MockInterview from "@/components/ai/mock-interview" // We will create this
+import { Sparkles, MessageSquare, FileText, MapPin, ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import CoverLetterGenerator from "@/components/ai/cover-letter-generator"
+import MockInterview from "@/components/ai/mock-interview"
 
 export default function LearningCenterPage() {
+    const router = useRouter()
+
     return (
         <div className="min-h-screen bg-muted/30 p-4 md:p-8">
             <div className="max-w-5xl mx-auto space-y-8">
-                <div className="space-y-2">
-                    <h1 className="text-3xl font-bold flex items-center gap-2">
+                <div>
+                    <Button variant="ghost" onClick={() => router.back()} className="mb-2">
+                        <ArrowLeft className="mr-2 size-4" />
+                        Back
+                    </Button>
+                    <div className="space-y-2">
+                        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
                         <Sparkles className="size-8 text-primary" />
                         Learning Center
                     </h1>
@@ -91,6 +100,7 @@ export default function LearningCenterPage() {
                         <MockInterview />
                     </TabsContent>
                 </Tabs>
+                </div>
             </div>
         </div>
     )

@@ -7,7 +7,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Eye, Edit, User, ExternalLink, Cloud } from "lucide-react"
-import type { CVData } from "@/lib/types"
+import type { CVData, JobApplication } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { normalizeCvRecord } from "@/lib/cv-storage"
 import { saveLocalCv } from "@/lib/cv-collection"
@@ -16,6 +16,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
   const [cvs, setCvs] = useState<CVData[]>([])
+  const [applicationCount, setApplicationCount] = useState(0)
   const [userInfo, setUserInfo] = useState({ name: "", email: "" })
   const [avatarDataUrl, setAvatarDataUrl] = useState<string>("")
   const [loading, setLoading] = useState(true)
@@ -57,6 +58,16 @@ export default function ProfilePage() {
       if (savedAvatar) {
         setAvatarDataUrl(savedAvatar)
       }
+
+      try {
+        const savedApplications = localStorage.getItem("job_applications")
+        if (savedApplications) {
+          const parsed = JSON.parse(savedApplications)
+          if (Array.isArray(parsed)) {
+            setApplicationCount(parsed.length)
+          }
+        }
+      } catch {}
     }
 
     loadData()
@@ -180,7 +191,7 @@ export default function ProfilePage() {
                 <p className="text-sm text-muted-foreground">CVs Created</p>
               </div>
               <div className="text-center p-4 bg-muted rounded-lg">
-                <p className="text-2xl font-bold text-foreground">0</p>
+                <p className="text-2xl font-bold text-foreground">{applicationCount}</p>
                 <p className="text-sm text-muted-foreground">Applications</p>
               </div>
               <div className="text-center p-4 bg-muted rounded-lg">
@@ -208,7 +219,7 @@ export default function ProfilePage() {
                 {cvs.map((cv) => (
                   <div
                     key={cv.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors gap-3"
                   >
                     <div className="flex items-center gap-3">
                       <FileText className="size-8 text-primary" />
@@ -225,7 +236,7 @@ export default function ProfilePage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"

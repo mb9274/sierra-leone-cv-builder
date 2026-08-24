@@ -55,10 +55,10 @@ export default function SignUpPage() {
           setError(`Registration failed: ${message}`)
         }
       } else {
-        setMessage(payload?.message || "Account created successfully. Check your email if confirmation is required.")
+        setMessage(payload?.message || "Account created successfully!")
         setTimeout(() => {
-          router.push("/auth/sign-in")
-        }, 2000)
+          router.push(payload?.next || "/dashboard")
+        }, 1500)
       }
     } catch (err) {
       setError(getAuthFriendlyMessage(err, "An unexpected error occurred. Please try again."))
@@ -83,7 +83,7 @@ export default function SignUpPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Or continue with email
+                Create account with email
               </span>
             </div>
           </div>

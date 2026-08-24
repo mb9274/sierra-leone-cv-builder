@@ -10,6 +10,14 @@ const protectedPrefixes = [
   "/settings",
   "/payments",
   "/generate",
+  "/cover-letter",
+  "/interview",
+  "/documents",
+  "/cv",
+  "/ats-checker",
+  "/learning-center",
+  "/blockchain",
+  "/score",
 ]
 
 export async function proxy(request: NextRequest) {

@@ -19,40 +19,48 @@ function buildCoverLetterFallback(prompt: string, cvData: any) {
     prompt.match(/at\s+(.+?)(?:\n|$)/i)?.[1]?.trim() ||
     "your company"
   const name = cvData?.personalInfo?.fullName || "Your Name"
-  const summary = cvData?.personalInfo?.summary || "my professional background"
+  const summary = cvData?.personalInfo?.summary
   const experience = cvData?.experience?.[0]
+  const topSkills = cvData?.skills?.slice(0, 4) || []
   const experienceLine = experience
-    ? `My background as ${experience.position || "a professional"} at ${experience.company || "my previous company"} has helped me build practical experience in ${cvData?.skills?.slice(0, 3).join(", ") || "communication, problem solving, and teamwork"}.`
-    : `I bring a strong commitment to learning, professionalism, and delivering quality work in ${cvData?.skills?.slice(0, 3).join(", ") || "communication, problem solving, and teamwork"}.`
+    ? `In my role as ${experience.position || "a professional"} at ${experience.company || "my previous organization"}, I have developed strong capabilities in ${topSkills.join(", ") || "communication, problem solving, and teamwork"}. ${(experience.description || "").split("\n")[0]?.replace(/^-\s*/, "") || ""}`
+    : `I bring a strong commitment to learning, professionalism, and delivering quality work. My skills in ${topSkills.join(", ") || "communication, problem solving, and teamwork"} have been developed through academic and practical experience.`
 
   return `Dear Hiring Manager,
 
-I am writing to express my interest in the ${jobTitle} position at ${company}.
+I am writing to express my strong interest in the ${jobTitle} position at ${company}.
 
 ${experienceLine}
 
-My professional summary reflects ${summary}. I believe this background, combined with my motivation to contribute, makes me a strong candidate for this role.
+${summary ? `My professional background reflects: ${summary}. ` : ""}I believe this experience, combined with my dedication to contributing meaningfully to your team, makes me a well-suited candidate for this role.
 
-Thank you for your time and consideration. I would welcome the opportunity to discuss how I can contribute to your team.
+I am eager to bring my skills and enthusiasm to ${company} and contribute to your continued success. Thank you for considering my application.
+
+I look forward to the opportunity to discuss how I can add value to your team.
 
 Sincerely,
 ${name}`
 }
 
 function buildInterviewQuestions(cvData: any) {
-  const fullName = cvData?.personalInfo?.fullName || "the candidate"
   const topSkills = cvData?.skills?.slice(0, 3) || []
   const topExperience = cvData?.experience?.[0]
 
-  return [
-    `Can you tell me about yourself and what makes you a good fit for this role, ${fullName}?`,
-    `How have your skills in ${topSkills.join(", ") || "communication and teamwork"} helped you in past roles?`,
-    topExperience
-      ? `Tell me about your experience as ${topExperience.position} at ${topExperience.company}.`
-      : "Can you describe a project or achievement you are most proud of?",
-    "How do you handle pressure, deadlines, or difficult challenges at work?",
-    "Do you have any questions for us about the role or the company?",
+  const questions = [
+    "Can you tell me about yourself and what motivates you in your career?",
+    `What are your strongest skills, and how have you applied them${topExperience ? ` in your role as ${topExperience.position}` : ""}?`,
   ]
+
+  if (topExperience) {
+    questions.push(`Tell me about a key achievement or project from your time at ${topExperience.company || "your previous role"}.`)
+  } else {
+    questions.push("Can you describe a project or achievement you are most proud of?")
+  }
+
+  questions.push("How do you handle challenges, tight deadlines, or working under pressure?")
+  questions.push("Do you have any questions for us about the role or the company?")
+
+  return questions
 }
 
 function buildInterviewFollowUp(prompt: string, cvData: any) {
@@ -96,7 +104,16 @@ function cleanGeminiText(text: string) {
   return output
 }
 
+function isValidGeminiKey(key: string) {
+  return Boolean(key && (key.startsWith("AIza") || key.length > 30))
+}
+
 async function callGemini(prompt: string, apiKey: string, maxOutputTokens = 1200, temperature = 0.4) {
+  if (!isValidGeminiKey(apiKey)) {
+    console.warn("[v0] Gemini API key format appears invalid. AI features will use smart templates.")
+    return ""
+  }
+
   const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
 
   for (const model of models) {
@@ -265,7 +282,7 @@ export async function POST(request: NextRequest) {
 
       return ApiResponse.success({
         message:
-          "I can answer general questions better when Gemini is enabled. Add your Gemini API key in Settings, then ask me anything again.",
+          "I'm currently running in template mode because no valid Gemini API key is configured. To enable full AI responses, add a Google Gemini API key (starts with 'AIza') in Settings. In the meantime, I can still help you navigate the app, explain features, and provide general career guidance.",
         fallback: true,
       })
     }
@@ -502,6 +519,151 @@ RETURN THE FEEDBACK AND NEXT QUESTION AS PLAIN TEXT.`
 
       if (!text) {
         return handleFallbackActions(action, prompt, cvData)
+      }
+
+      return ApiResponse.success({ message: text })
+    }
+
+    if (action === "analyze_job_match") {
+      const cvText = `
+Name: ${cvData.personalInfo?.fullName}
+Summary: ${cvData.personalInfo?.summary || "Not provided"}
+Education: ${cvData.education?.map((e: any) => `${e.degree} in ${e.fieldOfStudy} from ${e.institution}`).join("; ") || "Not provided"}
+Experience: ${cvData.experience?.map((e: any) => `${e.position} at ${e.company} - ${e.description || "No description"}`).join("; ") || "Not provided"}
+Skills: ${cvData.skills?.join(", ") || "Not provided"}
+Languages: ${cvData.languages?.map((l: any) => `${l.language} (${l.proficiency})`).join(", ") || "Not provided"}`
+
+      const jobMatchPrompt = `You are an expert career advisor in Sierra Leone. Analyze how well this candidate's CV matches the job below.
+
+CANDIDATE CV:
+${cvText}
+
+JOB DETAILS:
+${prompt}
+
+INSTRUCTIONS:
+1. Compare the candidate's actual skills, education, and experience against the job requirements.
+2. Identify MATCHING qualifications (what the candidate already has).
+3. Identify GAPS (what the candidate is missing).
+4. Give a match score out of 100.
+5. Be honest and specific. Do NOT invent skills or experience the candidate does not have.
+6. Keep it under 200 words total.
+
+RETURN ONLY VALID JSON:
+{
+  "score": 75,
+  "matching": ["Skill/experience 1 that matches", "Skill/experience 2 that matches"],
+  "gaps": ["Gap 1", "Gap 2"],
+  "summary": "Brief overall assessment"
+}`
+
+      const matchText = await callGemini(jobMatchPrompt, apiKey, 800, 0.3)
+
+      if (matchText) {
+        try {
+          let jsonStr = matchText
+          if (jsonStr.includes("```json")) jsonStr = jsonStr.split("```json")[1].split("```")[0]
+          else if (jsonStr.includes("```")) jsonStr = jsonStr.split("```")[1].split("```")[0]
+          const parsed = JSON.parse(jsonStr.trim())
+          return ApiResponse.success({ analysis: parsed })
+        } catch {
+          return ApiResponse.success({
+            analysis: {
+              score: 50,
+              matching: [],
+              gaps: [],
+              summary: matchText.substring(0, 300),
+            },
+          })
+        }
+      }
+
+      const cvSkills = cvData.skills?.map((s: string) => s.toLowerCase()) || []
+      const jobReqs = prompt.match(/Requirements?:\s*(.+)/i)?.[1]?.split(/[,;]/) || []
+      const matched = jobReqs.filter((r: string) => cvSkills.some((s: string) => s.includes(r.trim().toLowerCase()) || r.trim().toLowerCase().includes(s)))
+      const score = jobReqs.length > 0 ? Math.round((matched.length / jobReqs.length) * 100) : 50
+
+      return ApiResponse.success({
+        analysis: {
+          score,
+          matching: matched.map((r: string) => r.trim()),
+          gaps: jobReqs.filter((r: string) => !matched.includes(r)).map((r: string) => r.trim()),
+          summary: `Based on keyword analysis, your CV matches ${score}% of the job requirements.`,
+        },
+        fallback: true,
+      })
+    }
+
+    if (action === "job_specific_interview") {
+      const cvText = `
+Name: ${cvData.personalInfo?.fullName}
+Experience: ${cvData.experience?.map((e: any) => `${e.position} at ${e.company} - ${e.description || ""}`).join("; ")}
+Skills: ${cvData.skills?.join(", ")}
+Education: ${cvData.education?.map((e: any) => `${e.degree} in ${e.fieldOfStudy}`).join("; ")}`
+
+      const jobContext = context?.jobTitle
+        ? `Job Title: ${context.jobTitle}\nCompany: ${context.jobCompany || ""}\nDescription: ${context.jobDescription || ""}\nRequirements: ${context.jobRequirements || ""}`
+        : prompt
+
+      if (prompt === "start") {
+        const startPrompt = `You are an HR Manager conducting a mock interview for a specific job opening.
+
+CANDIDATE CV:
+${cvText}
+
+JOB DETAILS:
+${jobContext}
+
+INSTRUCTIONS:
+1. Generate 5 interview questions tailored to THIS specific job and the candidate's background.
+2. Questions should test whether the candidate can do THIS particular job.
+3. Mix behavioral, technical, and situational questions.
+4. Return the questions as a JSON array.
+
+RETURN ONLY VALID JSON:
+{ "questions": ["Question 1", "Question 2", "Question 3", "Question 4", "Question 5"] }`
+
+        const text = await callGemini(startPrompt, apiKey, 1000, 0.6)
+
+        if (text) {
+          try {
+            let jsonStr = text
+            if (jsonStr.includes("```json")) jsonStr = jsonStr.split("```json")[1].split("```")[0]
+            else if (jsonStr.includes("```")) jsonStr = jsonStr.split("```")[1].split("```")[0]
+            const parsed = JSON.parse(jsonStr.trim())
+            if (parsed.questions?.length) {
+              return ApiResponse.success(parsed)
+            }
+          } catch {
+            // fall through
+          }
+        }
+
+        return handleFallbackActions("mock_interview", "start", cvData)
+      }
+
+      const followUpPrompt = `You are an HR Manager conducting a job-specific mock interview.
+
+CANDIDATE CV:
+${cvText}
+
+JOB DETAILS:
+${jobContext}
+
+User's latest answer: "${prompt}"
+
+INSTRUCTIONS:
+1. Give brief, constructive feedback on their answer.
+2. Ask ONE follow-up question that connects to the specific job role.
+3. Be professional and encouraging.
+4. Keep it concise.
+
+RETURN AS PLAIN TEXT.`
+
+      const text = await callGemini(followUpPrompt, apiKey, 800, 0.6)
+
+      if (!text) {
+        return handleFallbackActions("mock_interview", prompt, cvData)
       }
 
       return ApiResponse.success({ message: text })
