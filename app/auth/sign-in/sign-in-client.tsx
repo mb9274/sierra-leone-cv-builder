@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { getAuthFriendlyMessage } from "@/lib/auth-errors"
-import { GitHubIcon } from "@/components/github-icon"
+import { GoogleIcon } from "@/components/google-icon"
 
 export default function SignInClient() {
   const router = useRouter()
@@ -31,7 +31,7 @@ export default function SignInClient() {
   const handleGoogleSignIn = () => {
     setGoogleLoading(true)
     setError("")
-    window.location.href = `/api/auth/oauth?provider=github&next=${encodeURIComponent(next)}`
+    window.location.href = `/api/auth/oauth?provider=google&next=${encodeURIComponent(next)}`
   }
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
@@ -92,9 +92,9 @@ export default function SignInClient() {
             {googleLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <GitHubIcon />
+              <GoogleIcon />
             )}
-            <span className="ml-2">{googleLoading ? "Connecting to GitHub..." : "Continue with GitHub"}</span>
+            <span className="ml-2">{googleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
           </Button>
 
           <div className="relative">
