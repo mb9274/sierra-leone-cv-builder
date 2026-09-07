@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { getAuthFriendlyMessage } from "@/lib/auth-errors"
+import { GoogleIcon } from "@/components/google-icon"
 
 export default function SignInClient() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function SignInClient() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState("")
 
   const next = searchParams.get("next") || "/dashboard"
@@ -25,6 +27,12 @@ export default function SignInClient() {
     ? getAuthFriendlyMessage(routeError, "We could not sign you in.")
     : ""
   const visibleError = error || routeErrorMessage || ""
+
+  const handleGoogleSignIn = () => {
+    setGoogleLoading(true)
+    setError("")
+    window.location.href = `/api/auth/oauth?provider=google&next=${encodeURIComponent(next)}`
+  }
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -74,13 +82,28 @@ export default function SignInClient() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={googleLoading}
+            onClick={handleGoogleSignIn}
+          >
+            {googleLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <GoogleIcon />
+            )}
+            <span className="ml-2">{googleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
+          </Button>
+
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <Separator className="w-full" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Sign in with email
+                or sign in with email
               </span>
             </div>
           </div>

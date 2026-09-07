@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { getAuthFriendlyMessage } from "@/lib/auth-errors"
+import { GoogleIcon } from "@/components/google-icon"
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -18,8 +19,15 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
+
+  const handleGoogleSignUp = () => {
+    setGoogleLoading(true)
+    setError("")
+    window.location.href = "/api/auth/oauth?provider=google&next=/dashboard"
+  }
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,13 +85,28 @@ export default function SignUpPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={googleLoading}
+            onClick={handleGoogleSignUp}
+          >
+            {googleLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <GoogleIcon />
+            )}
+            <span className="ml-2">{googleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
+          </Button>
+
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <Separator className="w-full" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Create account with email
+                or create account with email
               </span>
             </div>
           </div>
