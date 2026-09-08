@@ -1,7 +1,7 @@
 "use client"
 export const dynamic = "force-dynamic"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -20,6 +20,7 @@ import { BlueWaveLayout } from "@/components/cv-layouts/blue-wave-layout"
 import { loadAvailableCvs, saveLocalCv } from "@/lib/cv-collection"
 import { sanitizeCvRecord } from "@/lib/cv-storage"
 import { getCvLocation } from "@/lib/cv-location"
+import { FormSidebar } from "@/components/builder/form-sidebar"
 
 const templateThemes: Record<string, any> = {
   "sierra-leone-professional": {
@@ -141,6 +142,7 @@ export default function PreviewPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [editedData, setEditedData] = useState<CVData | null>(null)
   const [saving, setSaving] = useState(false)
+  const [selectedElement, setSelectedElement] = useState<string | null>(null)
   /* Verification state removed */
 
   const normalizeCvDates = (data: any): CVData => {
@@ -174,7 +176,7 @@ export default function PreviewPage() {
     }
   }, [router])
 
-  const handleSaveChanges = () => {
+const handleSaveChanges = () => {
     if (editedData) {
       setSaving(true)
       const now = new Date()
@@ -186,6 +188,7 @@ export default function PreviewPage() {
       setTimeout(() => {
         setSaving(false)
         setIsEditing(false)
+        setSelectedElement(null)
         toast({
           title: "Changes Saved",
           description: "Your CV has been updated successfully.",
@@ -193,6 +196,21 @@ export default function PreviewPage() {
       }, 500)
     }
   }
+
+  const handleEditChange = useCallback((path: string, value: any) => {
+    setEditedData((prev) => {
+      if (!prev) return prev
+      const keys = path.split(".")
+      const updated = JSON.parse(JSON.stringify(prev))
+      let obj = updated
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!obj[keys[i]]) obj[keys[i]] = {}
+        obj = obj[keys[i]]
+      }
+      obj[keys[keys.length - 1]] = value
+      return updated
+    })
+  }, [])
 
   const handlePrint = () => {
     window.print()
@@ -250,7 +268,7 @@ export default function PreviewPage() {
           <div className="flex gap-2">
             {isEditing ? (
               <>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                <Button variant="outline" onClick={() => { setIsEditing(false); setSelectedElement(null) }}>
                   Cancel
                 </Button>
                 <Button onClick={handleSaveChanges} disabled={saving}>
@@ -269,7 +287,7 @@ export default function PreviewPage() {
               </>
             ) : (
               <>
-                <Button variant="outline" onClick={() => setIsEditing(true)}>
+                <Button variant="outline" onClick={() => { setIsEditing(true); setSelectedElement("personalInfo") }}>
                   <Edit className="mr-2 size-4" />
                   Edit Preview
                 </Button>
@@ -299,7 +317,22 @@ export default function PreviewPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 print:p-0">
+      {/* Full editor drawer (add/remove/edit any section) */}
+      <div
+        className={`fixed inset-y-16 left-0 z-40 w-[min(480px,92vw)] bg-white shadow-2xl border-r print:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+          isEditing ? "translate-x-0 opacity-100 pointer-events-auto" : "-translate-x-full opacity-0 pointer-events-none"
+        }`}
+      >
+        <FormSidebar
+          data={editedData}
+          onChange={handleEditChange}
+          selectedElement={selectedElement}
+          onSelectElement={setSelectedElement}
+          onClose={() => setIsEditing(false)}
+        />
+      </div>
+
+      <div className={`container mx-auto px-4 py-8 print:p-0 ${isEditing ? "md:pl-[520px] lg:pl-[560px]" : ""} transition-all duration-300`}>
         <div className="max-w-4xl mx-auto mb-6 print:hidden">
           {/* Verification Card Removed */}
         </div>
