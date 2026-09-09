@@ -699,26 +699,36 @@ export async function POST(request: NextRequest) {
     const skills = normalizeSkills(input.skills || input.jobTitle || input.careerGoals)
     const generatedCV = await generateCvWithGemini(input, skills).catch(() => buildFallbackCv(input, skills))
 
-    const { databases } = createAdminClient()
+    let stored: { id: string; createdAt: string; updatedAt: string } | null = null
 
-    const doc = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.collectionId,
-      ID.unique(),
-      {
-        user_id: user.$id,
-        data: JSON.stringify(generatedCV),
-      },
-    )
+    try {
+      const { databases } = createAdminClient()
+
+      const doc = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.collectionId,
+        ID.unique(),
+        {
+          user_id: user.$id,
+          data: JSON.stringify(generatedCV),
+        },
+      )
+
+      stored = { id: doc.$id, createdAt: doc.$createdAt, updatedAt: doc.$updatedAt }
+    } catch (dbError) {
+      console.error("Failed to persist CV to database (continuing):", dbError)
+    }
+
+    const now = new Date()
 
     return NextResponse.json({
       success: true,
       message: "CV generated successfully",
       data: {
         ...generatedCV,
-        id: doc.$id,
-        createdAt: doc.$createdAt,
-        updatedAt: doc.$updatedAt,
+        id: stored?.id || `cv-${Date.now()}`,
+        createdAt: stored?.createdAt || now.toISOString(),
+        updatedAt: stored?.updatedAt || now.toISOString(),
       },
     })
   } catch (error) {

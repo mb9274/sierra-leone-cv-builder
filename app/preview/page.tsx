@@ -163,10 +163,22 @@ export default function PreviewPage() {
         return
       }
 
-      const data = normalizeCvDates(availableCvs[0])
+const data = normalizeCvDates(availableCvs[0])
       setCvData(data)
       setEditedData(data)
       saveLocalCv(data)
+
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get("edit") === "1") {
+          setIsEditing(true)
+          setSelectedElement("personalInfo")
+          toast({
+            title: "Editing mode enabled",
+            description: "Add or remove any section on the left, then click Save Changes.",
+          })
+        }
+      }
     }
 
     loadCurrentCv()

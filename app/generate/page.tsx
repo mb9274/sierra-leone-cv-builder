@@ -106,10 +106,10 @@ export default function GeneratePage() {
 
       toast({
         title: "CV generated",
-        description: "Your full AI-generated CV is ready.",
+        description: "Your full AI-generated CV is ready. Editing is now open — add or remove any info.",
       })
 
-      router.push("/preview")
+      router.push("/preview?edit=1")
     } catch (error) {
       toast({
         title: "Generation failed",
