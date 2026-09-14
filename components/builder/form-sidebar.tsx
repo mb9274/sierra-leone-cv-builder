@@ -281,6 +281,15 @@ export function FormSidebar({ data, onChange, selectedElement, onSelectElement, 
                                                         <Trash2 className="size-4" />
                                                     </Button>
                                                 </div>
+                                                <div className="grid gap-1">
+                                                    <Label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Position / Job Title</Label>
+                                                    <Input
+                                                        placeholder="e.g. Software Engineer"
+                                                        value={exp.position || ""}
+                                                        onChange={(e) => onChange(`experience.${index}.position`, e.target.value)}
+                                                        className="h-8 text-sm border-gray-200"
+                                                    />
+                                                </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
                                                     <div className="grid gap-1">
                                                         <Label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Location</Label>
