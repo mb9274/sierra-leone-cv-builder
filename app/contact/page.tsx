@@ -210,10 +210,10 @@ export default function ContactPage() {
                 <MessageSquare className="w-6 h-6 text-primary" />
                 <CardTitle>Need Quick Help?</CardTitle>
               </div>
-              <CardDescription>Try our AI chatbot for instant answers</CardDescription>
+              <CardDescription>Get quick answers about building your CV</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">Our AI chatbot can help you with:</p>
+              <p className="text-sm text-muted-foreground">We can help you with:</p>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary" />
@@ -221,7 +221,7 @@ export default function ContactPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  Job search strategies
+                  Cover letter writing
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary" />
@@ -233,7 +233,7 @@ export default function ContactPage() {
                 </li>
               </ul>
               <p className="text-sm font-medium text-foreground">
-                Look for the chat icon in the bottom-right corner of any page!
+                Contact us using the form or email above.
               </p>
             </CardContent>
           </Card>

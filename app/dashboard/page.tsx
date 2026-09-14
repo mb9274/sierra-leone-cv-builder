@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast"
 import { loadAvailableCvs, loadLocalCvs, saveLocalCv } from "@/lib/cv-collection"
 import { normalizeCvRecord } from "@/lib/cv-storage"
 import { getCvLocation } from "@/lib/cv-location"
-import { Chatbot } from "@/components/chatbot"
 import type { CVData } from "@/lib/types"
 import {
   ArrowDownRight,
@@ -62,7 +61,6 @@ export default function DashboardPage() {
   const [authLoading, setAuthLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [error, setError] = useState("")
-  const [assistantOpen, setAssistantOpen] = useState(false)
 
   useEffect(() => {
     loadDashboard()
@@ -263,14 +261,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button
-                type="button"
-                onClick={() => setAssistantOpen((prev) => !prev)}
-                className="h-11 rounded-full bg-emerald-600 px-4 text-white hover:bg-emerald-700"
-              >
-                <MessageSquareText className="mr-2 size-4" />
-                AI Assistant
-              </Button>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                 <Input
@@ -294,12 +284,6 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-
-          {assistantOpen && (
-            <div className="mb-6 max-w-2xl">
-              <Chatbot userName={currentUser?.name || undefined} embedded />
-            </div>
-          )}
 
           <div className="mb-6 grid gap-4 md:grid-cols-[1.5fr_1fr]">
             <Card className="border-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 text-white shadow-xl">
