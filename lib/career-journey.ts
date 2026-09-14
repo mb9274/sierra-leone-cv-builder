@@ -1,4 +1,4 @@
-import type { CVData, JobApplication } from "./types"
+import type { CVData } from "./types"
 
 export interface JourneyStep {
   id: string
@@ -11,7 +11,7 @@ export interface JourneyStep {
 
 export function computeCareerJourney(
   cvs: CVData[],
-  applications: JobApplication[],
+  _applications: unknown[],
   mockInterviewDone: boolean,
 ): JourneyStep[] {
   const primaryCv = cvs[0] || null
@@ -23,10 +23,6 @@ export function computeCareerJourney(
   )
 
   const hasCV = cvs.length > 0
-
-  const hasOpportunity = hasCV
-
-  const hasApplication = applications.length > 0
 
   const hasInterview = mockInterviewDone
 
@@ -52,26 +48,6 @@ export function computeCareerJourney(
       current: hasProfile && !hasCV,
     },
     {
-      id: "opportunity",
-      label: "Opportunity",
-      description: hasCV
-        ? "Browse matched jobs"
-        : "Create a CV first to see matched jobs",
-      href: "/jobs",
-      completed: hasOpportunity,
-      current: hasCV && !hasApplication,
-    },
-    {
-      id: "application",
-      label: "Application",
-      description: hasApplication
-        ? `${applications.length} application${applications.length > 1 ? "s" : ""} submitted`
-        : "Apply to a job",
-      href: "/jobs",
-      completed: hasApplication,
-      current: hasCV && !hasApplication,
-    },
-    {
       id: "interview",
       label: "Interview",
       description: hasInterview
@@ -79,7 +55,7 @@ export function computeCareerJourney(
         : "Practice with AI interviewer",
       href: "/interview",
       completed: hasInterview,
-      current: hasApplication && !hasInterview,
+      current: hasCV && !hasInterview,
     },
   ]
 
@@ -88,7 +64,7 @@ export function computeCareerJourney(
 
 export function getJourneyProgress(
   cvs: CVData[],
-  applications: JobApplication[],
+  applications: unknown[],
   mockInterviewDone: boolean,
 ): number {
   const steps = computeCareerJourney(cvs, applications, mockInterviewDone)

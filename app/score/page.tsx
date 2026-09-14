@@ -254,9 +254,6 @@ export default function CVScorePage() {
                 <Button size="lg" onClick={() => router.push("/builder")}>
                   Improve My CV
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => router.push("/jobs")}>
-                  Find Jobs
-                </Button>
               </div>
             </>
           )}

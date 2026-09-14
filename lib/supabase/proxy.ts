@@ -16,7 +16,6 @@ export async function updateSession(request: NextRequest) {
     "/builder",
     "/preview",
     "/profile",
-    "/applications",
     "/settings",
     "/payments",
   ]

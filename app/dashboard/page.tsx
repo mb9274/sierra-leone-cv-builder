@@ -12,15 +12,12 @@ import { loadAvailableCvs, loadLocalCvs, saveLocalCv } from "@/lib/cv-collection
 import { normalizeCvRecord } from "@/lib/cv-storage"
 import { getCvLocation } from "@/lib/cv-location"
 import { Chatbot } from "@/components/chatbot"
-import { computeCareerJourney } from "@/lib/career-journey"
-import type { CVData, JobApplication } from "@/lib/types"
+import type { CVData } from "@/lib/types"
 import {
   ArrowDownRight,
   ArrowUpRight,
   Bell,
   BookOpen,
-  BriefcaseBusiness,
-  ClipboardList,
   Eye,
   FileText,
   GraduationCap,
@@ -156,8 +153,6 @@ export default function DashboardPage() {
     { label: "Builder", href: "/builder", icon: FileText },
     { label: "Upload CV", href: "/cv", icon: Upload },
     { label: "ATS Checker", href: "/ats-checker", icon: ShieldCheck },
-    { label: "Jobs", href: "/jobs", icon: BriefcaseBusiness },
-    { label: "Applications", href: "/applications", icon: ClipboardList },
     { label: "Cover Letter", href: "/cover-letter", icon: MessageSquareText },
     { label: "Interview", href: "/interview", icon: GraduationCap },
     { label: "Learning", href: "/learning-center", icon: BookOpen },
@@ -529,15 +524,6 @@ export default function DashboardPage() {
                         className="h-2 rounded-full bg-teal-500"
                         style={{ width: `${cvs.length ? Math.round((atsReady / cvs.length) * 100) : 0}%` }}
                       />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-2 flex items-center justify-between text-sm text-slate-600">
-                      <span>Job applications</span>
-                      <span>{Math.min(100, cvs.length * 20)}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-200">
-                      <div className="h-2 rounded-full bg-pink-500" style={{ width: `${Math.min(100, cvs.length * 20)}%` }} />
                     </div>
                   </div>
                 </div>

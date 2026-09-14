@@ -7,7 +7,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Eye, Edit, User, ExternalLink, Cloud } from "lucide-react"
-import type { CVData, JobApplication } from "@/lib/types"
+import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { normalizeCvRecord } from "@/lib/cv-storage"
 import { saveLocalCv } from "@/lib/cv-collection"
@@ -16,7 +16,6 @@ export default function ProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
   const [cvs, setCvs] = useState<CVData[]>([])
-  const [applicationCount, setApplicationCount] = useState(0)
   const [userInfo, setUserInfo] = useState({ name: "", email: "" })
   const [avatarDataUrl, setAvatarDataUrl] = useState<string>("")
   const [loading, setLoading] = useState(true)
@@ -58,16 +57,6 @@ export default function ProfilePage() {
       if (savedAvatar) {
         setAvatarDataUrl(savedAvatar)
       }
-
-      try {
-        const savedApplications = localStorage.getItem("job_applications")
-        if (savedApplications) {
-          const parsed = JSON.parse(savedApplications)
-          if (Array.isArray(parsed)) {
-            setApplicationCount(parsed.length)
-          }
-        }
-      } catch {}
     }
 
     loadData()
@@ -185,14 +174,10 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-2 gap-4">
               <div className="text-center p-4 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-foreground">{cvs.length}</p>
                 <p className="text-sm text-muted-foreground">CVs Created</p>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <p className="text-2xl font-bold text-foreground">{applicationCount}</p>
-                <p className="text-sm text-muted-foreground">Applications</p>
               </div>
               <div className="text-center p-4 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-foreground">Member</p>

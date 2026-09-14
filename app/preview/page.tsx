@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Download, Briefcase, Edit, Printer, Check, FileSearch } from "lucide-react"
+import { ArrowLeft, Download, Edit, Printer, Check, FileSearch } from "lucide-react"
 import type { CVData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
@@ -241,11 +241,6 @@ const handleSaveChanges = () => {
     window.print()
   }
 
-  const handleViewJobs = () => {
-    router.push("/jobs")
-  }
-
-
   if (!cvData || !editedData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -318,10 +313,6 @@ const handleSaveChanges = () => {
                 <Button onClick={handleDownloadPDF}>
                   <Download className="mr-2 size-4" />
                   Download PDF
-                </Button>
-                <Button onClick={handleViewJobs} className="bg-primary">
-                  <Briefcase className="mr-2 size-4" />
-                  Find Jobs
                 </Button>
               </>
             )}
@@ -441,18 +432,6 @@ const handleSaveChanges = () => {
             <Button variant="outline" className="w-full bg-transparent">
               Download PDF
             </Button>
-          </Card>
-
-          <Card
-            className="p-6 border-2 hover:border-primary transition-all hover:scale-105 cursor-pointer"
-            onClick={handleViewJobs}
-          >
-            <Briefcase className="size-10 text-primary mb-4" />
-            <h3 className="text-xl font-bold text-foreground mb-2">Find Matching Jobs</h3>
-            <p className="text-muted-foreground mb-4">
-              We'll scan your CV and match you with relevant job openings in Sierra Leone.
-            </p>
-            <Button className="w-full">View Job Matches</Button>
           </Card>
         </div>
       </div>

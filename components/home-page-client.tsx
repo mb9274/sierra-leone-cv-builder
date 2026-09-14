@@ -10,7 +10,6 @@ import {
   Layout,
   Layers,
   Palette,
-  Play,
   Ruler,
   Settings,
   Star,
@@ -23,13 +22,13 @@ import { readStoredJson } from "@/lib/safe-json"
 
 export function HomePageClient() {
   const router = useRouter()
-  const [stats, setStats] = useState({ cvsCreated: 0, usersHelped: 0, jobsMatched: 0 })
+  const [stats, setStats] = useState({ cvsCreated: 0, usersHelped: 0 })
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
 
-    const targetStats = { cvsCreated: 2847, usersHelped: 1523, jobsMatched: 892 }
+    const targetStats = { cvsCreated: 2847, usersHelped: 1523 }
     const savedCVs = readStoredJson<unknown[]>("cvbuilder_cvs", [])
     const savedCVCount = Array.isArray(savedCVs) ? savedCVs.length : 0
 
@@ -43,7 +42,6 @@ export function HomePageClient() {
       setStats({
         cvsCreated: Math.floor(targetStats.cvsCreated * progress),
         usersHelped: Math.floor(targetStats.usersHelped * progress),
-        jobsMatched: Math.floor(targetStats.jobsMatched * progress),
       })
       if (currentStep >= 60) clearInterval(interval)
     }, 33)
@@ -82,10 +80,6 @@ export function HomePageClient() {
                 Get started for free
                 <ArrowRight className="ml-2 size-4" />
               </Button>
-              <Button onClick={() => router.push("/jobs")} variant="outline" size="lg" className="h-12 px-8">
-                <Play className="mr-2 size-4" />
-                Watch demo
-              </Button>
             </div>
           </div>
 
@@ -105,7 +99,7 @@ export function HomePageClient() {
 
       <section className="border-y border-border bg-muted py-12">
         <div className="container mx-auto px-4 max-w-6xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
             <div>
               <div className="text-2xl md:text-3xl font-bold text-primary">{stats.cvsCreated.toLocaleString()}+</div>
               <div className="text-sm text-muted-foreground">CVs Created</div>
@@ -113,10 +107,6 @@ export function HomePageClient() {
             <div>
               <div className="text-2xl md:text-3xl font-bold text-foreground">{stats.usersHelped.toLocaleString()}</div>
               <div className="text-sm text-muted-foreground">Users Helped</div>
-            </div>
-            <div>
-              <div className="text-2xl md:text-3xl font-bold text-foreground">{stats.jobsMatched.toLocaleString()}</div>
-              <div className="text-sm text-muted-foreground">Job Matches</div>
             </div>
             <div>
               <div className="text-2xl md:text-3xl font-bold text-primary">Free</div>
@@ -254,7 +244,7 @@ export function HomePageClient() {
             <div>
               <h3 className="font-semibold text-foreground mb-4">AI CV Builder</h3>
               <p className="text-sm text-muted-foreground">
-                Empowering Sierra Leone Youth. Build professional CVs, find jobs, and connect with opportunities.
+                Empowering Sierra Leone Youth. Build professional CVs and connect with opportunities.
               </p>
             </div>
             <div>
@@ -266,11 +256,6 @@ export function HomePageClient() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/jobs" className="text-muted-foreground hover:text-primary transition-colors">
-                    Find Jobs
-                  </Link>
-                </li>
-                <li>
                   <Link href="/ats-checker" className="text-muted-foreground hover:text-primary transition-colors">
                     ATS Checker
                   </Link>
@@ -278,11 +263,6 @@ export function HomePageClient() {
                 <li>
                   <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">
                     Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/job-map" className="text-muted-foreground hover:text-primary transition-colors">
-                    Job Map
                   </Link>
                 </li>
                 <li>

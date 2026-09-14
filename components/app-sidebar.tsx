@@ -1,14 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import {
   LayoutGrid,
-  ClipboardList,
-  Briefcase,
-  MapPin,
   BookOpen,
   User,
   FileSearch,
@@ -22,20 +18,7 @@ import {
 export function AppSidebar() {
   const router = useRouter()
   const pathname = usePathname()
-  const [applicationCount, setApplicationCount] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
-  useEffect(() => {
-    try {
-      const savedApplications = localStorage.getItem("job_applications")
-      if (savedApplications) {
-        const applications = JSON.parse(savedApplications)
-        setApplicationCount(applications.length)
-      }
-    } catch {
-      setApplicationCount(0)
-    }
-  }, [pathname])
 
   const handleSignOut = async () => {
     await fetch("/api/auth/sign-out", { method: "POST" })
@@ -106,65 +89,6 @@ export function AppSidebar() {
               >
                 <FileText className="size-4" />
                 Manage CVs
-              </Button>
-
-              <div className="pt-3">
-                <div className="px-4 pb-2 text-[10px] uppercase font-bold tracking-widest text-gray-400 font-sans">
-                  Jobs
-                </div>
-
-                <Button
-                  variant={isActivePrefix("/jobs") ? "secondary" : "ghost"}
-                  className={`w-full justify-start gap-3 h-11 border-none ${
-                    isActivePrefix("/jobs")
-                      ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                      : "text-gray-500 hover:text-black"
-                  }`}
-                  onClick={() => {
-                    router.push("/jobs")
-                    setIsMobileMenuOpen(false)
-                  }}
-                >
-                  <Briefcase className="size-4" />
-                  Jobs
-                </Button>
-
-                <Button
-                  variant={isActive("/job-map") ? "secondary" : "ghost"}
-                  className={`w-full justify-start gap-3 h-10 border-none ml-3 pl-8 ${
-                    isActive("/job-map")
-                      ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                      : "text-gray-500 hover:text-black"
-                  }`}
-                  onClick={() => {
-                    router.push("/job-map")
-                    setIsMobileMenuOpen(false)
-                  }}
-                >
-                  <MapPin className="size-4" />
-                  Job Map
-                </Button>
-              </div>
-
-              <Button
-                variant={isActive("/applications") ? "secondary" : "ghost"}
-                className={`w-full justify-start gap-3 h-11 border-none relative ${
-                  isActive("/applications")
-                    ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                    : "text-gray-500 hover:text-black"
-                }`}
-                onClick={() => {
-                  router.push("/applications")
-                  setIsMobileMenuOpen(false)
-                }}
-              >
-                <ClipboardList className="size-4" />
-                Applications
-                {applicationCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                    {applicationCount}
-                  </Badge>
-                )}
               </Button>
 
               <div className="pt-3">
@@ -283,56 +207,6 @@ export function AppSidebar() {
         >
           <LayoutGrid className="size-4" />
           All Resumes
-        </Button>
-
-        <div className="pt-3">
-          <div className="px-4 pb-2 text-[10px] uppercase font-bold tracking-widest text-gray-400 font-sans">
-            Jobs
-          </div>
-
-          <Button
-            variant={isActivePrefix("/jobs") ? "secondary" : "ghost"}
-            className={`w-full justify-start gap-3 h-11 border-none ${
-              isActivePrefix("/jobs")
-                ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                : "text-gray-500 hover:text-black"
-            }`}
-            onClick={() => router.push("/jobs")}
-          >
-            <Briefcase className="size-4" />
-            Jobs
-          </Button>
-
-          <Button
-            variant={isActive("/job-map") ? "secondary" : "ghost"}
-            className={`w-full justify-start gap-3 h-10 border-none ml-3 pl-8 ${
-              isActive("/job-map")
-                ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                : "text-gray-500 hover:text-black"
-            }`}
-            onClick={() => router.push("/job-map")}
-          >
-            <MapPin className="size-4" />
-            Job Map
-          </Button>
-        </div>
-
-        <Button
-          variant={isActive("/applications") ? "secondary" : "ghost"}
-          className={`w-full justify-start gap-3 h-11 border-none ${
-            isActive("/applications")
-              ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-              : "text-gray-500 hover:text-black"
-          }`}
-          onClick={() => router.push("/applications")}
-        >
-          <ClipboardList className="size-4" />
-          Applications
-          {applicationCount > 0 && (
-            <Badge className="ml-auto bg-blue-600 h-5 px-1.5 min-w-[20px] justify-center">
-              {applicationCount}
-            </Badge>
-          )}
         </Button>
 
         <Button
