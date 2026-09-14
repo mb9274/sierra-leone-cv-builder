@@ -204,8 +204,7 @@ export default function DashboardPage() {
       <div className="flex min-h-screen">
         <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white p-6 shadow-lg lg:flex lg:flex-col">
           <div className="mb-8">
-            <h1 className="text-xl font-black tracking-[0.28em] text-slate-900">FINCHECK</h1>
-            <p className="mt-2 text-xs uppercase tracking-[0.35em] text-slate-400">CV Dashboard</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">CV Dashboard</p>
           </div>
 
           <nav className="space-y-2">
